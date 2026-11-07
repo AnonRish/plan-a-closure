@@ -156,6 +156,6 @@ accepts them (state the tolerance before the run). pcapng is not supported: capt
 | FPR above 3 x alpha | non-stationary hardware state | recalibrate in the same session; log firmware, clocks, temperature |
 | DC-bus gap much worse than NVML | NVML under-reports or the bus meter is noisy | report both; do not claim the NVML number |
 | `slack` evades | expected: that is assumption A4 | `hw-probe` measures `s_max`; the report prints the slack-inflated gap. If it is large the energy bound is weak, and that is the result |
-| `hw-probe` exits 1 | fewer than three allowed variants, or no floor | read `notes`: unsupported clocks are dropped, `needs root` aborts; widen the sweep |
+| `hw-probe` exits 1 | fewer than three allowed variants, or no floor | read `notes`: unsupported clocks are dropped; without root, clock and power variants are dropped (`needs root`); locks that did not take effect are dropped (`was not applied`); widen the sweep |
 | `dcbus-analyze` refuses the trace | AC-coupled or sign-inverted channel | get a DC-coupled, calibrated channel (shunt, Hall sensor, PSU/PDU meter) |
 | `traffic-check` fails on unparsed bytes | frames that are not TCP/UDP over IP | account for them, filter them at capture and say so, or tolerate them explicitly |

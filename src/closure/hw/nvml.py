@@ -31,6 +31,13 @@ class NvmlReader:
     def power_limit_w(self) -> float:
         return float(self.N.nvmlDeviceGetPowerManagementLimit(self.h[0])) / 1000.0
 
+    def default_power_limit_w(self):
+        """The first GPU's factory default power limit in watts, or None if NVML cannot say."""
+        try:
+            return float(self.N.nvmlDeviceGetPowerManagementDefaultLimit(self.h[0])) / 1000.0
+        except Exception:
+            return None
+
     def sm_clock_mhz(self) -> float:
         return float(np.median([self.N.nvmlDeviceGetClockInfo(h, self.N.NVML_CLOCK_SM) for h in self.h]))
 
@@ -53,8 +60,14 @@ class NvmlReader:
 
     def info(self) -> dict:
         N = self.N
+
+        def uuid(h):
+            try:
+                return _s(N.nvmlDeviceGetUUID(h))
+            except Exception:
+                return None
         return {"driver": _s(N.nvmlSystemGetDriverVersion()),
-                "gpus": [{"index": i, "name": _s(N.nvmlDeviceGetName(h)),
+                "gpus": [{"index": i, "uuid": uuid(h), "name": _s(N.nvmlDeviceGetName(h)),
                           "power_limit_w": N.nvmlDeviceGetPowerManagementLimit(h) / 1000.0,
                           "sm_clock_mhz": N.nvmlDeviceGetClockInfo(h, N.NVML_CLOCK_SM),
                           "temp_c": N.nvmlDeviceGetTemperature(h, N.NVML_TEMPERATURE_GPU)}

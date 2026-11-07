@@ -17,15 +17,30 @@ The whole pilot is one command. It needs no meeting and never waits for keyboard
 | `hw-state` | device memory holds the verifier's data; blocks moved to host memory are caught by timing | a few minutes |
 | `hw-trial` | 30 min reference and a 30 min blind audit with synthetic hidden load injected on the same GPU | about 1 h |
 | `verify` | hash chain, Ed25519 signature, schedule commitment, pre-registration, results and probe hashes | seconds |
+| `hw-restore` | always runs last, even after a failure or a signal: SM clocks unlocked, power limit set back to what it was | seconds |
 
 The run stops early if `selftest`, `preflight`, `hw-selftest` or `hw-trial` fails, and still writes the summary and the
 bundle so the failure can be diagnosed from the logs.
 
+The whole hardware path (GPU identity, NVML reads, nvidia-smi control, restoring, signals, the bundle) is rehearsed on
+every push against a fake NVML library and a fake nvidia-smi (`tests/test_hw_rehearsal.py`). What only this run can check
+is CUDA itself: kernels, timing and energy on a real GPU.
+
 ## What it changes on the machine
 
+- **Which GPU.** `--gpu N` is the N-th GPU this process sees through CUDA, so `CUDA_VISIBLE_DEVICES` from your scheduler
+  applies. NVML and nvidia-smi number GPUs differently, so the tool matches the same physical GPU by UUID (or PCI
+  address) and passes that UUID to every `nvidia-smi -i` call; no other GPU is read or changed. `preflight` prints the
+  match and stops the run if it cannot make one.
 - **Clocks and power limit.** `hw-probe` locks SM clocks (`nvidia-smi -lgc`) and sets power limits (`nvidia-smi -pl`)
-  one variant at a time, and restores both on exit (`-rgc`, default limit). It uses only clocks the GPU lists as supported
-  and never sets a limit below the GPU's minimum. If it is interrupted, check with `nvidia-smi -q -d CLOCK,POWER`.
+  one variant at a time, and puts both back after every variant and on exit (`-rgc`, the limit as found). It uses only
+  clocks the GPU lists as supported, never sets a limit below the GPU's minimum, and checks that each lock and cap took
+  effect (some virtual machines accept the command and change nothing; such variants are dropped and noted).
+- **Interruptions.** Ctrl-C, a closed terminal or a scheduler's SIGTERM (a time limit) makes the running step restore the
+  GPU before it exits; the remaining steps are skipped, `hw-restore` still runs, and the summary and bundle are still
+  written. Only SIGKILL cannot be caught: after one, run `sudo -E env PATH="$PATH" closure hw-restore --gpu 0`.
+- **Without root.** Clock and power variants cannot be applied; they are dropped and noted, and the probe still measures
+  precisions and operand patterns, so the slack it reports covers less.
 - **Sustained load.** Dense GEMMs and memory passes at up to 90% of the GPU's capacity, within its power and thermal
   limits.
 - **Hidden load.** The "hidden" work is the same synthetic GEMM load, run on the same GPU on a schedule committed before

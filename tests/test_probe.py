@@ -130,17 +130,18 @@ class VClock:
 
 
 class FakeReader:
+    """Reports what the (recorded) nvidia-smi calls set, as NVML does on a real GPU."""
     def __init__(self, clk):
-        self.clk = clk
+        self.clk, self.limit_w, self.clock = clk, 700.0, None
 
     def energy_j(self):
         return self.clk.e
 
     def power_limit_w(self):
-        return 700.0
+        return self.limit_w
 
     def sm_clock_mhz(self):
-        return 1980.0
+        return float(self.clock or 1980.0)
 
     def info(self):
         return {"fake": True}
@@ -153,6 +154,12 @@ class VRig(P.TorchRig):
 
     def _smi(self, *a):
         self.smi.append(a)
+        if a[0] == "-lgc":
+            self.reader.clock = float(str(a[1]).split(",")[0])
+        elif a[0] == "-rgc":
+            self.reader.clock = None
+        elif a[0] == "-pl":
+            self.reader.limit_w = float(a[1])
 
     def _restore_numerics(self):
         pass
@@ -200,16 +207,35 @@ def test_torchrig_measure_runs_fixed_work_per_slot_and_flags_variants_that_canno
 
 
 def test_torchrig_smi_failures_are_classified(monkeypatch):
+    from closure.hw import gpu as G
     rig = VRig(VClock())
 
     def run(rc, err):
-        monkeypatch.setattr(P.subprocess, "run", lambda *a, **k: types.SimpleNamespace(returncode=rc, stderr=err, stdout=""))
+        monkeypatch.setattr(G.subprocess, "run", lambda *a, **k: types.SimpleNamespace(returncode=rc, stderr=err, stdout=""))
         return lambda: P.TorchRig._smi(rig, "-lgc", "1000,1000")
     run(0, "")()                                                  # success: nothing raised
-    with pytest.raises(RuntimeError, match="needs root"):
-        run(1, "Insufficient Permissions")()
-    with pytest.raises(P.Unavailable):
+    with pytest.raises(P.Unavailable, match="Specified clock"):
         run(1, "Specified clock is not supported")()
+    assert rig.control                                            # one unsupported clock does not end device control
+    with pytest.raises(P.Unavailable, match="needs root"):        # without root: dropped and noted, the probe goes on
+        run(1, "Insufficient Permissions")()
+    assert not rig.control
+    with pytest.raises(P.Unavailable, match="needs root"):        # and no further nvidia-smi calls are attempted
+        P.TorchRig._smi(rig, "-pl", 500)
+
+
+def test_torchrig_checks_that_clock_locks_and_power_caps_took_effect():
+    clk = VClock()
+    rig = VRig(clk)
+    rig.prepare(P.Variant("reference", "reference"))
+    lock = P.Variant("clock-1000MHz", "clock_cap", 1000.0)
+    assert rig.measure(lock, 0.25)["sm_mhz"] == 1000.0
+    rig.reset()                                                   # unlocked again: the GPU reports its boost clock
+    rig._smi = lambda *a: rig.smi.append(a)                      # nvidia-smi says yes and changes nothing (some VMs)
+    with pytest.raises(P.Unavailable, match="was not applied"):
+        rig.measure(lock, 0.25)
+    with pytest.raises(P.Unavailable, match="was not applied"):
+        rig.apply(P.Variant("powercap-70pct", "power_cap", 0.7))
 
 
 # ------------------------------------------------------------------ binding the probe into a trial

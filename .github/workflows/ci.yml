@@ -26,6 +26,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
+      - name: CPU torch on one Python, so the GPU code path is rehearsed (tests/test_hw_rehearsal.py)
+        if: matrix.python == '3.12'
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
       - run: pip install -e ".[test]"
       - run: pytest
       - run: closure selftest

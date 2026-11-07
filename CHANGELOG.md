@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.5.2
+
+Hardening for whoever lends the GPU. Found by rehearsing the hardware path end to end against a fake NVML and a fake
+nvidia-smi.
+
+- **The right GPU, always.** `--gpu N` was used as the NVML and nvidia-smi index too, but NVML ignores
+  `CUDA_VISIBLE_DEVICES` and numbers GPUs in PCI order. Under a scheduler that hands a job physical GPU 3 as `cuda:0`,
+  the probe would have read GPU 0's energy counter and locked GPU 0's clocks, which may be someone else's job.
+  `hw/gpu.py` now matches the CUDA device to its NVML GPU by UUID (or PCI address), refuses to guess when it cannot, and
+  passes the UUID to every `nvidia-smi -i`. `hw-selftest` and `hw-trial` read NVML for the same GPUs that torch loads.
+  `preflight --gpu N` prints the match and fails without one. CUDA devices are numbered in PCI order unless the
+  environment chose otherwise.
+- **The GPU is put back on SIGTERM, Ctrl-C and SIGHUP**, not only on a normal exit. A scheduler time limit used to kill
+  `hw-probe` with clocks locked. Now the first such signal restores clocks and power limit before exiting, and further
+  signals are held off while the restore runs. `tier0` passes a signal to the running step instead of killing it, skips
+  the rest, and still writes the summary and the bundle. `tier0` ends with a new step, `hw-restore`, that always runs
+  and sets the power limit back to the value it found. `closure hw-restore --gpu N` does the same by hand after a
+  SIGKILL.
+- **Without root the probe degrades instead of aborting.** Clock and power variants are dropped and noted ("needs
+  root"); precisions and operand patterns are still measured.
+- **Locks and caps are checked, not trusted.** A clock lock the GPU does not report, or a power limit NVML does not
+  show, drops that variant ("was not applied"). Some virtual machines accept `nvidia-smi -lgc` and change nothing.
+- **Bounded run time.** A slot that takes five times its length skips its remaining units; the variant is infeasible
+  anyway, and energy per FLOP counts the units actually run. A pathologically slow variant can no longer eat the
+  allocation.
+- Power caps are fractions of the GPU's default limit; after each variant the limit goes back to the value it had at the
+  start.
+- New tests: `test_gpu_identity.py`, and `test_hw_rehearsal.py`, which runs `closure tier0 --confirm-hardware` end to end
+  on CPU torch against `tests/fakegpu/` (NVML and nvidia-smi fakes), including SIGTERM mid-probe, SIGKILL followed by
+  `hw-restore`, no root, and no-op clock locks. CI installs CPU torch on Python 3.12 so these run on every push. A
+  rehearsal is labelled `REHEARSAL` everywhere and is refused as input to a hardware trial. Tests: 229 -> 237, plus 11
+  with torch installed (was 5).
+
 ## 0.5.1
 
 - **CI** (`.github/workflows/ci.yml`) now also runs `closure external check` and the Tier 0 pilot on a simulated GPU,

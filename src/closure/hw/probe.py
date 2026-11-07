@@ -40,7 +40,6 @@ from __future__ import annotations
 
 import math
 import random
-import subprocess
 import sys
 import time
 from dataclasses import dataclass
@@ -318,16 +317,28 @@ class TorchRig:
     HARDWARE-GATED: not run on a GPU by the author; ``measure`` control flow is covered by a virtual-clock test."""
     SLOT_S = 0.1
     OVERRUN_TOL = 0.02       # share of slots allowed to overrun before a variant is called infeasible at a level
+    MAX_SLOT_FACTOR = 5.0    # a slot that takes this many times its length skips its remaining units (bounds the run time)
     SETTLE_S, WARMUP_S, CALIB_S = 2.0, 3.0, 2.0
 
     def __init__(self, gpu: int = 0, dim: int = 8192, mem_elems: int = 1 << 29, window_s: float = 8.0,
-                 reader=None, time_fn=time.perf_counter, sleep_fn=time.sleep, device: str = None, control: bool = True):
+                 reader=None, time_fn=time.perf_counter, sleep_fn=time.sleep, device: str = None, control: bool = True,
+                 target=None):
+        self.target = target                           # hw.gpu.GpuTarget: the physical GPU, matched by UUID
+        if target is not None:
+            gpu, device = target.index, device or target.torch_device
         self.gpu, self.dim, self.mem, self.T = int(gpu), int(dim), int(mem_elems), float(window_s)
+        self.smi_id = target.uuid if target is not None else str(self.gpu)    # what nvidia-smi -i is given
+        self.rehearsal = bool(target is not None and target.rehearsal)
+        if self.rehearsal:                             # CPU rehearsal against a fake NVML: short settles, small buffers
+            self.SETTLE_S, self.WARMUP_S, self.CALIB_S = 0.1, 0.1, 0.2
+            self.mem = min(self.mem, 1 << 16)
+        self.err_n = 128 if self.rehearsal else 1024   # size of the seeded product that judges numerics
         self.time, self.sleep = time_fn, sleep_fn
         self.t_unit_ref = None
         self._err = {}
         self._mm = None                                # matmul for the current variant; None means torch.matmul
         self.control = bool(control)                   # False: no nvidia-smi; clock and power variants are dropped
+        self._no_control = None                        # why control was turned off during the run, if it was
         self.dev = device or f"cuda:{self.gpu}"        # "cpu" runs the same code without a GPU (tests, rehearsal)
         if reader is None or device is not None:
             import torch
@@ -342,9 +353,12 @@ class TorchRig:
                 self._blas = None
         if reader is None:
             from .nvml import NvmlReader
-            reader = NvmlReader([self.gpu])
+            reader = NvmlReader([target.nvml_index if target is not None else self.gpu])
         self.reader = reader
-        self.default_pl_w = float(self.reader.power_limit_w())
+        self.start_pl_w = float(self.reader.power_limit_w())        # restored after every variant and on exit
+        dflt = getattr(self.reader, "default_power_limit_w", None)
+        d = dflt() if dflt else None
+        self.default_pl_w = float(d) if d else self.start_pl_w        # power caps are fractions of the default limit
 
     def _sync(self):
         if str(self.dev).startswith("cuda"):
@@ -360,14 +374,19 @@ class TorchRig:
 
     # ---- device control -------------------------------------------------------------------------------------
     def _smi(self, *args):
+        """nvidia-smi on this GPU only (by UUID when resolved). Without root the clock and power variants are dropped
+        and noted, and the probe goes on with precisions and operands, which need no device control."""
+        from .gpu import smi
         if not self.control:
-            raise Unavailable("device control is off: clock and power-limit variants are skipped")
-        r = subprocess.run(["nvidia-smi", "-i", str(self.gpu), *map(str, args)], capture_output=True, text=True, timeout=60)
-        if r.returncode != 0:
-            msg = (r.stderr or r.stdout).strip()
-            if any(s in msg.lower() for s in ("permission", "root", "administrator")):
-                raise RuntimeError(f"`nvidia-smi {' '.join(map(str, args))}` needs root: {msg}")
-            raise Unavailable(msg or f"nvidia-smi {' '.join(map(str, args))} failed")
+            raise Unavailable(self._no_control or "device control is off: clock and power-limit variants are skipped")
+        ok, msg = smi(self.smi_id, *args)
+        if not ok:
+            cmd = f"nvidia-smi {' '.join(map(str, args))}"
+            if any(s in msg.lower() for s in ("permission", "root", "administrator", "not allowed")):
+                self.control = False
+                self._no_control = f"device control needs root (`{cmd}`: {msg}); clock and power-limit variants dropped"
+                raise Unavailable(self._no_control)
+            raise Unavailable(msg or f"{cmd} failed")
 
     def _restore_numerics(self):
         self.torch.backends.cuda.matmul.allow_tf32 = self._tf32
@@ -385,11 +404,14 @@ class TorchRig:
             raise Unavailable(f"BLAS library {lib!r}: {e}")
 
     def reset(self):
-        for args in ((("-rgc",), ("-pl", int(round(self.default_pl_w)))) if self.control else ()):
-            try:
-                self._smi(*args)
-            except Exception as e:
-                print(f"WARNING: could not undo `nvidia-smi {' '.join(map(str, args))}`: {e}", file=sys.stderr)
+        """Unlock clocks and put the power limit back to what it was at the start; signals are held meanwhile."""
+        from .gpu import signals_held
+        with signals_held():
+            for args in ((("-rgc",), ("-pl", int(round(self.start_pl_w)))) if self.control else ()):
+                try:
+                    self._smi(*args)
+                except Exception as e:
+                    print(f"WARNING: could not undo `nvidia-smi {' '.join(map(str, args))}`: {e}", file=sys.stderr)
         self._restore_numerics()
 
     def apply(self, v: Variant):
@@ -397,7 +419,11 @@ class TorchRig:
         if v.kind == "clock_cap":
             self._smi("-lgc", f"{int(v.value)},{int(v.value)}")
         elif v.kind == "power_cap":
-            self._smi("-pl", int(round(float(v.value) * self.default_pl_w)))
+            want = int(round(float(v.value) * self.default_pl_w))
+            self._smi("-pl", want)
+            got = float(self.reader.power_limit_w())          # nvidia-smi can report success and change nothing
+            if abs(got - want) > 1.5:
+                raise Unavailable(f"power limit {want} W was not applied (the GPU reports {got:.0f} W)")
         elif v.kind == "kernel":
             self._set_blas(v.value)
 
@@ -492,8 +518,8 @@ class TorchRig:
         if key not in self._err:
             t = self.torch
             t.manual_seed(0)
-            a = t.randn(1024, 1024, device=self.dev, dtype=t.float32)
-            b = t.randn(1024, 1024, device=self.dev, dtype=t.float32)
+            a = t.randn(self.err_n, self.err_n, device=self.dev, dtype=t.float32)
+            b = t.randn(self.err_n, self.err_n, device=self.dev, dtype=t.float32)
             truth = a.double() @ b.double()
             if v.kind == "precision" and v.value in LOWP:
                 mm = self._lowp_mm(v.value)
@@ -531,30 +557,42 @@ class TorchRig:
         slots = max(1, int(self.T / self.SLOT_S))
 
         def window(k):
-            over, busy_total = 0, 0.0
+            over, busy_total, done = 0, 0.0, 0
+            cap = self.MAX_SLOT_FACTOR * self.SLOT_S
             for _ in range(k):
                 s0 = self.time()
                 for _ in range(n_slot):
                     self._unit(A, B, big)
+                    done += 1
+                    if self.time() - s0 > cap:            # far too slow: already infeasible, so stop wasting the slot
+                        break
                 busy = self.time() - s0
                 busy_total += busy
                 if busy < self.SLOT_S:
                     self.sleep(self.SLOT_S - busy)
                 else:
                     over += 1
-            return over, busy_total
+            return over, busy_total, done
 
         window(max(1, int(self.SETTLE_S / self.SLOT_S)))   # settle clocks and temperature at this duty cycle
+        if v.kind == "clock_cap":                         # some VMs accept -lgc and change nothing: check, don't trust
+            cur = float(self.reader.sm_clock_mhz())
+            if cur > 1.02 * float(v.value) + 15.0:
+                raise Unavailable(f"clock lock to {int(v.value)} MHz was not applied (the GPU reports {cur:.0f} MHz)")
         e0, t0 = self.reader.energy_j(), self.time()
-        over, busy_total = window(slots)
+        over, busy_total, done = window(slots)
         e1, t1 = self.reader.energy_j(), self.time()
-        return {"energy_j": e1 - e0, "time_s": t1 - t0, "units": slots * n_slot, "flop": slots * n_slot * 2 * self.dim ** 3,
+        return {"energy_j": e1 - e0, "time_s": t1 - t0, "units": done, "flop": done * 2 * self.dim ** 3,
                 "level": level, "busy_frac": busy_total / (slots * self.SLOT_S), "feasible": over <= self.OVERRUN_TOL * slots,
                 "sm_mhz": float(self.reader.sm_clock_mhz()), "rel_err": self._rel_err(v)}
 
     def info(self) -> dict:
         d = {"rig": "TorchRig", "gpu": self.gpu, "device": self.dev, "control": self.control, "dim": self.dim,
-             "window_s": self.T, "default_power_limit_w": self.default_pl_w, "t_unit_ref_s": self.t_unit_ref}
+             "window_s": self.T, "default_power_limit_w": self.default_pl_w, "start_power_limit_w": self.start_pl_w,
+             "t_unit_ref_s": self.t_unit_ref, "nvidia_smi_id": self.smi_id,
+             "target": self.target.describe() if self.target is not None else None, "rehearsal": self.rehearsal}
+        if self._no_control:
+            d["control_lost"] = self._no_control
         try:
             d["device"] = self.reader.info()
             d["torch"] = self.torch.__version__

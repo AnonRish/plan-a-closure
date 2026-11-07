@@ -7,8 +7,9 @@
 Every joule, packet byte and byte of memory on an enrolled cluster must be *explained* by verified work.
 What is left over (the residual) upper-bounds hidden compute, hidden exfiltration and hidden persistent state.
 
-> **Status: v0.5.1, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
-> (229 tests, `pytest`, plus 5 that run the torch code on CPU where torch is installed). The 13 vendored repositories
+> **Status: v0.5.2, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
+> (237 tests, `pytest`, plus 11 that run the torch code on CPU where torch is installed, 6 of them rehearsing the
+> whole GPU path against a fake NVML and nvidia-smi). The 13 vendored repositories
 > under `external/` add their own suites (2,708 tests passed here, `closure external test`). **No physical claim is
 > demonstrated yet.** Each one is decided by the pre-registered trial in
 > [docs/PREREGISTRATION.md](docs/PREREGISTRATION.md) on instrumented hardware (Amodo's Side Channel Cloud, the
@@ -46,7 +47,7 @@ tap-and-recompute. Its known blind spot (efficiency slack: an energy-neutral adv
 | evidence | can a stranger check what was run and when? | hash chain, Ed25519 signature, preregistration, commit-reveal of the breaker's schedule | `evidence.py` |
 | independent meter | can the prover's own NVML be cross-checked? | absolute-power CSV import (AC-coupled traces are rejected), unit conversion, constant-memory decimation of very large traces, clock alignment, re-analysis of the same run | `dcbus.py` |
 | efficiency slack and energy floor | does an allowed stack, clock or power cap, numerics choice, or cheap input data leave energy-neutral room for hidden work? what is the lowest joules per FLOP? | duty-cycled windows at fixed work rates, one-sided 95% upper saving of allowed stack variants (`s_stack`) and activation patterns (`s_operand`), dynamic J/FLOP floor with int8 and fp8, the declared-work band, sealed `probe.json` bound into the pre-registration | `hw/probe.py` |
-| one-command pilot | can an operator run Tier 0 alone, without a meeting? | `closure tier0`: every step logged with its command and exit status, `SUMMARY.md`, a bundle that leaves out the private key | `tier0.py` |
+| one-command pilot | can an operator run Tier 0 alone, without a meeting, and get the GPU back as it was? | `closure tier0`: every step logged with its command and exit status, `SUMMARY.md`, a bundle that leaves out the private key; the GPU matched across CUDA and NVML by UUID; clocks and power limit restored on exit, on SIGTERM and by a final `hw-restore` step; the whole hardware path rehearsed in CI against a fake NVML and nvidia-smi | `tier0.py` `hw/gpu.py` |
 
 ## The rest of the software-addressable plan
 
@@ -169,7 +170,7 @@ covered. `gemm_audit.py` is a design-time screen, not the physical audit the pap
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"                # Python 3.10 or newer
-pytest                                  # 229 tests (234 with torch installed)
+pytest                                  # 237 tests (248 with torch installed)
 closure selftest                        # end-to-end simulated trial, PASS/FAIL
 closure tier0 --mock --out runs/tier0   # the whole one-GPU pilot on fake hardware: logs, SUMMARY.md, bundle
 closure redteam                         # gateway sampling + recomputation against substituted models (toy model)
@@ -236,7 +237,7 @@ verifier never sees it until analysis. Use `--pause-after-prereg` to timestamp `
 `src/closure/`: closure core (`conformal.py` `residual.py` `energy.py` `sim.py` `trial.py` `compose.py` `traffic.py`
 `state.py` `evidence.py` `dcbus.py` `tier0.py` `cli.py`), Plan A modules (`claims.py` `ledger.py` `retrofit.py` `assurance.py` `repro.py`
 `gateway.py` `taphash.py` `tapwatch.py` `cadence.py` `metrics.py` `frontier.py`
-`approval.py` `captrade.py` `coverage.py` `external.py`), `hw/` (`nvml.py` `workloads.py` `source.py` `probe.py`) and `pause/` (`thresholds.py`
+`approval.py` `captrade.py` `coverage.py` `external.py`), `hw/` (`nvml.py` `workloads.py` `source.py` `probe.py` `gpu.py`) and `pause/` (`thresholds.py`
 `treaty_ledger.py` `census.py` `inference_only.py` `gemm_audit.py` `fab.py` `whitelist.py` `registry.py` `supply_chain.py` `transition.py`
 `msic_econ.py` `pausegame.py` `bridge.py` `paper_claims.py` `coverage.py` `cli.py`). `tests/`, `scripts/` (`sim_study.py`,
 `crosscheck_upstream.py`), `docs/` (`HARDWARE_CONFIG.md`, `OPERATOR_TIER0.md`, `PREREGISTRATION.md`, `RUNBOOK_HARDWARE.md`, `PLAN_A_COVERAGE.md`,

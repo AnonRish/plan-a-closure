@@ -24,6 +24,9 @@ PROFILES = {
     "quick": dict(L=120, n_ref_blocks=240, n_audit_blocks=240, alpha=0.01),
     "smoke": dict(L=30, n_ref_blocks=60, n_audit_blocks=60, n_regimes=1, alpha=0.01,
                   classes=("constant", "idle_gap", "duty", "dilute"), intensities=(0.05, 0.2)),
+    # CPU rehearsal against a fake NVML (tests/fakegpu): exercises the hardware code path in about a minute; refused on a GPU
+    "rehearsal": dict(dt=0.5, L=2, n_ref_blocks=40, n_audit_blocks=12, n_regimes=1, alpha=0.01,
+                      classes=("constant", "idle_gap"), intensities=(0.2,)),
     "hw-short": dict(L=120, n_ref_blocks=180, n_audit_blocks=180, n_regimes=2, alpha=0.01,
                      classes=("constant", "idle_gap", "duty", "dilute"), intensities=(0.01, 0.02, 0.05, 0.10, 0.20)),
     "hw-full": dict(L=120, n_ref_blocks=360, n_audit_blocks=720, n_regimes=3, alpha=0.01,
@@ -48,7 +51,7 @@ def _signer(out: Path, announce: bool = True) -> Signer:
     return s
 
 
-def _apply_probe(cfg, path, out: Path, hardware: bool) -> None:
+def _apply_probe(cfg, path, out: Path, hardware: bool, rehearsal: bool = False) -> None:
     """Bind a sealed probe.json (closure hw-probe) into the trial config: energy floor, slack and the file's hash."""
     from .hw import probe as P
     pr = json.loads(Path(path).read_text())
@@ -56,6 +59,8 @@ def _apply_probe(cfg, path, out: Path, hardware: bool) -> None:
         raise SystemExit(f"refusing: {path} fails its own sha256 seal (do not edit probe.json; re-run closure hw-probe)")
     if hardware and str(pr.get("status", "")).startswith("MOCK"):
         raise SystemExit(f"refusing: {path} comes from `hw-probe --mock`; run `closure hw-probe --confirm-hardware` first")
+    if hardware and not rehearsal and str(pr.get("status", "")).startswith("REHEARSAL"):
+        raise SystemExit(f"refusing: {path} comes from a CPU rehearsal; run `closure hw-probe --confirm-hardware` on the GPU")
     src = f"measured by hw-probe ({pr['status']}), sha256 {pr['sha256'][:16]}"
     if pr.get("e_floor_j_per_flop"):
         cfg.e_floor_j_per_flop, cfg.e_floor_source = float(pr["e_floor_j_per_flop"]), src
@@ -128,7 +133,8 @@ def cmd_selftest(a) -> int:
     return 0 if all(checks.values()) else 1
 
 
-def preflight_checks(mock: bool = False) -> list:
+def preflight_checks(mock: bool = False, gpu: int = 0) -> list:
+    from .hw import gpu as G
     R = []
 
     def add(name, status, detail=""):
@@ -146,32 +152,44 @@ def preflight_checks(mock: bool = False) -> list:
                   "NTP synchronised", "capture interface up"):
             add(n, "PASS", "mock")
         return R
+    N, target = None, None
     try:
         import pynvml as N
         N.nvmlInit()
         n = N.nvmlDeviceGetCount()
-        add("pynvml/NVML init", "PASS", f"driver {N.nvmlSystemGetDriverVersion()}")
+        add("pynvml/NVML init", "PASS", f"driver {G._text(N.nvmlSystemGetDriverVersion())}")
         add("GPU count>0", "PASS" if n else "FAIL", str(n))
-        if n:
-            h = N.nvmlDeviceGetHandleByIndex(0)
+    except Exception as e:
+        add("pynvml/NVML init", "FAIL", f"{type(e).__name__}: {e}")
+        N = None
+    try:
+        import torch
+        if torch.cuda.is_available():
+            add("torch.cuda available", "PASS", torch.__version__)
+        elif G.rehearsal_requested():
+            add("torch.cuda available", "WARN", f"{torch.__version__}: REHEARSAL on CPU, nothing measured means anything")
+        else:
+            add("torch.cuda available", "FAIL", f"{torch.__version__}: install a CUDA build of torch on the GPU node")
+    except Exception as e:
+        add("torch.cuda available", "SKIP", f"torch not importable: {e}")
+    if N is not None:
+        try:                                         # the GPU every later step touches, matched across CUDA and NVML
+            target = G.resolve(gpu, N=N)
+            add(f"GPU identity (--gpu {gpu})", "WARN" if target.rehearsal else "PASS", target.describe())
+        except Exception as e:
+            add(f"GPU identity (--gpu {gpu})", "FAIL", f"{type(e).__name__}: {e}")
+        if target is not None:
             try:
-                e0 = N.nvmlDeviceGetTotalEnergyConsumption(h)
+                e0 = N.nvmlDeviceGetTotalEnergyConsumption(N.nvmlDeviceGetHandleByIndex(target.nvml_index))
                 add("energy counter readable", "PASS", f"{e0} mJ")
             except Exception as e:
                 add("energy counter readable", "FAIL", f"{e} (use power sampling instead)")
-    except Exception as e:
-        add("pynvml/NVML init", "FAIL", f"{type(e).__name__}: {e}")
-    try:
-        import torch
-        add("torch.cuda available", "PASS" if torch.cuda.is_available() else "FAIL", torch.__version__)
-    except Exception as e:
-        add("torch.cuda available", "SKIP", f"torch not importable: {e}")
     try:
         r = subprocess.run(["timedatectl", "show", "-p", "NTPSynchronized", "--value"], capture_output=True, text=True, timeout=5)
         add("NTP synchronised", "PASS" if r.stdout.strip() == "yes" else "WARN", r.stdout.strip() or r.stderr.strip())
     except Exception as e:
         add("NTP synchronised", "SKIP", str(e))
-    _gpu_readiness(add)
+    _gpu_readiness(add, target)
     add("tcpdump present", "PASS" if shutil.which("tcpdump") else "WARN", shutil.which("tcpdump") or "install for TAP capture")
     iface = os.environ.get("CLOSURE_IFACE")
     if iface:
@@ -182,21 +200,23 @@ def preflight_checks(mock: bool = False) -> list:
     return R
 
 
-def _gpu_readiness(add) -> None:
+def _gpu_readiness(add, target=None) -> None:
     """Checks that do not stop a run but decide whether hw-probe and the trial can do their job on this node (WARN, never
     FAIL): root for clock and power control, MIG, persistence, the clock and power-limit ranges, other processes on the GPU,
-    the GPU model, int8 and fp8 GEMM support, and free memory."""
+    the GPU model, int8 and fp8 GEMM support, and free memory. `target` (hw.gpu.GpuTarget) says which GPU; default 0."""
     euid = getattr(os, "geteuid", lambda: -1)()
-    add("running as root", "PASS" if euid == 0 else "WARN", "" if euid == 0 else "hw-probe needs root to lock clocks and set power limits")
+    add("running as root", "PASS" if euid == 0 else "WARN",
+        "" if euid == 0 else "without root hw-probe cannot lock clocks or set power limits: those variants are dropped")
+    gi, ti = (target.nvml_index, target.index) if target is not None else (0, 0)
     try:
         import pynvml as N
         N.nvmlInit()
-        h = N.nvmlDeviceGetHandleByIndex(0)
+        h = N.nvmlDeviceGetHandleByIndex(gi)
         checks = (
             ("MIG disabled", lambda: N.nvmlDeviceGetMigMode(h)[0] == 0,
              "MIG is on: the energy counter and clock control cover the whole GPU, not one slice"),
             ("persistence mode on", lambda: bool(N.nvmlDeviceGetPersistenceMode(h)), "run `nvidia-smi -pm 1` as root"),
-            ("no other compute processes on GPU 0", lambda: not N.nvmlDeviceGetComputeRunningProcesses(h),
+            (f"no other compute processes on GPU {ti}", lambda: not N.nvmlDeviceGetComputeRunningProcesses(h),
              "another process is using the GPU: ask for an exclusive allocation"))
         for name, ok, hint in checks:
             try:
@@ -219,22 +239,22 @@ def _gpu_readiness(add) -> None:
         add("GPU readiness (NVML)", "SKIP", f"{type(e).__name__}: {e}")
     try:
         import torch
-        if torch.cuda.is_available():
-            cap = tuple(torch.cuda.get_device_capability(0))
-            add("GPU model", "PASS", f"{torch.cuda.get_device_name(0)}, compute capability {cap[0]}.{cap[1]}")
+        if torch.cuda.is_available() and not (target is not None and target.rehearsal):
+            cap = tuple(torch.cuda.get_device_capability(ti))
+            add("GPU model", "PASS", f"{torch.cuda.get_device_name(ti)}, compute capability {cap[0]}.{cap[1]}")
             i8 = hasattr(torch, "_int_mm")
             add("int8 GEMM (torch._int_mm)", "PASS" if i8 else "WARN", "" if i8 else "the int8 floor variant will be dropped")
             f8 = hasattr(torch, "_scaled_mm") and hasattr(torch, "float8_e4m3fn") and cap >= (8, 9)
             add("fp8 GEMM (torch._scaled_mm, compute capability 8.9+)", "PASS" if f8 else "WARN",
                 "" if f8 else "the fp8 floor variant will be dropped")
-            free, total = torch.cuda.mem_get_info(0)
+            free, total = torch.cuda.mem_get_info(ti)
             add("free GPU memory >= 8 GB", "PASS" if free >= 8e9 else "WARN", f"{free / 1e9:.1f} of {total / 1e9:.1f} GB free")
     except Exception as e:
         add("GPU readiness (torch)", "SKIP", f"{type(e).__name__}: {e}")
 
 
 def cmd_preflight(a) -> int:
-    R = preflight_checks(mock=a.mock or os.environ.get("CLOSURE_MOCK") == "1")
+    R = preflight_checks(mock=a.mock or os.environ.get("CLOSURE_MOCK") == "1", gpu=a.gpu)
     if a.json:
         print(json.dumps(R, indent=2))
     else:
@@ -243,17 +263,35 @@ def cmd_preflight(a) -> int:
     return 1 if any(r["status"] == "FAIL" for r in R) else 0
 
 
+REHEARSAL_STATUS = "REHEARSAL-CPU (fake devices; no physical meaning)"
+
+
 def _hw_parts(a):
+    """(reader, load, clock, n_gpu, to_stop, targets). On hardware every --gpus index (default: every GPU CUDA shows) is
+    resolved to its physical GPU by UUID, so NVML reads the energy of the GPUs torch actually loads (hw/gpu.py)."""
     if a.mock:
         from .hw.source import FakeHardware
         fh = FakeHardware(seed=a.seed)
-        return fh, fh, dict(time_fn=fh.now, sleep_fn=fh.sleep), 8, None
+        return fh, fh, dict(time_fn=fh.now, sleep_fn=fh.sleep), 8, None, []
+    import pynvml as N
+    from .hw import gpu as G
     from .hw.nvml import NvmlReader
     from .hw.workloads import TorchLoad
-    gpus = [int(x) for x in a.gpus.split(",")] if a.gpus else None
-    reader = NvmlReader(gpus)
-    load = TorchLoad(reader.idx)
-    return reader, load, {}, len(reader.idx), load
+    N.nvmlInit()
+    if a.gpus:
+        idx = [int(x) for x in a.gpus.split(",")]
+    else:
+        torch = G._torch()
+        idx = list(range(torch.cuda.device_count())) if torch is not None and torch.cuda.is_available() else [0]
+    targets = [G.resolve(i, N=N) for i in idx]
+    for t in targets:
+        print("GPU:", t.describe(), file=sys.stderr, flush=True)
+    G.install_stop_handlers()                       # a SIGTERM (e.g. a scheduler time limit) stops the load cleanly
+    reader = NvmlReader([t.nvml_index for t in targets])
+    rehearsal = any(t.rehearsal for t in targets)
+    load = (TorchLoad([t.index for t in targets], dim=128, mem_elems=1 << 16, device="cpu") if rehearsal
+            else TorchLoad([t.index for t in targets]))
+    return reader, load, {}, len(targets), load, targets
 
 
 def _pause_hook(path, sha):
@@ -283,15 +321,24 @@ def cmd_hw_trial(a) -> int:
         print("refusing: pass --confirm-hardware (this runs sustained GPU load and hidden-load injections)")
         return 2
     from .hw.source import HwSource
-    cfg = _cfg(a.profile, a.seed, "HARDWARE-MOCK" if a.mock else "HARDWARE (NVML energy counter; spoofable)")
-    out = Path(a.out)
-    if getattr(a, "probe", None):
-        _apply_probe(cfg, a.probe, out, hardware=not a.mock)
-    reader, load, clock, n_gpu, to_stop = _hw_parts(a)
-    cfg.n_gpu = n_gpu
-    src = HwSource(reader, load, dt=cfg.dt, n_gpu=n_gpu, seed=a.seed, **clock)
-    hook = _pause_hook if a.pause_after_prereg else (_stamp_hook if getattr(a, "stamp_prereg", False) else None)
+    if a.profile == "rehearsal" and not a.mock and not os.environ.get("CLOSURE_REHEARSAL_CPU") == "1":
+        print("refusing: the rehearsal profile is for CPU rehearsals against a fake NVML; use smoke, hw-short or hw-full")
+        return 2
+    reader, load, clock, n_gpu, to_stop, targets = _hw_parts(a)
+    rehearsal = any(t.rehearsal for t in targets)
+    if a.profile == "rehearsal" and not a.mock and not rehearsal:
+        to_stop.stop()
+        print("refusing: the rehearsal profile is for CPU rehearsals; this process sees a real GPU")
+        return 2
     try:
+        cfg = _cfg(a.profile, a.seed, "HARDWARE-MOCK" if a.mock else REHEARSAL_STATUS if rehearsal
+                   else "HARDWARE (NVML energy counter; spoofable)")
+        out = Path(a.out)
+        if getattr(a, "probe", None):
+            _apply_probe(cfg, a.probe, out, hardware=not a.mock, rehearsal=rehearsal)
+        cfg.n_gpu = n_gpu
+        src = HwSource(reader, load, dt=cfg.dt, n_gpu=n_gpu, seed=a.seed, **clock)
+        hook = _pause_hook if a.pause_after_prereg else (_stamp_hook if getattr(a, "stamp_prereg", False) else None)
         res = run_trial(src, cfg, out, _signer(out), pause_hook=hook)
     finally:
         if to_stop is not None:
@@ -304,7 +351,7 @@ def cmd_hw_selftest(a) -> int:
     """First thing to run on the cluster: is the evidence chain sane before any hidden-load trial?"""
     from .hw.source import HwSource
     from .residual import nnls
-    reader, load, clock, n_gpu, to_stop = _hw_parts(a)
+    reader, load, clock, n_gpu, to_stop, targets = _hw_parts(a)
     src = HwSource(reader, load, dt=1.0, n_gpu=n_gpu, seed=a.seed, **clock)
     rows = []
     try:
@@ -322,7 +369,10 @@ def cmd_hw_selftest(a) -> int:
     r2 = 1 - float(np.sum(res ** 2) / np.sum((y - y.mean()) ** 2))
     idle_w = float(np.mean([r[2] / r[1][0] for r in rows if r[0] == 0.0]))
     out = {"windows": len(rows), "r2": r2, "residual_sd_j": float(res.std()), "idle_power_w": idle_w,
-           "theta": dict(zip(FEATURES, th.tolist())), "pass": r2 > 0.9 and idle_w > 0}
+           "theta": dict(zip(FEATURES, th.tolist())), "pass": r2 > 0.9 and idle_w > 0,
+           "gpus": [t.describe() for t in targets]}
+    if any(t.rehearsal for t in targets):
+        out["status"] = REHEARSAL_STATUS
     print(json.dumps(clean(out), indent=2))
     return 0 if out["pass"] else 1
 
@@ -471,7 +521,15 @@ def cmd_hw_probe(a) -> int:
         print("refusing: pass --confirm-hardware (this locks clocks, changes the power limit and runs sustained GPU load; "
               "it needs root, and clocks and limit are restored afterwards)")
         return 2
-    rig = P.FakeProbeRig(seed=a.seed, window_s=a.window_s) if a.mock else P.TorchRig(a.gpu, a.dim, window_s=a.window_s)
+    if a.mock:
+        rig, status = P.FakeProbeRig(seed=a.seed, window_s=a.window_s), "MOCK"
+    else:
+        from .hw import gpu as G
+        target = G.resolve(a.gpu)                    # the physical GPU by UUID: nvidia-smi and NVML touch only it
+        print("GPU:", target.describe(), file=sys.stderr, flush=True)
+        G.install_stop_handlers()                    # SIGTERM/SIGINT/SIGHUP: restore clocks and power limit, then exit
+        rig = P.TorchRig(target=target, dim=a.dim, window_s=a.window_s)
+        status = REHEARSAL_STATUS if target.rehearsal else "HARDWARE-PROBE (NVML energy counter; spoofable)"
     if a.clocks == "auto":                       # clocks this device supports, so no variant is wasted on an invalid clock
         clocks = P.pick_clocks(rig.supported_clocks())
         clock_src = "picked from the device's supported clocks" if clocks else "fixed fallback: the device did not list its clocks"
@@ -487,7 +545,7 @@ def cmd_hw_probe(a) -> int:
                       log=lambda s: print(s, file=sys.stderr))
     res["settings"].update({"clocks_mhz": [float(c) for c in clocks], "clock_source": clock_src,
                             "power_caps": [float(c) for c in caps], "power_cap_source": cap_src})
-    res = P.seal(res, "MOCK" if a.mock else "HARDWARE-PROBE (NVML energy counter; spoofable)", rig.info())
+    res = P.seal(res, status, rig.info())
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     Path(a.out).write_text(json.dumps(res, indent=2, sort_keys=True))
     s, e = res["s_max"], res["e_floor_j_per_flop"]
@@ -628,6 +686,23 @@ def cmd_tier0(a) -> int:
     return tier0.run(Path(a.out), gpu=a.gpu, mock=a.mock, run_tests=not a.skip_tests)
 
 
+def cmd_hw_restore(a) -> int:
+    """Unlock the SM clocks and set the power limit back on one GPU: what hw-probe does on exit, for when a run was
+    killed with SIGKILL (or the node lost power) before it could. Needs root, like hw-probe."""
+    import pynvml as N
+    from .hw import gpu as G
+    N.nvmlInit()
+    target = G.resolve(a.gpu, N=N)
+    print("GPU:", target.describe())
+    w = a.power_limit_w if a.power_limit_w is not None else G.default_power_limit_w(N, target.nvml_index)
+    print(f"power limit -> {w:.0f} W ({'given' if a.power_limit_w is not None else 'the GPU default'})" if w else
+          "power limit: NVML gave no default; pass --power-limit-w to set it")
+    rows = G.restore(target, w, N=N)
+    for cmd, ok, msg in rows:
+        print(("ok    " if ok else "FAIL  ") + cmd + ("" if ok else f"  ({msg})"))
+    return 0 if rows and all(ok for _, ok, _ in rows) else 1
+
+
 def cmd_dcbus_decimate(a) -> int:
     from . import dcbus
     r = dcbus.decimate_csv(a.src, a.dst, a.window_ms / 1000.0, scale=a.scale, ts_unit=a.ts_unit)
@@ -680,11 +755,14 @@ def cmd_dcbus(a) -> int:
 
 
 def main(argv=None) -> int:
+    from .hw.gpu import prefer_pci_order
+    prefer_pci_order()                    # number CUDA devices as NVML and nvidia-smi do, before CUDA is initialised
     ap = argparse.ArgumentParser(prog="closure", description=f"plan-a-closure {__version__}")
     sp = ap.add_subparsers(dest="cmd", required=True)
     s = sp.add_parser("selftest"); s.set_defaults(f=cmd_selftest)
     s = sp.add_parser("verify"); s.add_argument("run"); s.set_defaults(f=cmd_verify)
-    s = sp.add_parser("preflight"); s.add_argument("--mock", action="store_true"); s.add_argument("--json", action="store_true"); s.set_defaults(f=cmd_preflight)
+    s = sp.add_parser("preflight"); s.add_argument("--mock", action="store_true"); s.add_argument("--json", action="store_true")
+    s.add_argument("--gpu", type=int, default=0, help="index among the GPUs CUDA shows this process"); s.set_defaults(f=cmd_preflight)
     s = sp.add_parser("sim-trial"); s.add_argument("--out", required=True); s.add_argument("--seed", type=int, default=1)
     s.add_argument("--profile", choices=list(PROFILES), default="sim"); s.add_argument("--probe", default=None)
     s.set_defaults(f=cmd_sim_trial)
@@ -743,6 +821,10 @@ def main(argv=None) -> int:
     s.add_argument("--python", default=None, help="interpreter to run the suites with (default: this one)")
     s.add_argument("--log-dir", default="runs/external"); s.add_argument("--root", default=None)
     s.add_argument("--json", action="store_true"); s.set_defaults(f=cmd_external)
+    s = sp.add_parser("hw-restore", help="unlock the clocks and restore the power limit of one GPU (after a killed run)")
+    s.add_argument("--gpu", type=int, default=0, help="index among the GPUs CUDA shows this process")
+    s.add_argument("--power-limit-w", type=float, default=None, help="limit to set back (default: the GPU's default)")
+    s.set_defaults(f=cmd_hw_restore)
     s = sp.add_parser("tier0", help="the whole Tier 0 pilot on one GPU (about 2 h), unattended, bundled for sending back")
     s.add_argument("--out", default="runs/tier0"); s.add_argument("--gpu", type=int, default=0)
     s.add_argument("--mock", action="store_true"); s.add_argument("--confirm-hardware", action="store_true")
