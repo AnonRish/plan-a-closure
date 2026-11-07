@@ -1,0 +1,8 @@
+numpy
+psycopg2-binary
+fastapi
+pydantic
+uvicorn
+cryptography
+blake3
+requests

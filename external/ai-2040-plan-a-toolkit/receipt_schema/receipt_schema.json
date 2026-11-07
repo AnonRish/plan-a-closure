@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/verification-receipt/v1",
+  "title": "Verification Receipt",
+  "description": "A machine-checkable record of a single verification decision (a workload approval, a compute registration, an audit certificate, a license grant, or a license revocation), designed so that a legal or treaty dispute-resolution process can reference a receipt_id and get a self-contained, independently checkable artifact -- not just a line in someone's private log. This is the 'bind verification to governance' half of the trust-composition problem: the trust_composition/ tool checks whether an architecture's independence claim holds; this schema is what the architecture's OUTPUT has to look like for that claim to be worth anything to a court, a treaty body, or an auditor who wasn't in the room.",
+  "type": "object",
+  "required": [
+    "schema_version", "receipt_id", "receipt_type", "issued_at",
+    "subject", "claim", "evidence_chain", "attestation", "governance_binding"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Schema version this receipt was produced against, e.g. '1.0'. A verifier must refuse to interpret a receipt against a schema_version it doesn't recognize rather than guessing at forward compatibility."
+    },
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Globally unique identifier for this receipt, stable forever. This is the string a treaty or dispute-resolution reference points to."
+    },
+    "receipt_type": {
+      "type": "string",
+      "enum": ["workload_approval", "compute_registration", "audit_certificate", "license_grant", "license_revocation"],
+      "description": "What kind of decision this receipt records."
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 timestamp of issuance, per whatever clock the issuing system uses (production systems: real time; this repo's demo system: a simulated clock, disclosed in producer_note)."
+    },
+    "subject": {
+      "type": "object",
+      "required": ["subject_id", "subject_type"],
+      "additionalProperties": true,
+      "properties": {
+        "subject_id": { "type": "string", "minLength": 1, "description": "The unit, organization, or workload this receipt is about." },
+        "subject_type": { "type": "string", "description": "e.g. 'compute_unit', 'organization', 'workload'." },
+        "display_name": { "type": "string" }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "required": ["statement", "confidence"],
+      "additionalProperties": true,
+      "properties": {
+        "statement": { "type": "string", "minLength": 1, "description": "The actual assertion, in plain language a non-specialist reader (a judge, a treaty officer) can act on -- not just a machine code." },
+        "confidence": {
+          "type": "number", "minimum": 0, "maximum": 1,
+          "description": "How confident the issuing process is in the statement. 1.0 only for claims that are exact by construction (e.g. a cryptographic verification), not for statistical or judgment-based claims."
+        },
+        "basis": {
+          "type": "string",
+          "description": "One sentence on WHY: which mechanism produced this claim (e.g. 'k-of-n signature quorum', 'Wilson-score statistical bound over an audited sample', 'LLM-based policy review'). A reader deciding how much to trust the claim needs to know this."
+        }
+      }
+    },
+    "evidence_chain": {
+      "type": "object",
+      "required": ["hash", "prev_hash", "hash_algorithm"],
+      "additionalProperties": false,
+      "properties": {
+        "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 hex digest of this receipt's own canonicalized content, chained to prev_hash." },
+        "prev_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "Hash of the immediately preceding receipt in this issuer's chain. All-zero for the first receipt in a chain." },
+        "hash_algorithm": { "type": "string", "const": "sha256" }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "required": ["scheme", "required_quorum", "total_signers", "signatures"],
+      "additionalProperties": false,
+      "properties": {
+        "scheme": { "type": "string", "enum": ["ecdsa-p256-k-of-n", "single-signer"], "description": "'single-signer' MUST only be used for systems that have not implemented multi-party issuance; per the trust-composition analysis in this repo, single-signer schemes have a min_attack of 1 against any claimed threshold above 1 and should be treated as unattested for governance purposes." },
+        "required_quorum": { "type": "integer", "minimum": 1 },
+        "total_signers": { "type": "integer", "minimum": 1 },
+        "signatures": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["signer_id", "signer_role", "signature", "public_key_fingerprint"],
+            "additionalProperties": false,
+            "properties": {
+              "signer_id": { "type": "string" },
+              "signer_role": { "type": "string", "description": "e.g. 'Operating Lab', 'Independent Auditor' -- the ROLE, since governance bodies care about who is structurally represented, not just headcount." },
+              "signature": { "type": "string", "minLength": 1, "description": "Base64-encoded signature over the canonicalized claim + subject + issued_at." },
+              "public_key_fingerprint": { "type": "string", "description": "Truncated hash of the signer's public key, for out-of-band identity confirmation." }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "description": "Structural note (not machine-enforced by this schema alone; see validator.py for the cross-field check): len(signatures) must be >= required_quorum, and signer_ids among signatures must be distinct, for a receipt to be considered CONSUMMATED rather than merely proposed."
+        }
+      ]
+    },
+    "governance_binding": {
+      "type": "object",
+      "required": ["instrument_ref", "retention_until", "dispute_process"],
+      "additionalProperties": true,
+      "properties": {
+        "instrument_ref": { "type": "string", "minLength": 1, "description": "Which treaty, agreement, or policy this receipt is issued under. A receipt with no instrument_ref is evidence of nothing in particular to anyone outside the issuing organization." },
+        "retention_until": { "type": "string", "format": "date-time", "description": "This receipt MUST remain retrievable and verifiable until this date, per the governing instrument's retention rule." },
+        "dispute_process": { "type": "string", "description": "How to contest this receipt's claim -- a process name, contact, or reference, not necessarily a URL." },
+        "supersedes": { "type": ["string", "null"], "description": "receipt_id of a prior receipt this one revises or renews, if any -- the semantic-level analog of evidence_chain.prev_hash." }
+      }
+    },
+    "producer_note": {
+      "type": "string",
+      "description": "Optional free text for anything a reader needs to correctly weigh this receipt that the structured fields don't capture -- e.g. 'issued against a simulated clock in a demonstration system, not a production deployment.'"
+    }
+  }
+}

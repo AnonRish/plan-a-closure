@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "principle": "A claim can only be promoted to the strongest evidence level actually supported by its evidence.",
+  "levels": ["SYNTHETIC","SOFTWARE_TESTED","BENCH_HARDWARE","INDEPENDENT_REPLICATION","OPERATIONAL_FIELD"],
+  "claims": [
+    {
+      "claim_id":"RVP1-INTEGRITY",
+      "claim":"Evidence and receipts were not modified after signing",
+      "minimum":"SOFTWARE_TESTED",
+      "required_controls":["canonical_hash","signed_receipt","receipt_verification"],
+      "cannot_infer":["physical_capture_truth","global_completeness"]
+    },
+    {
+      "claim_id":"RVP1-RECOMPUTATION",
+      "claim":"A sampled workload output was independently recomputed from committed inputs",
+      "minimum":"SOFTWARE_TESTED",
+      "promotion":["BENCH_HARDWARE","INDEPENDENT_REPLICATION","OPERATIONAL_FIELD"],
+      "cannot_infer":["unsampled_workloads","outside_population"]
+    },
+    {
+      "claim_id":"RVP1-CAPTURE",
+      "claim":"The observation channel captured the declared traffic boundary",
+      "minimum":"BENCH_HARDWARE",
+      "required_controls":["capture_drop_counters","path_attestation","reassembly_loss_accounting"],
+      "cannot_infer":["covert_physical_side_channels","unobserved_alternate_paths"]
+    },
+    {
+      "claim_id":"RVP1-MEMORY",
+      "claim":"Specified accelerator/storage memory was successfully erased under the test protocol",
+      "minimum":"BENCH_HARDWARE",
+      "required_controls":["measured_wipe","challenge_bound_readback","raw_device_logs"],
+      "cannot_infer":["untested_media","vendor_or_firmware_paths_not_in_scope"]
+    },
+    {
+      "claim_id":"TRACK3-ACCOUNTING",
+      "claim":"Declared compute-relevant inventory reconciles over a specified interval",
+      "minimum":"INDEPENDENT_REPLICATION",
+      "required_controls":["closed_population","double_entry_reconciliation","independent_evidence"],
+      "cannot_infer":["an open or undiscovered population"]
+    },
+    {
+      "claim_id":"TRACK3-ABSENCE",
+      "claim":"No secret compute exists in the relevant population",
+      "minimum":"OPERATIONAL_FIELD",
+      "required_controls":["closed_population","independent_external_evidence","continuous_observation","defined_adversary_model"],
+      "cannot_infer":["anything outside the defined population, boundary or time interval"]
+    },
+    {
+      "claim_id":"GLOBAL-VERIFICATION",
+      "claim":"The verification system has been validated internationally",
+      "minimum":"OPERATIONAL_FIELD",
+      "required_controls":["multiple_independent_parties","common_mode_analysis","cross-border_validation"],
+      "cannot_infer":["technical conclusions unsupported by actual measurements"]
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "main": {
+    "naive": {
+      "true_positive_rate": 0.885,
+      "false_positive_rate": 0.00803030303030303,
+      "counts": {
+        "tp": 177,
+        "fp": 159,
+        "tn": 19641,
+        "fn": 23
+      }
+    },
+    "correlation_rule": {
+      "true_positive_rate": 0.535,
+      "false_positive_rate": 0.0,
+      "counts": {
+        "tp": 107,
+        "fp": 0,
+        "tn": 19800,
+        "fn": 93
+      }
+    }
+  },
+  "min_signals_sweep": {
+    "1": {
+      "true_positive_rate": 0.8543689320388349,
+      "false_positive_rate": 0.008689501869253309,
+      "counts": {
+        "tp": 176,
+        "fp": 172,
+        "tn": 19622,
+        "fn": 30
+      }
+    },
+    "2": {
+      "true_positive_rate": 0.5086705202312138,
+      "false_positive_rate": 0.0,
+      "counts": {
+        "tp": 88,
+        "fp": 0,
+        "tn": 19827,
+        "fn": 85
+      }
+    },
+    "3": {
+      "true_positive_rate": 0.15384615384615385,
+      "false_positive_rate": 0.0,
+      "counts": {
+        "tp": 32,
+        "fp": 0,
+        "tn": 19792,
+        "fn": 176
+      }
+    }
+  },
+  "weak_covert": {
+    "naive": {
+      "tpr": 0.24719101123595505,
+      "fpr": 0.007416002421551811
+    },
+    "correlation_rule": {
+      "tpr": 0.02247191011235955,
+      "fpr": 0.0
+    }
+  }
+}

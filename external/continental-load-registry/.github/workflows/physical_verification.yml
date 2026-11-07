@@ -1,0 +1,126 @@
+name: Build Physical Verification Layer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - ".github/workflows/physical_verification.yml"
+      - "acquire_physical_verification.py"
+      - "data/external/epoch_ai/registry.json"
+      - "track3.html"
+  workflow_dispatch:
+  schedule:
+    - cron: "15 4 * * 0"
+
+permissions:
+  contents: write
+
+# Physical verification: full 93-site acquisition after smoke-test validation.
+concurrency:
+  group: track3-canonical-writers-main
+  cancel-in-progress: false
+
+jobs:
+  acquire:
+    if: github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'Refresh physical verification')
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install acquisition dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests numpy rasterio planetary-computer pystac-client
+
+      - name: Acquire public physical observations
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: python acquire_physical_verification.py --max-sites 93 --scenes-per-modality 2 --workers 3
+
+      - name: Validate generated physical artifacts
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("data")
+          physical = json.loads((root / "physical_verification_layer.json").read_text(encoding="utf-8"))
+          coords = json.loads((root / "track3" / "physical_site_coordinates.json").read_text(encoding="utf-8"))
+          obs = json.loads((root / "track3" / "remote_sensing_observations.json").read_text(encoding="utf-8"))
+          tx = json.loads((root / "track3" / "transformer_supply_chain_events.json").read_text(encoding="utf-8"))
+
+          assert len(physical["site_records"]) == 93
+          assert len(coords["records"]) == 93
+          assert obs["site_count_target"] == 93
+          assert tx["target_count"] == 93
+          assert tx["record_count"] == len(tx["records"])
+          assert tx["record_count"] >= 1
+          derived_by_modality = {
+              modality: sum(
+                  1 for row in obs["records"]
+                  if row.get("status") == "INGESTED_DERIVED" and row.get("modality") == modality
+              )
+              for modality in ("optical", "tir", "sar")
+          }
+          assert all(count > 0 for count in derived_by_modality.values()), derived_by_modality
+          print("PASS: physical verification artifact contracts")
+          print("derived observations:", obs["derived_observation_count"])
+          print("transformer events:", tx["record_count"])
+          print("optical:", derived_by_modality["optical"], "tir:", derived_by_modality["tir"], "sar:", derived_by_modality["sar"])
+          PY
+
+      - name: Reconcile remote-sensing target states
+        run: python build_remote_sensing_target_status.py
+
+      - name: Build physical-coordinate coverage audit
+        run: python build_track3_geo_audit.py
+
+      - name: Rebuild canonical Track 3 evidence/status ledgers
+        run: python build_track3_evidence.py
+
+      - name: Refresh physical-source provenance manifest
+        run: python refresh_physical_source_manifest.py
+
+      - name: Validate physical-source provenance
+        run: python validate_physical_provenance.py
+
+      - name: Validate Python syntax
+        run: |
+          python -m py_compile acquire_physical_verification.py build_remote_sensing_target_status.py             build_track3_geo_audit.py build_track3_evidence.py refresh_physical_source_manifest.py             validate_physical_provenance.py
+
+      - name: Commit updated artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A data/physical_verification_layer.json data/physical_verification_layer.csv \
+            data/track3/physical_site_coordinates.json data/track3/remote_sensing_observations.json \
+            data/track3/remote_sensing_observations.csv data/track3/transformer_supply_chain_events.json \
+            data/track3/transformer_supply_chain_events.csv data/track3/transformer_event_targets.csv \
+            data/track3_source_stack.json
+          if git diff --cached --quiet; then
+            echo "No physical-verification data changes."
+            exit 0
+          fi
+          git commit -m "Refresh physical verification observations"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase -X theirs origin/main; then
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+            else
+              git rebase --abort || true
+            fi
+            sleep 3
+          done
+          echo "Unable to push physical verification refresh after retries."
+          exit 1

@@ -1,0 +1,431 @@
+{
+  "about": "Repositories from github.com/AnonRish vendored into plan-a-closure. Provenance per repository; tree_sha256 and tests are written by `closure external test --record` and checked by `closure external check`.",
+  "repos": {
+    "ai-2040-plan-a-toolkit": {
+      "source": "https://github.com/AnonRish/ai-2040-plan-a-toolkit",
+      "commit": "4b18af09b0a1ba6a2ae262212933e5c81901a6cd",
+      "commit_date": "2026-09-28",
+      "license": "Apache-2.0",
+      "vendored_changes": [],
+      "notes": [],
+      "tree_sha256": "9d37e5651056c988dda9d9ee7c6d97a5f2bb97d34fe8c73f41e234fd71a36667",
+      "files": 285,
+      "bytes": 1681065,
+      "tests": {
+        "status": "pass",
+        "passed": 282,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 57.0,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {},
+        "cited": {}
+      }
+    },
+    "ai-2040-verification": {
+      "source": "https://github.com/AnonRish/ai-2040-verification",
+      "commit": "0199a4bd0411d682a3d02286148bdbf0e44d1e1d",
+      "commit_date": "2026-09-28",
+      "license": "Apache-2.0",
+      "vendored_changes": [],
+      "notes": [
+        "Only tests/test_headline_invariants.py is a pytest suite; the other modules are experiment scripts, some of which need a GPU or PostgreSQL."
+      ],
+      "tree_sha256": "f2904c001f82d2bc731bbb8b246e2834d5dfd13300ebad169dff36ff606013c9",
+      "files": 77,
+      "bytes": 785117,
+      "tests": {
+        "status": "pass",
+        "passed": 4,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 0.4,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {},
+        "cited": {}
+      }
+    },
+    "aisecurity-rfds": {
+      "source": "https://github.com/AnonRish/aisecurity-rfds",
+      "commit": "00d44ecc509560620e0d34802771d18ff5211507",
+      "commit_date": "2026-10-23",
+      "license": "none",
+      "vendored_changes": [],
+      "notes": [
+        "No LICENSE file upstream.",
+        "Uses pytest-timeout (timeout = 300 in its pytest configuration)."
+      ],
+      "tree_sha256": "da0b810578ddf3d91e407e63597dcb5806e8aa5cc3d994d6a182b873b3a0bdee",
+      "files": 159,
+      "bytes": 1342101,
+      "tests": {
+        "status": "pass",
+        "passed": 1443,
+        "skipped": 68,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 248.1,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {
+          "RFD 003: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 004: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 005: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 006: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 007: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 008: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 009: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 010: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 011: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 012: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 013: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 014: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 015: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 016: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 017: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 018: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 019: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 020: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 021: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 022: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 023: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 024: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 025: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 026: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 027: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 028: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 029: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 030: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 036: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 038: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 039: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 040: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 041: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2,
+          "RFD 042: not started (see docs/STATUS.md); AISEC_REQUIRE_ALL=1 makes this fail": 2
+        },
+        "cited": {}
+      }
+    },
+    "assurance-curves": {
+      "source": "https://github.com/AnonRish/assurance-curves",
+      "commit": "17cf95003a99e172f1f49d13620c07dc499204ae",
+      "commit_date": "2026-10-01",
+      "license": "Apache-2.0",
+      "vendored_changes": [],
+      "notes": [],
+      "tree_sha256": "fc0b1881cc403306db88b704fd77696b60ceb285bc70d66ca99d62ca9f7676b3",
+      "files": 23,
+      "bytes": 85841,
+      "tests": {
+        "status": "pass",
+        "passed": 112,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 8.0,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {},
+        "cited": {}
+      }
+    },
+    "compute-ledger": {
+      "source": "https://github.com/AnonRish/packet-forge (anonrish-verification-repos-2.zip at commit 6b63366a9df6)",
+      "commit": "a36e00b1aa11205638a4f7badbe7d415ac97640e",
+      "commit_date": "2026-10-06",
+      "intended_home": "https://github.com/AnonRish/compute-ledger",
+      "license": "Apache-2.0",
+      "vendored_changes": [],
+      "notes": [
+        "The GitHub repository exists but is empty; the code here is from the batch zip."
+      ],
+      "tree_sha256": "3a67eddf666f303320c1f0cb67fda7152a36909585f3d6f3ba47f9372eaf3a59",
+      "files": 23,
+      "bytes": 97595,
+      "tests": {
+        "status": "pass",
+        "passed": 87,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 4.1,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {},
+        "cited": {
+          "tests/test_distributions_reconcile.py::test_reproduces_the_three_published_quantiles_exactly": "passed",
+          "tests/test_distributions_reconcile.py::test_wider_estimates_leave_more_room_for_hidden_stock": "passed",
+          "tests/test_plan_a.py::test_every_published_figure_is_reproduced_from_its_inputs": "passed",
+          "tests/test_units_stock.py::test_ai_relevance_matches_the_plans_three_examples": "passed",
+          "tests/test_units_stock.py::test_tpp_round_trip": "passed"
+        }
+      }
+    },
+    "continental-load-registry": {
+      "source": "https://github.com/AnonRish/continental-load-registry",
+      "commit": "ad3292b47a764d081e79b59597e90a25c1c5fe4a",
+      "commit_date": "2026-11-06",
+      "license": "Apache-2.0",
+      "vendored_changes": [
+        "not vendored: data/ (389 MB), except data/track3/audit_chain_input.example.json and data/track3/h100e_conversion.json, which its tests read",
+        "not vendored: BIS_Rulemaking_Petition_5USC553e_Computational_Load_CEII_Protocol.pdf",
+        "not vendored: FERC_Docket_RM26-4-000_Comments_Computational_Load_Telemetry.pdf"
+      ],
+      "notes": [
+        "Its pipeline and dashboard need the rest of data/, which is in the GitHub repository.",
+        "Its README and index.html give a contact e-mail address; check that you want it published."
+      ],
+      "tree_sha256": "89635f23e6b94aca38d8c7a2ef02e28413e253d4843ce1678bbc8bd818c7df44",
+      "files": 173,
+      "bytes": 3072714,
+      "tests": {
+        "status": "pass",
+        "passed": 84,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 1.1,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {},
+        "cited": {
+          "tests/test_track3_bound.py::test_closed_population_produces_conservative_site_bound": "passed",
+          "tests/test_track3_bound.py::test_missing_site_evidence_blocks_numeric_global_bound": "passed",
+          "tests/test_track3_bound.py::test_open_population_stays_unknown": "passed",
+          "tests/test_track3_certificate.py::test_zero_failure_bound_matches_closed_form": "passed",
+          "tests/test_track3_tail_audit.py::test_balanced_population_produces_zero_failures": "passed"
+        }
+      }
+    },
+    "covert-timing-warden": {
+      "source": "https://github.com/AnonRish/covert-timing-warden",
+      "commit": "b27c17c317ccc0d4133539354cd55f2b14a1cec7",
+      "commit_date": "2026-10-01",
+      "license": "Apache-2.0",
+      "vendored_changes": [],
+      "notes": [],
+      "tree_sha256": "129407e804762dd6ac742af00b58b79fd00e3124db57388d57d580afad139e7a",
+      "files": 24,
+      "bytes": 107705,
+      "tests": {
+        "status": "pass",
+        "passed": 115,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 15.7,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {},
+        "cited": {
+          "tests/test_capacity.py::test_bsc_matches_closed_form_and_bracket_contains_it": "passed",
+          "tests/test_mitigate.py::test_quantizer_capacity_brackets": "passed"
+        }
+      }
+    },
+    "cuda-guard": {
+      "source": "https://github.com/AnonRish/cuda-guard",
+      "commit": "c16cba4bebba6f91a4c8accbfb009d47e704ef17",
+      "commit_date": "2026-08-15",
+      "license": "none",
+      "vendored_changes": [],
+      "notes": [
+        "No LICENSE file upstream.",
+        "Tests import torch (CPU is enough); install the hw extra.",
+        "nv-attestation-sdk is not installed (it failed to build here); attestation needs a confidential-computing GPU."
+      ],
+      "tree_sha256": "69c6abd57f4e1cab200e52f8252e008279e9ea6eabc7174c0a6f6d5746446337",
+      "files": 26,
+      "bytes": 164241,
+      "tests": {
+        "status": "pass",
+        "passed": 41,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 4.0,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {},
+        "cited": {
+          "tests/test_hardware.py::test_attestation_skips_fast_without_hanging_when_no_cc_gpu": "passed",
+          "tests/test_hardware.py::test_composition_never_upgrades_unknown_registry_to_authorized": "passed",
+          "tests/test_ledger.py::test_modification_detected": "passed",
+          "tests/test_verdict.py::test_never_reduces_to_pass_fail": "passed"
+        }
+      }
+    },
+    "fides": {
+      "source": "https://github.com/AnonRish/fides",
+      "commit": "076cd765eaca889decc4a7db014a754dd53f1b8f",
+      "commit_date": "2026-09-28",
+      "license": "MIT",
+      "vendored_changes": [
+        "changed: LICENSE"
+      ],
+      "notes": [
+        "The vendored LICENSE names AnonRish as copyright holder; the copy on GitHub names a different person."
+      ],
+      "tree_sha256": "75a3289a49c1c25df3bbd6078d21513baba8594453e5c0288123f0be083005dc",
+      "files": 48,
+      "bytes": 214499,
+      "tests": {
+        "status": "pass",
+        "passed": 121,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 41.0,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {},
+        "cited": {
+          "tests/test_determinism.py::test_deterministic_sum_gives_identical_bits_across_repeated_calls": "passed",
+          "tests/test_difr_reference.py::test_matching_only_the_mode_does_not_evade_detection": "passed",
+          "tests/test_difr_reference.py::test_tampered_distribution_shows_measurable_divergence": "passed",
+          "tests/test_ledger.py::test_untampered_chain_verifies": "passed",
+          "tests/test_packet_reconstruction.py::test_message_reconstructs_correctly_regardless_of_arrival_order": "passed",
+          "tests/test_server_attestation.py::test_honest_server_passes_challenge": "passed",
+          "tests/test_server_attestation.py::test_modified_software_fails_even_with_correct_state": "passed",
+          "tests/test_toploc_reference.py::test_fabricated_unrelated_values_fail_to_match_well": "passed",
+          "tests/test_toploc_reference.py::test_honest_recomputation_with_small_jitter_matches_mostly": "passed",
+          "tests/test_zk_verification.py::test_honest_inference_epoch_proof_verifies": "passed",
+          "tests/test_zk_verification.py::test_training_epoch_cannot_produce_a_valid_inference_only_proof": "passed"
+        }
+      }
+    },
+    "frontier-verify": {
+      "source": "https://github.com/AnonRish/frontier-verify",
+      "commit": "3e6e0dbcb9b7f2b8bcc1df6567dfa8df779f7550",
+      "commit_date": "2026-09-28",
+      "license": "Apache-2.0",
+      "vendored_changes": [],
+      "notes": [
+        "Its tests import opentelemetry (the [triton] extra upstream), so the external extra includes it."
+      ],
+      "tree_sha256": "ea25e1255702786d119beae4c3843d51df017e408f7cb137676f35036c2fc40d",
+      "files": 150,
+      "bytes": 528765,
+      "tests": {
+        "status": "pass",
+        "passed": 131,
+        "skipped": 4,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 11.3,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {
+          "NVIDIA Confidential Computing not confirmed enabled": 2,
+          "no NVIDIA GPU detected (nvidia-smi not found)": 1,
+          "nvattest CLI not found on PATH": 1
+        },
+        "cited": {}
+      }
+    },
+    "packet-forge": {
+      "source": "https://github.com/AnonRish/packet-forge (anonrish-verification-repos-2.zip at commit 6b63366a9df6)",
+      "commit": "1f18f1dbb9872e6535a617e602c94abc52e6ec64",
+      "commit_date": "2026-10-06",
+      "intended_home": "https://github.com/AnonRish/packet-forge",
+      "license": "Apache-2.0",
+      "vendored_changes": [],
+      "notes": [
+        "On GitHub, packet-forge holds a placeholder commit with the batch zip; the code here is the full repository from that zip.",
+        "Two tests need tshark and tcpdump; the tap-reader tests build a Rust adapter with cargo, which fetches its crates; four replay traffic through the kernel and run only as root, because they create a temporary TUN interface (10.99.0.1/24)."
+      ],
+      "tree_sha256": "0baa86b11e336fe2e037bfaf20f363ea72e8285865918a940f662d23ebb74daf",
+      "files": 100,
+      "bytes": 391624,
+      "tests": {
+        "status": "pass",
+        "passed": 86,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 38.8,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {},
+        "cited": {
+          "tests/test_assembler_vs_oracle.py::test_dense_overlap_fuzz": "passed",
+          "tests/test_corpus.py::test_pipeline_matches_oracle_for_every_arrival_order": "passed"
+        }
+      }
+    },
+    "tap-logger-rtl": {
+      "source": "https://github.com/AnonRish/packet-forge (anonrish-verification-repos-2.zip at commit 6b63366a9df6)",
+      "commit": "3374adb746e6c1b14dec3d421d03981d21603342",
+      "commit_date": "2026-10-06",
+      "intended_home": "https://github.com/AnonRish/tap-logger-rtl",
+      "license": "Apache-2.0",
+      "vendored_changes": [],
+      "notes": [
+        "The GitHub repository exists but is empty; the code here is from the batch zip.",
+        "29 of its tests need Icarus Verilog, Verilator and yosys and skip without them; the recorded run had all three."
+      ],
+      "tree_sha256": "ef576c0309f05e81ed513e60d9a3cb5c51a864b9157a9a3de46bc8290bf4c61e",
+      "files": 28,
+      "bytes": 99618,
+      "tests": {
+        "status": "pass",
+        "passed": 44,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 107.8,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {},
+        "cited": {
+          "tests/test_reference.py::test_any_single_bit_flip_is_detected_at_its_frame": "passed",
+          "tests/test_rtl.py::test_core_matches_hashlib_on_random_messages": "passed"
+        }
+      }
+    },
+    "weight-diode": {
+      "source": "https://github.com/AnonRish/weight-diode",
+      "commit": "f305a745e606c09f7cc850787937c39a389c87c2",
+      "commit_date": "2026-10-01",
+      "license": "Apache-2.0",
+      "vendored_changes": [],
+      "notes": [],
+      "tree_sha256": "ab855158a6b5ea694e67bad40eea592f7c2ccc7f63b2db48f0d26cb35b963503",
+      "files": 28,
+      "bytes": 118245,
+      "tests": {
+        "status": "pass",
+        "passed": 158,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 8.3,
+        "date": "2026-11-07",
+        "python": "3.13.18",
+        "platform": "Linux x86_64",
+        "skip_reasons": {},
+        "cited": {
+          "tests/test_negative_controls.py::test_without_a_whitelist_an_unapproved_file_is_accepted": "passed",
+          "tests/test_transfer.py::test_clean_transfer_and_progress_api": "passed",
+          "tests/test_udp_cli.py::test_real_udp_transfer_over_loopback_with_loss_and_the_receiver_never_transmits": "passed"
+        }
+      }
+    }
+  }
+}

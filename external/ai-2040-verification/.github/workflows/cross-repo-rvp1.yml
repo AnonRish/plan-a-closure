@@ -1,0 +1,58 @@
+name: Cross-repository RVP-1 integration
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: AnonRish/ai-2040-plan-a-toolkit
+          ref: 1968cd35b54614254bd68a586847e1d88dd4ade9
+          path: deps/ai-2040-plan-a-toolkit
+      - uses: actions/checkout@v4
+        with:
+          repository: AnonRish/frontier-verify
+          ref: 1361644cb6f860b05bcbbacea79f42f28ec36c29
+          path: deps/frontier-verify
+      - uses: actions/checkout@v4
+        with:
+          repository: AnonRish/continental-load-registry
+          ref: e458fe02255c929883c516ab5d2441d355f202bb
+          path: deps/continental-load-registry
+      - name: Assert pinned snapshots
+        run: |
+          test "$(git -C deps/ai-2040-plan-a-toolkit rev-parse HEAD)" = "1968cd35b54614254bd68a586847e1d88dd4ade9"
+          test "$(git -C deps/frontier-verify rev-parse HEAD)" = "1361644cb6f860b05bcbbacea79f42f28ec36c29"
+          test "$(git -C deps/continental-load-registry rev-parse HEAD)" = "e458fe02255c929883c516ab5d2441d355f202bb"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Toolkit conformance
+        working-directory: deps/ai-2040-plan-a-toolkit
+        run: |
+          python -m pip install -r requirements-rvp1-lock.txt
+          python -m pip install -e .
+          python -m repository_gate
+          python -m pytest -q
+      - name: Frontier Verify recomputation path
+        working-directory: deps/frontier-verify
+        run: |
+          python -m pip install -e ".[dev,triton,recomputation-research]"
+          python -m pytest tests/integration/test_recomputation_v2.py -q
+      - name: Track 3 residual bound
+        working-directory: deps/continental-load-registry
+        run: |
+          python -m pip install pytest
+          python -m pytest tests/test_track3_bound.py tests/test_track3_tail_audit.py -q
+          python track3_bound.py --input data/track3/residual_bound_input.example.json >/tmp/track3-result.json
+      - name: Cross-repo contract
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          result=json.loads(pathlib.Path("/tmp/track3-result.json").read_text())
+          assert result["status"]=="PASS"
+          PY

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Track 3 Complete Coverage · Continental Large-Load Registry</title>
+<link rel="stylesheet" href="observatory-nav.css">
+<style>
+:root{--ink:#16233a;--soft:#59697d;--faint:#8a99aa;--paper:#eef2ed;--panel:#fbfcfa;--line:#d6ded9;--teal:#33604f;--teal-soft:#dbe9e2;--amber:#a85e0a;--amber-soft:#f3e3c9}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:IBM Plex Sans,system-ui,sans-serif}.page{max-width:1240px;margin:auto;padding:24px 16px 72px}.k{font:600 9px IBM Plex Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}h1{font-size:clamp(42px,7vw,86px);line-height:.94;letter-spacing:-.055em;margin:10px 0 15px}h1 span{color:var(--teal)}p{color:var(--soft);line-height:1.65}.hero{padding:40px 0 28px}.hero p{max-width:880px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:18px}.card{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}.num{font:700 32px IBM Plex Mono,monospace}.label{margin-top:4px;font-size:10px;color:var(--soft)}.note{padding:13px 14px;border:1px solid #e1bf8b;background:var(--amber-soft);border-radius:12px;color:#7b4b0d;font-size:11px;line-height:1.55;margin-top:15px}.section{border-top:1px solid var(--line);padding:32px 0}.tools{display:flex;gap:7px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);text-decoration:none;color:var(--ink);font:600 9px IBM Plex Mono,monospace}.btn:hover{border-color:#9fb2a8}.scroll{overflow:auto}.matrix{width:100%;border-collapse:collapse;font-size:10.5px}.matrix th,.matrix td{text-align:left;vertical-align:top;border-bottom:1px solid var(--line);padding:10px}.matrix th{color:var(--soft);font-size:9px;text-transform:uppercase;letter-spacing:.06em}.pill{display:inline-flex;padding:4px 6px;border:1px solid var(--line);border-radius:999px;font:600 8px IBM Plex Mono,monospace;text-transform:uppercase}.pill.good{background:var(--teal-soft);border-color:#8bb4a3;color:var(--teal)}.pill.warn{background:var(--amber-soft);border-color:#d9a25c;color:var(--amber)}.pill.neutral{color:var(--soft)}.tiny{font-size:9px;color:var(--faint);line-height:1.45;margin-top:3px}.mono{font-family:IBM Plex Mono,monospace}.meter{display:inline-block;width:72px;height:5px;border-radius:99px;background:#e3e9e5;overflow:hidden;vertical-align:middle}.meter i{display:block;height:100%;background:var(--teal)}.filter{margin:12px 0;display:flex;gap:8px;flex-wrap:wrap}.filter input{min-width:280px;flex:1;padding:9px;border:1px solid var(--line);border-radius:9px;background:var(--panel);font:12px IBM Plex Sans,system-ui,sans-serif;color:var(--ink)}@media(max-width:800px){.stats{grid-template-columns:1fr 1fr}}@media(max-width:520px){.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="page">
+<section class="hero">
+<div class="k">TRACK 3 · FULL COVERAGE</div>
+<h1>Nothing hidden<br><span>behind a checkbox.</span></h1>
+<p>This page enumerates the repository's implementation of each major Track-3 requirement. “Framework implemented” means the schema/workflow exists; it does not mean the external evidence or institutional authority required to execute it exists.</p>
+<div class="tools"><a class="btn" href="track3.html">Track 3 dashboard</a><a class="btn" href="global-accounting.html">Global accounting</a><a class="btn" href="closed-cases.html">Closed cases</a><a class="btn" href="research.html">Research ops</a><a class="btn" href="data/track3/geo_coverage_audit_2026-09-27.json">Physical-coordinate audit</a><a class="btn" href="data/track3/public_web_claims.json">Public claim layer</a><a class="btn" href="data/track3/public_research_leads.json">Research leads (53)</a><a class="btn" href="TRACK3_COMPLETE_COVERAGE.md">Reviewer document</a></div>
+<div class="note"><b>Current boundary:</b> the repository is Track-3-relevant research infrastructure, not a complete AI 2040 verification regime. The matrix below is deliberately honest about the remaining external blockers. Physical interpretation is gated on a retained site coordinate; unresolved coordinates stay UNKNOWN rather than becoming false negatives.</div>
+<div class="stats" id="stats"></div>
+</section>
+<section class="section">
+<div class="k">IMPLEMENTATION MATRIX</div>
+<h2>Requirement → artifact → evidence → blocker</h2>
+<div class="filter"><input id="filter" placeholder="Filter by requirement, status, evidence, or blocker"></div>
+<div class="scroll"><table class="matrix"><thead><tr><th>ID</th><th>Requirement</th><th>Status</th><th>Implementation</th><th>Current evidence</th><th>Blocking gap</th></tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+<section class="section">
+<div class="k">LIVE CLOSURE REGISTER</div>
+<h2>93 sites · 15 evidence domains · every open cell visible</h2>
+<p>The gap register below is the operational backlog, not a claim of missing real-world infrastructure. A cell remains open until the required evidence state is actually retained and classified.</p>
+<div class="stats" id="gapStats"></div>
+<div class="filter"><input id="gapFilter" placeholder="Search site, domain, country, status, or next action"></div>
+<div class="scroll"><table class="matrix"><thead><tr><th>Domain</th><th>Resolved</th><th>Open</th><th>Coverage</th><th>Current states</th></tr></thead><tbody id="domainRows"></tbody></table></div>
+<div class="tools" style="margin-top:12px"><a class="btn" href="data/track3/coverage_gap_register_2026-09-27.json">Download gap register</a></div>
+<details style="margin-top:14px"><summary class="k" style="cursor:pointer">OPEN SITE CELLS · 93-site detail</summary>
+<div class="filter" style="margin-top:12px"><input id="siteFilter" placeholder="Search site, country, power, or open domain"></div>
+<div class="scroll"><table class="matrix"><thead><tr><th>Site</th><th>Location</th><th>Power</th><th>Open domains</th></tr></thead><tbody id="siteRows"></tbody></table></div>
+</details>
+</section>
+<section class="section">
+<div class="k">STRICT DISCOVERY PILOT</div>
+<h2>Five load candidates, source-audited</h2>
+<p>Three primary ambiguity targets test identity and physical resolution. Two explicit industrial-load controls test that unresolved large loads are not automatically interpreted as compute.</p>
+<div class="scroll"><table class="matrix"><thead><tr><th>Case</th><th>Load</th><th>Role</th><th>Current state</th><th>Next gate</th></tr></thead><tbody id="strictRows"></tbody></table></div>
+</section>
+<section class="section">
+<div class="k">EMPIRICAL BASE</div>
+<div class="stats" id="empirical"></div>
+</section>
+</main>
+<script>
+(async()=>{
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let rows=[]; let gapRows=[]; let strictCases=[];
+function pill(s){const z=String(s||'');const k=z.includes('PARTIAL')||z.includes('UNKNOWN')?'warn':z.includes('IMPLEMENTED')||z.includes('INGESTED')?'good':'neutral';return '<span class="pill '+k+'">'+esc(z.replaceAll('_',' '))+'</span>'}
+function render(){
+ const q=(document.getElementById('filter').value||'').toLowerCase();
+ const f=rows.filter(x=>JSON.stringify(x).toLowerCase().includes(q));
+ document.getElementById('rows').innerHTML=f.map(x=>'<tr><td class="tiny">'+esc(x.id)+'</td><td><strong>'+esc(x.requirement)+'</strong></td><td>'+pill(x.status)+'</td><td>'+esc(x.implementation)+'</td><td>'+esc(x.evidence)+'</td><td>'+esc(x.blocking_gap)+'</td></tr>').join('')||'<tr><td colspan="6">No matching requirement.</td></tr>';
+}
+try{
+ const d=await fetch('data/track3/track3_completeness_matrix.json?cb=20260927',{cache:'no-store'}).then(r=>r.json());
+ rows=d.rows||[];
+ const counts={};rows.forEach(x=>counts[x.status]=(counts[x.status]||0)+1);
+ document.getElementById('stats').innerHTML='<div class="card"><div class="num">'+rows.length+'</div><div class="label">tracked requirements</div></div>'+Object.entries(counts).map(([k,v])=>'<div class="card"><div class="num">'+v+'</div><div class="label">'+esc(k.replaceAll('_',' '))+'</div></div>').join('');
+ render();
+}catch(e){document.getElementById('rows').innerHTML='<tr><td colspan="6">Coverage matrix unavailable: '+esc(e.message)+'</td></tr>'}
+try{
+ const d=await fetch('data/physical_verification_layer.json?cb=20260927',{cache:'no-store'}).then(r=>r.json());
+ const s=d.summary||{};
+ document.getElementById('empirical').innerHTML=[
+  ['93','reference sites'],[String(s.raw_optical_scenes_ingested||0),'optical scenes'],[String(s.raw_tir_numeric_observations||0),'TIR observations'],[String(s.raw_sar_numeric_observations||0),'SAR observations'],[String(s.transformer_event_records||0),'transformer records'],[String(s.building_footprint_polygon_site_count||0),'polygonized sites'],[String(s.external_permit_records||0),'permit records'],[String((s.external_substation_transmission_evidence_records||{}).substation||0),'substation evidence']
+ ].map(x=>'<div class="card"><div class="num">'+esc(x[0])+'</div><div class="label">'+esc(x[1])+'</div></div>').join('');
+}catch{}
+document.getElementById('filter').addEventListener('input',render);
+try{
+ const g=await fetch('data/track3/coverage_gap_register_2026-09-27.json?cb=20260927',{cache:'no-store'}).then(r=>r.json());
+ gapRows=g.domain_summary||[];
+ const openCells=gapRows.reduce((n,x)=>n+x.open_site_count,0);
+ const resolvedCells=gapRows.reduce((n,x)=>n+x.resolved_site_count,0);
+ const sites=(g.sites||[]).length;
+ const unresolvedPublisher=g.publisher?.summary?.effective_unresolved_publisher_fields ?? g.publisher?.summary?.remaining_unresolved_publisher_fields ?? 0;
+ const cov=Math.round((resolvedCells/(resolvedCells+openCells))*1000)/10;
+ document.getElementById('gapStats').innerHTML=[
+  [String(sites),'canonical sites'],[String(gapRows.length),'evidence domains'],[String(resolvedCells),'resolved domain cells'],[String(openCells),'open domain cells'],[String(unresolvedPublisher),'open publisher fields'],[String(cov)+'%','domain-cell coverage']
+ ].map(x=>'<div class="card"><div class="num">'+esc(x[0])+'</div><div class="label">'+esc(x[1])+'</div></div>').join('');
+ function renderGaps(){
+  const q=(document.getElementById('gapFilter').value||'').toLowerCase();
+  const f=gapRows.filter(x=>JSON.stringify(x).toLowerCase().includes(q));
+  document.getElementById('domainRows').innerHTML=f.map(x=>{
+   const total=x.resolved_site_count+x.open_site_count; const pct=total?Math.round(1000*x.resolved_site_count/total)/10:0;
+   const states=Object.entries(x.status_counts||{}).map(([k,v])=>esc(k.replaceAll('_',' '))+': '+v).join(' · ');
+   return '<tr><td><strong>'+esc(x.domain.replaceAll('_',' '))+'</strong></td><td class="mono">'+x.resolved_site_count+'</td><td class="mono">'+x.open_site_count+'</td><td class="mono">'+pct+'%</td><td class="tiny">'+states+'</td></tr>';
+  }).join('')||'<tr><td colspan="5">No matching domain.</td></tr>';
+ }
+ renderGaps();
+ document.getElementById('gapFilter').addEventListener('input',renderGaps);
+}catch(e){document.getElementById('domainRows').innerHTML='<tr><td colspan="5">Gap register unavailable: '+esc(e.message)+'</td></tr>'}
+try{
+ const g=await fetch('data/track3/coverage_gap_register_2026-09-27.json?cb=20260927',{cache:'no-store'}).then(r=>r.json());
+ const siteRows=g.sites||[];
+ function renderSites(){
+  const q=(document.getElementById('siteFilter').value||'').toLowerCase();
+  const f=siteRows.filter(x=>JSON.stringify(x).toLowerCase().includes(q));
+  document.getElementById('siteRows').innerHTML=f.map(x=>{
+   const open=(x.open_domains||[]).map(d=>d.replaceAll('_',' ')).join(' · ')||'None';
+   return '<tr><td><strong>'+esc(x.site_name)+'</strong><div class="tiny">'+esc(x.epoch_id)+'</div></td><td>'+esc([x.country,x.state_province].filter(Boolean).join(', ')||'—')+'</td><td class="mono">'+esc(x.current_it_power_mw??'—')+' MW</td><td class="tiny">'+esc(open)+'</td></tr>';
+  }).join('')||'<tr><td colspan="4">No matching site.</td></tr>';
+ }
+ renderSites();
+ document.getElementById('siteFilter').addEventListener('input',renderSites);
+}catch{}
+try{
+ const s=await fetch('data/track3/strict_discovery_public_evidence.json?cb=20260927',{cache:'no-store'}).then(r=>r.json());
+ const cased=[s,...(s.cases||[])];
+ const seen=new Set();
+ strictCases=cased.filter(x=>x.case_id&&!seen.has(x.case_id)&&seen.add(x.case_id));
+ document.getElementById('strictRows').innerHTML=strictCases.map(x=>{
+  const role=x.research_role||((x.case_id==='AMB-AESO-P2958'||x.case_id==='AMB-AESO-P2614')?'CONTROL':'PRIMARY TARGET');
+  const obs=x.observations||[];
+  const state=x.current_disposition||'PUBLIC_PROJECT_IDENTITY_RESOLVED';
+  const next=(x.next_gates||[]).slice(0,3).join(' · ')||'—';
+  return '<tr><td><strong>'+esc(x.case_id)+'</strong><div class="tiny">'+esc(x.queue_id||'')+'</div></td><td class="mono">'+esc(x.capacity_mw||'—')+' MW</td><td>'+esc(role.replaceAll('_',' '))+'</td><td>'+pill(state)+'</td><td class="tiny">'+esc(next.replaceAll('_',' '))+'<br>'+obs.length+' retained source observations</td></tr>';
+ }).join('');
+}catch(e){document.getElementById('strictRows').innerHTML='<tr><td colspan="5">Strict evidence unavailable: '+esc(e.message)+'</td></tr>'}
+})();
+</script>
+<script src="observatory-nav.js" defer></script>
+</body>
+</html>

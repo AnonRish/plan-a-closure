@@ -1,0 +1,59 @@
+# Runs on every push, so anyone can see the checks pass without running anything themselves.
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      external:
+        description: "Also run the 13 vendored repositories' own test suites (about 15 minutes)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[test]"
+      - run: pytest
+      - run: closure selftest
+      - run: closure claims
+      - run: closure coverage
+      - run: closure pause claims
+      - run: closure pause coverage
+      - name: vendored repositories are the trees that were tested
+        run: closure external check
+      - run: closure hw-probe --mock --out probe.json
+      - run: closure sim-trial --profile smoke --out run --probe probe.json && closure verify run
+      - name: Tier 0 pilot on a simulated GPU
+        run: closure tier0 --mock --skip-tests --out runs/tier0
+
+  external-suites:
+    if: github.event_name == 'workflow_dispatch' && inputs.external
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: tools some vendored tests need (RTL simulators, packet capture)
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends iverilog verilator yosys tshark tcpdump iproute2
+      - name: install (CPU torch for cuda-guard's tests)
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[hw,external]"
+      - run: closure external test --install

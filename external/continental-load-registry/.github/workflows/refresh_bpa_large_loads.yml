@@ -1,0 +1,88 @@
+name: Refresh official BPA large-load layer
+
+on:
+  schedule:
+    - cron: "15 6 * * *"
+  push:
+    paths:
+      - "ingest_bpa_large_loads.py"
+      - ".github/workflows/refresh_bpa_large_loads.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bpa-large-load-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Sync to latest main before ingestion
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Self-test BPA parser
+        run: python ingest_bpa_large_loads.py --selftest
+
+      - name: Fetch and normalize official BPA load workbook
+        run: python ingest_bpa_large_loads.py
+
+      - name: Run cross-artifact consistency checks
+        run: python validate_cross_artifact_consistency.py
+
+      - name: Show refresh result
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("data/bpa_large_load_registry.json").read_text(encoding="utf-8"))
+          print("BPA rows:", p["record_count"])
+          print("Mapped:", p["mapped_record_count"])
+          print("Unmapped:", p["unmapped_record_count"])
+          print("Capture:", p["generated_on"])
+          print("Workbook SHA-256:", p["source"]["raw_official_snapshot_sha256"])
+          PY
+          git diff --stat -- data/bpa_large_load_registry.json data/bpa_large_load_registry.csv data/map_layer_manifest.json data/map_layer_manifest.csv data/market_universe_manifest.json data/market_universe_manifest.csv data/public_data_catalog.json data/data_universe_checklist.json data/data_universe_checklist.csv index.html
+
+      - name: Commit and push refreshed BPA layer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/bpa_large_load_registry.json data/bpa_large_load_registry.csv data/map_layer_manifest.json data/map_layer_manifest.csv data/market_universe_manifest.json data/market_universe_manifest.csv data/public_data_catalog.json data/data_universe_checklist.json data/data_universe_checklist.csv index.html
+          if git diff --cached --quiet; then
+            echo "BPA layer unchanged; nothing to commit."
+            exit 0
+          fi
+          git commit -m "Automated BPA large-load refresh"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "::error title=BPA push race::Could not push after 5 fetch/rebase/push attempts."
+              exit 1
+            fi
+            sleep 2
+          done

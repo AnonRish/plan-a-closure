@@ -1,0 +1,149 @@
+name: Validate public research interface
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "track3.html"
+      - "facility.html"
+      - "api.html"
+      - "api/v1/facilities.json"
+      - "api/v1/openapi.json"
+      - "bulk-download.html"
+      - "research.html"
+      - "plan-a.html"
+      - "observatory-nav.js"
+      - "observatory-nav.css"
+      - "research.html"
+      - "plan-a.html"
+      - "observatory-nav.js"
+      - "observatory-nav.css"
+      - "data/bulk_download_manifest.json"
+      - "data/website_completeness_audit.json"
+      - "data/track3/summary.json"
+      - "data/track3/evidence_records.json"
+      - "data/track3/site_status.json"
+      - "data/track3/observation_queue.json"
+      - "sync_epoch_ai_data_centers.py"
+      - "sync_nyiso_public_queue.py"
+      - ".github/workflows/validate_public_interface.yml"
+  pull_request:
+    paths:
+      - "index.html"
+      - "track3.html"
+      - "facility.html"
+      - "api.html"
+      - "api/v1/facilities.json"
+      - "api/v1/openapi.json"
+      - "bulk-download.html"
+      - "data/bulk_download_manifest.json"
+      - "data/website_completeness_audit.json"
+      - "data/track3/summary.json"
+      - "data/track3/evidence_records.json"
+      - "data/track3/site_status.json"
+      - "data/track3/observation_queue.json"
+      - "sync_epoch_ai_data_centers.py"
+      - "sync_nyiso_public_queue.py"
+      - ".github/workflows/validate_public_interface.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Validate JSON/API contracts
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for p in ["api/v1/facilities.json","api/v1/openapi.json","data/bulk_download_manifest.json","data/epoch_ai_map.json"]:
+              json.loads(Path(p).read_text(encoding="utf-8"))
+          import csv
+          with Path("data/external/epoch_ai/crosswalk.csv").open(encoding="utf-8",newline="") as fh:
+              rows=list(csv.DictReader(fh))
+          assert rows and all(r.get("epoch_id") for r in rows) and len({r["epoch_id"] for r in rows})==len(rows)
+          api=json.loads(Path("api/v1/facilities.json").read_text())
+          assert api["record_count"] == len(api["records"]) == 93
+          assert len({x["facility_id"] for x in api["records"]}) == 93
+          evidence=json.loads(Path("data/track3/evidence_records.json").read_text(encoding="utf-8"))
+          audit=json.loads(Path("data/website_completeness_audit.json").read_text(encoding="utf-8"))
+          assert evidence["record_count"] == len(evidence["records"])
+          assert audit["summary"]["track3_evidence_records"] == evidence["record_count"]
+          openapi=json.loads(Path("api/v1/openapi.json").read_text())
+          assert "/api/v1/facilities.json" in openapi["paths"]
+          assert "/data/facility_records/{rto}/{shard}.json" in openapi["paths"]
+          print("PASS: API contracts")
+          PY
+      - name: Validate Track 3 / Module 1 runtime contracts
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path(".")
+          summary=json.loads((root/"data/track3/summary.json").read_text(encoding="utf-8"))
+          observation=json.loads((root/"data/track3/observation_queue.json").read_text(encoding="utf-8"))
+          status=json.loads((root/"data/track3/site_status.json").read_text(encoding="utf-8"))
+          evidence=json.loads((root/"data/track3/evidence_records.json").read_text(encoding="utf-8"))
+          audit=json.loads((root/"data/website_completeness_audit.json").read_text(encoding="utf-8"))
+          physical=json.loads((root/"data/physical_verification_layer.json").read_text(encoding="utf-8"))
+          tx=json.loads((root/"data/track3/transformer_supply_chain_events.json").read_text(encoding="utf-8"))
+          assert len(status["records"])==93
+          assert len(observation["tasks"])==summary["observation_task_count"]
+          assert audit["summary"]["track3_evidence_records"]==len(evidence["records"])
+          assert physical["summary"]["transformer_event_records"]==tx["record_count"]==3
+          print("PASS: Track 3 runtime contracts")
+          PY
+
+      - name: Validate public interface markers
+        run: |
+          test -s facility.html
+          test -s api.html
+          test -s bulk-download.html
+          grep -q "facility.html?facility=" track3.html
+          grep -q "Download facility record JSON" facility.html
+          grep -q "Download facility CSV" facility.html
+          grep -qi "source document" facility.html
+          grep -q "Mexican state boundaries" index.html
+          grep -q "Mexican state boundaries" track3.html
+          echo "PASS: public interface markers"
+      - name: Validate inline JavaScript
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          out=Path("/tmp/interface-js");out.mkdir(exist_ok=True)
+          for name in ["index.html","track3.html","facility.html","api.html","bulk-download.html","research.html","plan-a.html"]:
+              c=Path(name).read_text(encoding="utf-8")
+              for i,s in enumerate(re.findall(r"<script(?:\\s[^>]*)?>(.*?)</script>",c,re.S|re.I),1):
+                  if s.strip():
+                      (out/f"{name.replace('.','-')}-{i}.js").write_text(s,encoding="utf-8")
+          PY
+          for f in /tmp/interface-js/*.js; do node --check "$f"; done
+          node --check observatory-nav.js
+      - name: Validate facility record shards
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path(".")
+          idx=json.loads((root/"data/facility_records/index.json").read_text())
+          scope=json.loads((root/"data/large_load_scope.json").read_text(encoding="utf-8"))
+          expected=scope["definitions"]["current_row_level"]["records"]
+          assert idx["record_count"] == sum(idx["rto_counts"].values()) == expected
+          total=0
+          for rto,path in idx["files"].items():
+              d=json.loads((root/path).read_text())
+              assert d["rto"] == rto
+              assert d["record_count"] == sum(s["record_count"] for s in d["shards"])
+              total += d["record_count"]
+          assert total == expected
+          print("PASS: facility-record shards", total)
+          PY

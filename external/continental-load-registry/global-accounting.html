@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Global Compute Accounting · Track 3</title>
+<meta name="description" content="Global AI-compute accounting evidence bridge for Track 3: production, sales, ownership, transfers, physical end use, disposition and residual untraced compute.">
+<link rel="stylesheet" href="observatory-nav.css">
+<style>
+:root{--ink:#16233a;--soft:#59697d;--faint:#8a99aa;--paper:#eef2ed;--panel:#fbfcfa;--line:#d6ded9;--teal:#33604f;--teal-soft:#dbe9e2;--amber:#a85e0a;--amber-soft:#f3e3c9}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:IBM Plex Sans,system-ui,sans-serif}.page{max-width:1180px;margin:auto;padding:24px 16px 70px}.k{font:600 9px IBM Plex Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}h1{font-size:clamp(42px,7vw,82px);line-height:.93;letter-spacing:-.05em;margin:10px 0 16px}h1 span{color:var(--teal)}p{line-height:1.65;color:var(--soft)}.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;padding:44px 0 28px}.hero-card,.card,.note{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:16px}.hero-card{background:linear-gradient(145deg,var(--panel),#e4ece7)}.stat{font:700 48px IBM Plex Mono,monospace}.muted{font-size:11px;color:var(--soft)}.section{padding:34px 0;border-top:1px solid var(--line)}.grid{display:grid;gap:10px}.grid5{grid-template-columns:repeat(5,1fr)}.grid3{grid-template-columns:repeat(3,1fr)}.chain{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.chain .card{min-height:135px}.num{font:600 10px IBM Plex Mono,monospace;color:var(--amber)}.card strong{display:block;margin-top:13px}.card small{display:block;margin-top:5px;color:var(--soft);line-height:1.45}.badge{display:inline-block;padding:4px 7px;border:1px solid var(--line);border-radius:999px;font:600 8px IBM Plex Mono,monospace;color:var(--soft);text-transform:uppercase}.good{background:var(--teal-soft);color:var(--teal);border-color:#8bb4a3}.warn{background:var(--amber-soft);color:var(--amber);border-color:#d9a25c}.source{display:flex;justify-content:space-between;gap:12px;align-items:start}.source a{font:600 10px IBM Plex Mono,monospace;color:var(--ink);text-decoration:underline}.source p{font-size:11px;margin:6px 0 0}.note{background:var(--amber-soft);border-color:#e1bf8b;color:#7b4b0d;font-size:11px;line-height:1.55}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:11px}th,td{text-align:left;padding:9px;border-bottom:1px solid var(--line);vertical-align:top}th{font-weight:600;color:var(--soft)}@media(max-width:900px){.hero,.chain,.grid5,.grid3{grid-template-columns:1fr 1fr}}@media(max-width:620px){.hero,.chain,.grid5,.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="page">
+<section class="hero">
+<div>
+<div class="k">TRACK 3 · GLOBAL COMPUTE ACCOUNTING</div>
+<h1>Follow the<br><span>stock and flow.</span></h1>
+<p>A public-source accounting bridge for the part of Track 3 that sits upstream of physical covert-site detection: accelerator production, sales, ownership, transfers, physical end use, and disposition.</p>
+<div class="note"><b>Boundary:</b> aggregate public snapshots are evidence inputs, not a globally closed transaction/serial ledger. The residual untraced pool therefore remains <b>UNKNOWN</b>.</div>
+</div>
+<div class="hero-card">
+<div class="k">CURRENT PUBLIC SNAPSHOT</div>
+<div class="stat" id="ownerRows">—</div>
+<div class="muted">owner-cumulative rows</div>
+<div style="height:1px;background:var(--line);margin:18px 0"></div>
+<div class="stat" id="salesRows">—</div>
+<div class="muted">sales-timeline rows</div>
+<div style="height:1px;background:var(--line);margin:18px 0"></div>
+<span class="badge warn">GLOBAL CLOSURE UNKNOWN</span>
+</div>
+</section>
+
+<section class="section">
+<div class="k">ACCOUNTING CHAIN</div>
+<h2>Six stages, one evidence graph</h2>
+<div class="chain" style="margin-top:14px">
+<div class="card"><span class="num">01</span><strong>Production</strong><small>logic wafers, advanced packaging, HBM and other inputs → production estimate</small></div>
+<div class="card"><span class="num">02</span><strong>Sale</strong><small>vendor → customer shipment/sales record</small></div>
+<div class="card"><span class="num">03</span><strong>Transfer</strong><small>resale / internal transfer → recipient</small></div>
+<div class="card"><span class="num">04</span><strong>Owner</strong><small>legal entity and parent/subsidiary resolution</small></div>
+<div class="card"><span class="num">05</span><strong>Physical end use</strong><small>site evidence or authorized inspection</small></div>
+<div class="card"><span class="num">06</span><strong>Disposition</strong><small>service, decommission, recycle, destroy or UNKNOWN</small></div>
+</div>
+</section>
+
+<section class="section">
+<div class="k">RETAINED SNAPSHOTS</div>
+<h2>What the repository actually has</h2>
+<div class="grid grid5" style="margin-top:14px">
+<div class="card"><div class="stat" id="owners">—</div><small>owner-cumulative rows</small></div>
+<div class="card"><div class="stat" id="users">—</div><small>year-end user snapshots</small></div>
+<div class="card"><div class="stat" id="sales">—</div><small>sales timeline rows</small></div>
+<div class="card"><div class="stat" id="components">—</div><small>component-by-chip rows</small></div>
+<div class="card"><div class="stat" id="chips">—</div><small>chip types in sales timeline</small></div>
+</div>
+</section>
+
+<section class="section">
+<div class="k">OFFICIAL SOURCE ANCHORS</div>
+<h2>Public datasets that close different parts of the chain</h2>
+<div id="sources" class="grid" style="margin-top:14px"></div>
+</section>
+
+<section class="section">
+<div class="k">RESIDUAL</div>
+<h2>Why the untraced pool remains unknown</h2>
+<p>The repository has the model, but a real certificate requires a closed population and verified observations. Public aggregate ownership/sales snapshots cannot be added together across overlapping dates to create a valid global inventory. Likewise, company-level ownership does not establish a physical location.</p>
+<div class="note"><b>Current state:</b> framework implemented; numerical residual <b>not claimed</b>.</div>
+</section>
+</main>
+<script>
+(async()=>{
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ try{
+  const d=await fetch('data/track3/global_compute_supply_chain.json?cb=20260927',{cache:'no-store'}).then(r=>r.json());
+  const c=d.current||{}, rows=d.source_snapshot_counts||{};
+  document.getElementById('ownerRows').textContent=rows.owner_cumulative_rows??'—';
+  document.getElementById('salesRows').textContent=rows.sales_timeline_rows??'—';
+  document.getElementById('owners').textContent=rows.owner_cumulative_rows??'—';
+  document.getElementById('users').textContent=rows.user_year_end_rows??'—';
+  document.getElementById('sales').textContent=rows.sales_timeline_rows??'—';
+  document.getElementById('components').textContent=rows.component_by_chip_rows??'—';
+  document.getElementById('chips').textContent=rows.distinct_chip_types??'—';
+  const src=(d.source_layers||[]).map(s=>'<div class="card source"><div><strong>'+esc(s.id)+'</strong><p>'+esc(s.role||'')+'</p></div><div>'+(s.url?'<a target="_blank" rel="noopener" href="'+esc(s.url)+'">Source ↗</a>':'<span class="badge">'+esc(s.status||'')+'</span>')+'</div></div>').join('');
+  document.getElementById('sources').innerHTML=src;
+ }catch(e){document.getElementById('sources').innerHTML='<div class="note">Global accounting artifact failed to load: '+esc(e.message)+'</div>'}
+})();
+</script>
+<script src="observatory-nav.js" defer></script>
+</body>
+</html>

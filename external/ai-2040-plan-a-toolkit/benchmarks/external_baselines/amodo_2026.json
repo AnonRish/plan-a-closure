@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "organization": "Amodo Design",
+  "source": "https://amododesign.com/notes/2026-09-15-network-tap-inference-verification/",
+  "published": "2026-09-15",
+  "measurements": {
+    "verified_inference_requests": 800,
+    "concurrency": 32,
+    "irrelevant_flood_gbps": 1
+  },
+  "source_note": "These values are external published measurements, not measurements performed by RVP-1."
+}

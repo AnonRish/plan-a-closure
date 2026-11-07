@@ -1,0 +1,82 @@
+{
+  "properties": {
+    "receipt_version": {
+      "default": "0.1.0",
+      "title": "Receipt Version",
+      "type": "string"
+    },
+    "verification_id": {
+      "title": "Verification Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "verifier_key_id": {
+      "title": "Verifier Key Id",
+      "type": "string"
+    },
+    "model_identity_digest": {
+      "title": "Model Identity Digest",
+      "type": "string"
+    },
+    "runtime_identity_digest": {
+      "title": "Runtime Identity Digest",
+      "type": "string"
+    },
+    "hardware_evidence_digest": {
+      "title": "Hardware Evidence Digest",
+      "type": "string"
+    },
+    "policy_id": {
+      "title": "Policy Id",
+      "type": "string"
+    },
+    "policy_version": {
+      "title": "Policy Version",
+      "type": "string"
+    },
+    "assurance_level": {
+      "title": "Assurance Level",
+      "type": "string"
+    },
+    "result": {
+      "title": "Result",
+      "type": "boolean"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    },
+    "signature": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Signature"
+    }
+  },
+  "required": [
+    "verification_id",
+    "verifier_key_id",
+    "model_identity_digest",
+    "runtime_identity_digest",
+    "hardware_evidence_digest",
+    "policy_id",
+    "policy_version",
+    "assurance_level",
+    "result"
+  ],
+  "title": "Receipt",
+  "type": "object"
+}

@@ -1,0 +1,46 @@
+{
+  "declared_flops": 23089744183296,
+  "aggregate_by_cluster_size": {
+    "4": {
+      "declared_flops": 23089744183296,
+      "reported_total": 21296165840486,
+      "relative_gap": 0.07767857142858875,
+      "flagged": true,
+      "n_byzantine_actual": 1
+    },
+    "16": {
+      "declared_flops": 23089744183296,
+      "reported_total": 22491884735692,
+      "relative_gap": 0.02589285714289179,
+      "flagged": true,
+      "n_byzantine_actual": 1
+    },
+    "64": {
+      "declared_flops": 23089744183296,
+      "reported_total": 22842354067046,
+      "relative_gap": 0.010714285714303037,
+      "flagged": false,
+      "n_byzantine_actual": 1
+    },
+    "256": {
+      "declared_flops": 23089744183296,
+      "reported_total": 23007280811212,
+      "relative_gap": 0.003571428571463219,
+      "flagged": false,
+      "n_byzantine_actual": 1
+    },
+    "1024": {
+      "declared_flops": 23089744183296,
+      "reported_total": 23007280811212,
+      "relative_gap": 0.003571428571463219,
+      "flagged": false,
+      "n_byzantine_actual": 1
+    }
+  },
+  "spot_check_empirical": {
+    "total_audited": 608,
+    "total_caught": 28,
+    "false_positives": 0,
+    "n_byzantine_actual": 10
+  }
+}

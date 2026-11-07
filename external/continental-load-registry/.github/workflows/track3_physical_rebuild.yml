@@ -1,0 +1,105 @@
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 6 * * 0"
+  push:
+    paths:
+      - "acquire_physical_verification.py"
+      - "apply_track3_coordinate_overrides.py"
+      - "data/track3/coordinate_overrides_2026-09-27.json"
+      - ".github/workflows/track3_physical_rebuild.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: track3-canonical-writers-main
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install physical verification dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests numpy rasterio planetary-computer pystac-client
+
+      - name: Apply source-backed coordinate overrides
+        run: python apply_track3_coordinate_overrides.py
+
+      - name: Acquire physical observations
+        run: |
+          python acquire_physical_verification.py --max-sites 93 --scenes-per-modality 2 --workers 3
+
+      - name: Validate real observations
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("data/track3")
+          obs = json.loads((root / "remote_sensing_observations.json").read_text(encoding="utf-8"))
+          tx = json.loads((root / "transformer_supply_chain_events.json").read_text(encoding="utf-8"))
+          assert obs["site_count_target"] == 93
+          assert len(obs["records"]) > 0
+          derived_by_modality = {m: sum(1 for r in obs["records"] if r.get("status") == "INGESTED_DERIVED" and r.get("modality") == m) for m in ("optical","tir","sar")}
+          print("physical acquisition attempts:", len(obs["records"]))
+          print("derived observations by modality:", derived_by_modality)
+          assert all(v > 0 for v in derived_by_modality.values()), derived_by_modality
+          counts = derived_by_modality
+          assert tx["record_count"] == len(tx["records"]) >= 1
+          print("PASS:", counts, "transformer_events=", tx["record_count"])
+          PY
+
+      - name: Reconcile remote-sensing target states
+        run: python build_remote_sensing_target_status.py
+
+      - name: Build physical-coordinate coverage audit
+        run: python build_track3_geo_audit.py
+
+      - name: Rebuild Track 3 graph
+        run: python build_track3_evidence.py
+
+      - name: Refresh physical provenance manifest
+        run: python refresh_physical_source_manifest.py
+
+      - name: Validate Python syntax
+        run: python -m py_compile acquire_physical_verification.py apply_track3_coordinate_overrides.py build_track3_geo_audit.py build_track3_evidence.py
+
+      - name: Commit physical artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data/physical_verification_layer.json data/track3_evidence_schema.json data/track3/geo_coverage_audit_2026-09-27.json \
+            data/track3/physical_site_coordinates.json data/track3/remote_sensing_observations.json \
+            data/track3/remote_sensing_observations.csv data/track3/transformer_supply_chain_events.json \
+            data/track3/transformer_supply_chain_events.csv data/track3/transformer_event_targets.csv \
+            data/track3/site_status.json data/track3/evidence_records.json data/track3/summary.json \
+            data/track3/physical_source_manifest.json
+          if git diff --cached --quiet; then
+            echo "No physical artifact changes."
+            exit 0
+          fi
+          git commit -m "Publish Track 3 physical verification observations"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase --autostash -X theirs origin/main; then
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+            else
+              git rebase --abort || true
+            fi
+            sleep 3
+          done
+          echo "Unable to publish physical artifacts after retries."
+          exit 1

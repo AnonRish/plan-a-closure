@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "source": "https://ai-2040.com/supplements/covert-ai-projects (section 3.3, Quantitative estimates)",
+  "note": "Assumptions taken from the AI 2040 covert-projects supplement, not measurements. track3_units.py is the implementation; tests/test_track3_units.py keeps this file in sync with it.",
+  "baseline_year": 2026.0,
+  "us_it_watts_per_h100e_at_baseline": 833.0,
+  "us_efficiency_progress_per_year": 1.37,
+  "china_domestic_efficiency_gap": 3.7,
+  "default_pue": 1.4,
+  "smuggled_chip_year": 2028.6,
+  "decommissioned_chip_year": 2026.5,
+  "supplement_1gw_examples": {
+    "smuggled_us_chips_2028": {
+      "year": 2028.6,
+      "efficiency_gap": 1.0,
+      "stated_h100e": 1900000,
+      "computed_h100e": 1944019
+    },
+    "decommissioned_us_chips": {
+      "year": 2026.5,
+      "efficiency_gap": 1.0,
+      "stated_h100e": 1000000,
+      "computed_h100e": 1003661
+    },
+    "domestic_chips_2028": {
+      "year": 2028.6,
+      "efficiency_gap": 3.7,
+      "stated_h100e": 525000,
+      "computed_h100e": 525410
+    }
+  },
+  "illustrative_threshold_T": {
+    "description": "The supplement's example T: 0.01% of pre-deal world compute, about 30k H100e.",
+    "value": 30000,
+    "unit": "H100e",
+    "year": 2028.6,
+    "pue": 1.4,
+    "efficiency_gap": 1.0,
+    "it_watts_per_h100e": 367.4273891484264,
+    "it_mw": 11.022821674452793,
+    "facility_mw": 15.43195034423391
+  }
+}

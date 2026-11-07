@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "weight-diode"
+version = "0.1.0"
+description = "One-way (data-diode) transport for model weights: Reed-Solomon erasure-coded carousel, per-symbol Merkle proofs against a signed manifest, whitelist and rollback checks, and a receiver with no reverse path."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "AnonRish" }]
+dependencies = ["numpy>=1.24", "cryptography>=41"]
+
+[project.optional-dependencies]
+test = ["pytest>=7", "hypothesis>=6", "scipy>=1.10", "pymerkle>=6,<7"]
+
+[project.scripts]
+weight-diode = "weight_diode.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

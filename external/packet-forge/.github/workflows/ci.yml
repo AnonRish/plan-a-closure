@@ -1,0 +1,24 @@
+# Written from the exact commands that were run locally in a fresh virtualenv; it has not been executed on GitHub.
+name: ci
+on: [push, pull_request]
+jobs:
+  portable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: sudo apt-get update && sudo apt-get install -y tshark tcpdump
+      - run: pip install -e ".[dev]"
+      - run: python -m pytest -m "not kernel and not rust" -q
+      - run: python tools/mutation_check.py
+  kernel:
+    # replays the corpus into the runner's live Linux TCP stack through a TUN device (needs root)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: sudo apt-get update && sudo apt-get install -y iproute2
+      - run: pip install -e ".[dev]"
+      - run: sudo -E env "PATH=$PATH" python -m pytest -m kernel -q

@@ -1,0 +1,20 @@
+{
+  "receipt_version": "0.1.0",
+  "verification_id": "external-validation-example-001",
+  "created_at": "2026-08-25T22:19:14.995560Z",
+  "verifier_key_id": "external-validation-demo-key",
+  "model_identity_digest": "sha256:abababababababababababababababababababababababababababababababab",
+  "runtime_identity_digest": "sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+  "hardware_evidence_digest": "sha256:efefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef",
+  "policy_id": "frontier-inference-baseline",
+  "policy_version": "0.1.0",
+  "assurance_level": "L1",
+  "result": true,
+  "limitations": [
+    "Phase 1/2/3/4: no independent recomputation was performed",
+    "Phase 1/2/3/4: no network evidence was collected",
+    "Phase 1/2/3/4: hardware evidence is MOCK unless a real AttestationProvider produced it (none exists yet)",
+    "this receipt attests that the evidence satisfied the named policy's checks -- it does not attest that the evidence was truthful when submitted"
+  ],
+  "signature": "9fP1aLCC9TiWzKzX5Zi/lK3GOdaK5H/qy0g1k2SyvPKvsqTpOnZ86O52HKUHPQ9HBqXutoYhOcZpSvpiAN38CQ=="
+}

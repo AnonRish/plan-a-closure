@@ -1,0 +1,8 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"RVP-1 passport",
+  "type":"object",
+  "required":["passport_id","subject_id","model_fingerprint","policy_digest","trust_mode","issued_at","claims"],
+  "properties":{"passport_id":{"type":"string"},"subject_id":{"type":"string"},"model_fingerprint":{"type":"string"},"policy_digest":{"type":"string"},"trust_mode":{"type":"string"},"issued_at":{"type":"integer"},"expires_at":{"type":["integer","null"]},"evidence_root":{"type":"string"},"claims":{"type":"array"},"attestation_refs":{"type":"array"}},
+  "additionalProperties":false
+}

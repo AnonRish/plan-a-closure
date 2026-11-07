@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anonrish.github.io/plan-a-protocol/receipt.schema.json",
+  "title": "AI 2040 Plan A Verification Receipt",
+  "type": "object",
+  "required": ["schema_version", "receipt_id", "track", "issued_at", "subject", "claim", "evidence_chain", "verification", "attestation", "governance_binding", "limitations", "producer", "receipt_digest"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "receipt_id": {"type": "string", "minLength": 1},
+    "track": {"enum": ["TRACK_1", "TRACK_2", "TRACK_3", "TRACK_4"]},
+    "issued_at": {"type": "string"},
+    "subject": {"type": "object"},
+    "claim": {"type": "object"},
+    "evidence_chain": {"type": "object"},
+    "verification": {"type": "object"},
+    "attestation": {"type": "object"},
+    "governance_binding": {"type": "object"},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "producer": {"type": "string"},
+    "receipt_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": true
+}

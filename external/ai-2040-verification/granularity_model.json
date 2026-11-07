@@ -1,0 +1,65 @@
+{
+  "S0_request_level (\u00a72 floor)": {
+    "packets_per_violation_N_fake": 1,
+    "C_required_for_99pct": 0.99,
+    "total_packets_per_day": 86400000,
+    "packets_recomputed_per_day": 85536000.0,
+    "recompute_load_gbps": 0.01188,
+    "cores_needed_full_recompute_\u00a72": 0.001616326530612245,
+    "cores_needed_hash_only_\u00a74": 0.00118562874251497,
+    "reproducibility_burden_multiplier": 1.0,
+    "effective_cores_incl_burden": 0.001616326530612245,
+    "depends_on": [
+      "\u00a72"
+    ]
+  },
+  "S1_frame_level (\u00a72+\u00a78)": {
+    "packets_per_violation_N_fake": 40,
+    "C_required_for_99pct": 0.10874906186625444,
+    "total_packets_per_day": 3456000000,
+    "packets_recomputed_per_day": 375836757.80977535,
+    "recompute_load_gbps": 0.052199549695802136,
+    "cores_needed_full_recompute_\u00a72": 0.007101979550449271,
+    "cores_needed_hash_only_\u00a74": 0.005209535897784645,
+    "reproducibility_burden_multiplier": 1.15,
+    "effective_cores_incl_burden": 0.00816727648301666,
+    "depends_on": [
+      "\u00a72",
+      "\u00a78"
+    ]
+  },
+  "S2_frame_level_sampled (\u00a72+\u00a73+\u00a74+\u00a78)": {
+    "packets_per_violation_N_fake": 40,
+    "C_required_for_99pct": 0.10874906186625444,
+    "total_packets_per_day": 3456000000,
+    "packets_recomputed_per_day": 375836757.80977535,
+    "recompute_load_gbps": 0.052199549695802136,
+    "cores_needed_full_recompute_\u00a72": 0.007101979550449271,
+    "cores_needed_hash_only_\u00a74": 0.005209535897784645,
+    "reproducibility_burden_multiplier": 1.15,
+    "effective_cores_incl_burden": 0.00816727648301666,
+    "depends_on": [
+      "\u00a72",
+      "\u00a73",
+      "\u00a74",
+      "\u00a78"
+    ]
+  },
+  "S3_token_level (\u00a72+\u00a73+\u00a78+\u00a722-UNSOLVED)": {
+    "packets_per_violation_N_fake": 512,
+    "C_required_for_99pct": 0.00895414375113912,
+    "total_packets_per_day": 44236800000,
+    "packets_recomputed_per_day": 396102666.2903911,
+    "recompute_load_gbps": 0.05501425920699877,
+    "cores_needed_full_recompute_\u00a72": 0.00748493322544201,
+    "cores_needed_hash_only_\u00a74": 0.0054904450306386,
+    "reproducibility_burden_multiplier": 3.0,
+    "effective_cores_incl_burden": 0.022454799676326027,
+    "depends_on": [
+      "\u00a72",
+      "\u00a73",
+      "\u00a78",
+      "\u00a722-UNSOLVED"
+    ]
+  }
+}

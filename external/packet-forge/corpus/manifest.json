@@ -1,0 +1,3912 @@
+{
+ "cases": [
+  {
+   "category": "benign",
+   "client": "192.0.2.1:40000",
+   "description": "Plain in-order delivery. No overlap, no ambiguity.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6162636465666768696a",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6b6c6d6e6f7071727374",
+     "off": 20,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": false,
+    "anomalies": [],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     },
+     "last": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ok-in-order",
+   "isn": 16777217,
+   "pcap": "ok-in-order.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Three contiguous segments"
+  },
+  {
+   "category": "benign",
+   "client": "192.0.2.1:40001",
+   "description": "Segments arrive 3, 1, 2. Reordering alone is not ambiguity.",
+   "events": [
+    {
+     "data_hex": "6b6c6d6e6f7071727374",
+     "off": 20,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6162636465666768696a",
+     "off": 10,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": false,
+    "anomalies": [],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     },
+     "last": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ok-reordered",
+   "isn": 16777218,
+   "pcap": "ok-reordered.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Three segments, reordered"
+  },
+  {
+   "category": "benign",
+   "client": "192.0.2.1:40002",
+   "description": "A segment is retransmitted byte for byte.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6162636465666768696a",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6162636465666768696a",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6b6c6d6e6f7071727374",
+     "off": 20,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": false,
+    "anomalies": [],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     },
+     "last": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ok-duplicate-retransmit",
+   "isn": 16777219,
+   "pcap": "ok-duplicate-retransmit.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Exact retransmission"
+  },
+  {
+   "category": "benign",
+   "client": "192.0.2.1:40003",
+   "description": "Lost data is resent as larger, differently aligned segments (identical bytes). Honest TCP stacks do this routinely; a tap must not call it an attack.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6162636465666768696a",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6b6c6d6e6f7071727374",
+     "off": 20,
+     "type": "seg"
+    },
+    {
+     "data_hex": "35363738396162636465666768696a6b6c6d6e6f",
+     "off": 5,
+     "type": "seg"
+    },
+    {
+     "data_hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "666768696a6b6c6d6e6f70717273747576777879",
+     "off": 15,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": false,
+    "anomalies": [],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f70717273747576777879",
+      "length": 35,
+      "sha256": "4c98dcd1ede7eab545b7583f8efa6c62489b87e29be0331986ac5f05536d4cc5"
+     },
+     "last": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f70717273747576777879",
+      "length": 35,
+      "sha256": "4c98dcd1ede7eab545b7583f8efa6c62489b87e29be0331986ac5f05536d4cc5"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f70717273747576777879",
+      "length": 35,
+      "sha256": "4c98dcd1ede7eab545b7583f8efa6c62489b87e29be0331986ac5f05536d4cc5"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f70717273747576777879",
+      "length": 35,
+      "sha256": "4c98dcd1ede7eab545b7583f8efa6c62489b87e29be0331986ac5f05536d4cc5"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ok-resegmented-retransmit",
+   "isn": 16777220,
+   "pcap": "ok-resegmented-retransmit.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Retransmission with different segmentation"
+  },
+  {
+   "category": "benign",
+   "client": "192.0.2.1:40004",
+   "description": "Data beyond a hole is buffered until the missing segment arrives.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6b6c6d6e6f7071727374",
+     "off": 20,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6162636465666768696a",
+     "off": 10,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": false,
+    "anomalies": [],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     },
+     "last": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+      "length": 30,
+      "sha256": "ce7e7725a0fbe3c046bf34777702e48fe7e1edc35f59ec38475719c72ecc56eb"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ok-hole-then-fill",
+   "isn": 16777221,
+   "pcap": "ok-hole-then-fill.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Hole filled later"
+  },
+  {
+   "category": "benign",
+   "client": "192.0.2.1:40005",
+   "description": "Single-byte segments: every frame is padded to the Ethernet minimum, so a parser that trusts the frame length instead of the IP length would append zero bytes.",
+   "events": [
+    {
+     "data_hex": "30",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "31",
+     "off": 1,
+     "type": "seg"
+    },
+    {
+     "data_hex": "32",
+     "off": 2,
+     "type": "seg"
+    },
+    {
+     "data_hex": "33",
+     "off": 3,
+     "type": "seg"
+    },
+    {
+     "data_hex": "34",
+     "off": 4,
+     "type": "seg"
+    },
+    {
+     "data_hex": "35",
+     "off": 5,
+     "type": "seg"
+    },
+    {
+     "data_hex": "36",
+     "off": 6,
+     "type": "seg"
+    },
+    {
+     "data_hex": "37",
+     "off": 7,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": false,
+    "anomalies": [],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637",
+      "length": 8,
+      "sha256": "924592b9b103f14f833faafb67f480691f01988aa457c0061769f58cd47311bc"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637",
+      "length": 8,
+      "sha256": "924592b9b103f14f833faafb67f480691f01988aa457c0061769f58cd47311bc"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637",
+      "length": 8,
+      "sha256": "924592b9b103f14f833faafb67f480691f01988aa457c0061769f58cd47311bc"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637",
+      "length": 8,
+      "sha256": "924592b9b103f14f833faafb67f480691f01988aa457c0061769f58cd47311bc"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ok-tiny-segments",
+   "isn": 16777222,
+   "pcap": "ok-tiny-segments.pcap",
+   "server": "192.0.2.2:80",
+   "title": "One-byte segments"
+  },
+  {
+   "category": "benign",
+   "client": "192.0.2.1:40006",
+   "description": "The 32-bit sequence number wraps in the middle of the stream.",
+   "events": [
+    {
+     "data_hex": "303132333435363738396162",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "636465666768696a6b6c6d6e",
+     "off": 12,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6f707172737475767778797a",
+     "off": 24,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": false,
+    "anomalies": [],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a",
+      "length": 36,
+      "sha256": "74e7e5bb9d22d6db26bf76946d40fff3ea9f0346b884fd0694920fccfad15e33"
+     },
+     "last": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a",
+      "length": 36,
+      "sha256": "74e7e5bb9d22d6db26bf76946d40fff3ea9f0346b884fd0694920fccfad15e33"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a",
+      "length": 36,
+      "sha256": "74e7e5bb9d22d6db26bf76946d40fff3ea9f0346b884fd0694920fccfad15e33"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a",
+      "length": 36,
+      "sha256": "74e7e5bb9d22d6db26bf76946d40fff3ea9f0346b884fd0694920fccfad15e33"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ok-wrap-in-order",
+   "isn": 4294967285,
+   "pcap": "ok-wrap-in-order.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Sequence wrap, in order"
+  },
+  {
+   "category": "benign",
+   "client": "192.0.2.1:40007",
+   "description": "A segment that lies just past the 32-bit wrap arrives before the bytes that precede it. A naive `seq < next_expected` test mistakes it for an old duplicate and drops it.",
+   "events": [
+    {
+     "data_hex": "574f524c44",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": false,
+    "anomalies": [],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233343536373839574f524c44",
+      "length": 15,
+      "sha256": "2daaf95d1662386f197fa3e0e15a0ae18e75c53a724dd93ece0972712f8dd303"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233343536373839574f524c44",
+      "length": 15,
+      "sha256": "2daaf95d1662386f197fa3e0e15a0ae18e75c53a724dd93ece0972712f8dd303"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233343536373839574f524c44",
+      "length": 15,
+      "sha256": "2daaf95d1662386f197fa3e0e15a0ae18e75c53a724dd93ece0972712f8dd303"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233343536373839574f524c44",
+      "length": 15,
+      "sha256": "2daaf95d1662386f197fa3e0e15a0ae18e75c53a724dd93ece0972712f8dd303"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ok-wrap-out-of-order",
+   "isn": 4294967285,
+   "pcap": "ok-wrap-out-of-order.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Sequence wrap, out of order"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40008",
+   "description": "The same sequence range is sent twice with different bytes: the tap and the endpoint can keep different copies.",
+   "events": [
+    {
+     "data_hex": "41414141",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "42424242",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      0,
+      4
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "41414141",
+      "length": 4,
+      "sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201"
+     },
+     "last": {
+      "complete": true,
+      "hex": "42424242",
+      "length": 4,
+      "sha256": "4a8d8134f29b0b7b60c126f5532bc9f5d9bb73037373cf6fb872d81f1dcefdfd"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "41414141",
+      "length": 4,
+      "sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "41414141",
+      "length": 4,
+      "sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-conflicting-retransmit",
+   "isn": 33554433,
+   "pcap": "ov-conflicting-retransmit.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Same range, different bytes"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40009",
+   "description": "First and last copies agree but a middle copy differs: 'first' and 'last' reassemble the same stream although the flow is ambiguous.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "41414141414141414141",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "42424242424242424242",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "41414141414141414141",
+     "off": 10,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383941414141414141414141",
+      "length": 20,
+      "sha256": "f4dec9347b23d142916599d464177388de6c8cecc9eff843fe666700163e61b5"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383941414141414141414141",
+      "length": 20,
+      "sha256": "f4dec9347b23d142916599d464177388de6c8cecc9eff843fe666700163e61b5"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383941414141414141414141",
+      "length": 20,
+      "sha256": "f4dec9347b23d142916599d464177388de6c8cecc9eff843fe666700163e61b5"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383941414141414141414141",
+      "length": 20,
+      "sha256": "f4dec9347b23d142916599d464177388de6c8cecc9eff843fe666700163e61b5"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-aba-inorder",
+   "isn": 33554434,
+   "pcap": "ov-aba-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "A, B, A on the same range (delivered)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40010",
+   "description": "As above, with the range buffered beyond a hole.",
+   "events": [
+    {
+     "data_hex": "41414141414141414141",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "42424242424242424242",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "41414141414141414141",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383941414141414141414141",
+      "length": 20,
+      "sha256": "f4dec9347b23d142916599d464177388de6c8cecc9eff843fe666700163e61b5"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383941414141414141414141",
+      "length": 20,
+      "sha256": "f4dec9347b23d142916599d464177388de6c8cecc9eff843fe666700163e61b5"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383941414141414141414141",
+      "length": 20,
+      "sha256": "f4dec9347b23d142916599d464177388de6c8cecc9eff843fe666700163e61b5"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383941414141414141414141",
+      "length": 20,
+      "sha256": "f4dec9347b23d142916599d464177388de6c8cecc9eff843fe666700163e61b5"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-aba-ooo",
+   "isn": 33554435,
+   "pcap": "ov-aba-ooo.pcap",
+   "server": "192.0.2.2:80",
+   "title": "A, B, A on the same range (buffered)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40011",
+   "description": "A overlaps B, B overlaps C, all with different bytes, buffered beyond a hole.",
+   "events": [
+    {
+     "data_hex": "41414141414141414141",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "42424242424242424242",
+     "off": 15,
+     "type": "seg"
+    },
+    {
+     "data_hex": "43434343434343434343",
+     "off": 20,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      15,
+      25
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "303132333435363738394141414141414141414142424242424343434343",
+      "length": 30,
+      "sha256": "0b7de0fd58002a76a7368bfee7cf0cb6ffa2e20d6347ed25f75b9b9358d15c42"
+     },
+     "last": {
+      "complete": true,
+      "hex": "303132333435363738394141414141424242424243434343434343434343",
+      "length": 30,
+      "sha256": "aff89acd8f9eab88d25dbdaef153086cf82564a4c808d23aa5217fb26f969153"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "303132333435363738394141414141414141414142424242424343434343",
+      "length": 30,
+      "sha256": "0b7de0fd58002a76a7368bfee7cf0cb6ffa2e20d6347ed25f75b9b9358d15c42"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "303132333435363738394141414141414141414142424242424343434343",
+      "length": 30,
+      "sha256": "0b7de0fd58002a76a7368bfee7cf0cb6ffa2e20d6347ed25f75b9b9358d15c42"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-chain-three-ooo",
+   "isn": 33554436,
+   "pcap": "ov-chain-three-ooo.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Chain of three overlapping segments"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40012",
+   "description": "A large segment arrives after three small segments it contradicts.",
+   "events": [
+    {
+     "data_hex": "73737373",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "74747474",
+     "off": 14,
+     "type": "seg"
+    },
+    {
+     "data_hex": "75757575",
+     "off": 18,
+     "type": "seg"
+    },
+    {
+     "data_hex": "47474747474747474747474747474747",
+     "off": 8,
+     "type": "seg"
+    },
+    {
+     "data_hex": "3031323334353637",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      22
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "303132333435363747477373737374747474757575754747",
+      "length": 24,
+      "sha256": "ce43513a52bfeacf0057e0f9d4bcc60f7ce1f1555f34106d941f07d969253786"
+     },
+     "last": {
+      "complete": true,
+      "hex": "303132333435363747474747474747474747474747474747",
+      "length": 24,
+      "sha256": "49756e2baa69b20c4973427bb72bdd2cce0e857ab32932d974f2577994456ce6"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "303132333435363747474747474747474747474747474747",
+      "length": 24,
+      "sha256": "49756e2baa69b20c4973427bb72bdd2cce0e857ab32932d974f2577994456ce6"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "303132333435363747474747474747474747474747474747",
+      "length": 24,
+      "sha256": "49756e2baa69b20c4973427bb72bdd2cce0e857ab32932d974f2577994456ce6"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-one-covers-three-ooo",
+   "isn": 33554437,
+   "pcap": "ov-one-covers-three-ooo.pcap",
+   "server": "192.0.2.2:80",
+   "title": "One large segment over three small ones"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40013",
+   "description": "A large segment arrives first and three smaller segments contradict parts of it.",
+   "events": [
+    {
+     "data_hex": "47474747474747474747474747474747",
+     "off": 8,
+     "type": "seg"
+    },
+    {
+     "data_hex": "73737373",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "74747474",
+     "off": 14,
+     "type": "seg"
+    },
+    {
+     "data_hex": "75757575",
+     "off": 18,
+     "type": "seg"
+    },
+    {
+     "data_hex": "3031323334353637",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      22
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "303132333435363747474747474747474747474747474747",
+      "length": 24,
+      "sha256": "49756e2baa69b20c4973427bb72bdd2cce0e857ab32932d974f2577994456ce6"
+     },
+     "last": {
+      "complete": true,
+      "hex": "303132333435363747477373737374747474757575754747",
+      "length": 24,
+      "sha256": "ce43513a52bfeacf0057e0f9d4bcc60f7ce1f1555f34106d941f07d969253786"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "303132333435363747474747474747474747474747474747",
+      "length": 24,
+      "sha256": "49756e2baa69b20c4973427bb72bdd2cce0e857ab32932d974f2577994456ce6"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "303132333435363747474747474747474747474747474747",
+      "length": 24,
+      "sha256": "49756e2baa69b20c4973427bb72bdd2cce0e857ab32932d974f2577994456ce6"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-big-first-ooo",
+   "isn": 33554438,
+   "pcap": "ov-big-first-ooo.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Large segment, then small contradictions"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40014",
+   "description": "A conflicting segment straddles the 2**32 boundary after the original data was delivered.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "5151515151515151",
+     "off": 8,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      8,
+      16
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637515151515151515150505050",
+      "length": 20,
+      "sha256": "980641fb1bca33bee3c47787222527f99d8fdeca959484862c1acd4d8630d136"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515150505050",
+      "length": 20,
+      "sha256": "8b9489d45b559b5dfdbfa3652618318a5fcb82a46bfe847818eb2521f292d4ea"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-wrap-conflict-inorder",
+   "isn": 4294967285,
+   "pcap": "ov-wrap-conflict-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Conflict spanning the sequence wrap (delivered)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40015",
+   "description": "As above, with both copies buffered beyond a hole.",
+   "events": [
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "5151515151515151",
+     "off": 8,
+     "type": "seg"
+    },
+    {
+     "data_hex": "3031323334353637",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      16
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637515150505050505050505050",
+      "length": 20,
+      "sha256": "87e1c1e05c3d38a886276398637f559e6efa9c5196bb37f5c4ebc3fa951b78e5"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637515151515151515150505050",
+      "length": 20,
+      "sha256": "980641fb1bca33bee3c47787222527f99d8fdeca959484862c1acd4d8630d136"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637515151515151515150505050",
+      "length": 20,
+      "sha256": "980641fb1bca33bee3c47787222527f99d8fdeca959484862c1acd4d8630d136"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637515151515151515150505050",
+      "length": 20,
+      "sha256": "980641fb1bca33bee3c47787222527f99d8fdeca959484862c1acd4d8630d136"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-wrap-conflict-ooo",
+   "isn": 4294967285,
+   "pcap": "ov-wrap-conflict-ooo.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Conflict spanning the sequence wrap (buffered)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40016",
+   "description": "The conflicting copy arrives before the server has acknowledged the range.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "51515151515151515151",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515151515151",
+      "length": 20,
+      "sha256": "063c067e3585bd58dbed037ed1b5f71c72bda4b4482a311abb13ff059e9261ba"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-before-ack",
+   "isn": 33554441,
+   "pcap": "ov-before-ack.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Conflicting retransmission before the ACK"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40017",
+   "description": "RFC 1122 lets a keep-alive probe carry one garbage octet at the last sequence number already acknowledged. It contradicts real data, so it is flagged, but it is the one benign-looking source of a conflict the corpus knows about.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "off": 10,
+     "type": "ack"
+    },
+    {
+     "data_hex": "00",
+     "off": 9,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      9,
+      10
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233343536373800",
+      "length": 10,
+      "sha256": "d6f3bc3b4ddd947c67b4a31d6cdf9baa444ec8d9ab7c4b27f82bcb6ff72a07cd"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-keepalive-garbage-byte",
+   "isn": 33554442,
+   "pcap": "ov-keepalive-garbage-byte.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Keep-alive probe with a garbage octet"
+  },
+  {
+   "category": "insertion",
+   "client": "192.0.2.1:40018",
+   "description": "A decoy segment with a wrong checksum precedes the real one. Endpoints discard it; a tap that does not verify checksums reassembles the decoy bytes.",
+   "events": [
+    {
+     "bad_csum": true,
+     "data_hex": "44444444444444444444",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "52525252525252525252",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [
+     "bad-checksum"
+    ],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383952525252525252525252",
+      "length": 20,
+      "sha256": "a4c8ce63961dac8bea7f57aaacd88354833f99a651d162dc2acdb9c78bef765a"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383952525252525252525252",
+      "length": 20,
+      "sha256": "a4c8ce63961dac8bea7f57aaacd88354833f99a651d162dc2acdb9c78bef765a"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383952525252525252525252",
+      "length": 20,
+      "sha256": "a4c8ce63961dac8bea7f57aaacd88354833f99a651d162dc2acdb9c78bef765a"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383952525252525252525252",
+      "length": 20,
+      "sha256": "a4c8ce63961dac8bea7f57aaacd88354833f99a651d162dc2acdb9c78bef765a"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ins-bad-checksum-decoy",
+   "isn": 50331649,
+   "pcap": "ins-bad-checksum-decoy.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Decoy with a bad TCP checksum"
+  },
+  {
+   "category": "insertion",
+   "client": "192.0.2.1:40019",
+   "description": "A segment with a wrong checksum covers a range no valid segment ever carries. The endpoint never receives it and stalls at the hole; a checksum-blind tap splices the decoy into the stream and, because nothing overlaps, sees no conflict at all.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "bad_csum": true,
+     "data_hex": "44444444444444444444",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6b6c6d6e6f7071727374",
+     "off": 20,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [
+     "bad-checksum"
+    ],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": false,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "last": {
+      "complete": false,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "linux": {
+      "complete": false,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "lowseq": {
+      "complete": false,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ins-bad-checksum-fills-hole",
+   "isn": 50331650,
+   "pcap": "ins-bad-checksum-fills-hole.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Decoy with a bad checksum fills a hole"
+  },
+  {
+   "category": "anomaly",
+   "client": "192.0.2.1:40020",
+   "description": "The SYN carries bytes that a later segment contradicts. Linux without TCP Fast Open ignores SYN payload; a tap that counts it disagrees with the endpoint.",
+   "events": [
+    {
+     "data_hex": "53594e44415441212121",
+     "off": 0,
+     "syn": true,
+     "type": "seg"
+    },
+    {
+     "data_hex": "5245414c444154412121",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [
+     "syn-data"
+    ],
+    "conflict_ranges": [
+     [
+      0,
+      8
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "53594e44415441212121",
+      "length": 10,
+      "sha256": "36bc2a567e5c1b07fb9488ecc145e6022c6c350e1c478e359d0c1cb7a63670f8"
+     },
+     "last": {
+      "complete": true,
+      "hex": "5245414c444154412121",
+      "length": 10,
+      "sha256": "cf1603c1abecc3f8f475ee95455465a495e0f017927af501cb2be538a9337ac9"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "5245414c444154412121",
+      "length": 10,
+      "sha256": "cf1603c1abecc3f8f475ee95455465a495e0f017927af501cb2be538a9337ac9"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "53594e44415441212121",
+      "length": 10,
+      "sha256": "36bc2a567e5c1b07fb9488ecc145e6022c6c350e1c478e359d0c1cb7a63670f8"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "anom-syn-data",
+   "isn": 67108865,
+   "pcap": "anom-syn-data.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Payload on the SYN"
+  },
+  {
+   "category": "anomaly",
+   "client": "192.0.2.1:40021",
+   "description": "Bytes are sent past the stream's FIN. The application sees EOF at the FIN.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "",
+     "fin": true,
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "4c41544521",
+     "off": 10,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [
+     "data-after-fin"
+    ],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "anom-data-after-fin",
+   "isn": 67108866,
+   "pcap": "anom-data-after-fin.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Payload beyond the FIN"
+  },
+  {
+   "category": "anomaly",
+   "client": "192.0.2.1:40022",
+   "description": "The stream is closed at two different offsets.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "",
+     "fin": true,
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "7878",
+     "fin": true,
+     "off": 10,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [
+     "conflicting-fin",
+     "data-after-fin"
+    ],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "anom-conflicting-fin",
+   "isn": 67108867,
+   "pcap": "anom-conflicting-fin.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Two FINs at different offsets"
+  },
+  {
+   "category": "anomaly",
+   "client": "192.0.2.1:40023",
+   "description": "One segment travels as two IP fragments. Endpoints reassemble them; a tap that does not reassemble IP fragments never sees the bytes.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6162636465666768696a6b6c6d6e6f7071727374",
+     "frag": true,
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "75767778797a30313233",
+     "off": 30,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [
+     "ip-fragment"
+    ],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": false,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "last": {
+      "complete": false,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "linux": {
+      "complete": false,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     },
+     "lowseq": {
+      "complete": false,
+      "hex": "30313233343536373839",
+      "length": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "anom-ip-fragment",
+   "isn": 67108868,
+   "pcap": "anom-ip-fragment.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Segment split into IPv4 fragments"
+  },
+  {
+   "category": "anomaly",
+   "client": "192.0.2.1:40024",
+   "description": "The tap joined mid-connection: the stream start has to be inferred.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "6162636465666768696a",
+     "off": 10,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": false,
+    "anomalies": [
+     "midstream"
+    ],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a",
+      "length": 20,
+      "sha256": "6bc14bdc4517a7a682c6910de2e2946eb8e1ecd04090728fef6d092a7ceb62c5"
+     },
+     "last": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a",
+      "length": 20,
+      "sha256": "6bc14bdc4517a7a682c6910de2e2946eb8e1ecd04090728fef6d092a7ceb62c5"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a",
+      "length": 20,
+      "sha256": "6bc14bdc4517a7a682c6910de2e2946eb8e1ecd04090728fef6d092a7ceb62c5"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "303132333435363738396162636465666768696a",
+      "length": 20,
+      "sha256": "6bc14bdc4517a7a682c6910de2e2946eb8e1ecd04090728fef6d092a7ceb62c5"
+     }
+    }
+   },
+   "handshake": false,
+   "id": "anom-midstream",
+   "isn": 83886081,
+   "pcap": "anom-midstream.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Capture without the handshake"
+  },
+  {
+   "category": "anomaly",
+   "client": "192.0.2.1:40025",
+   "description": "A segment begins three bytes before the first data byte; the endpoint trims those bytes.",
+   "events": [
+    {
+     "data_hex": "3031323031323334353637",
+     "off": -3,
+     "type": "seg"
+    },
+    {
+     "data_hex": "3839616263646566",
+     "off": 8,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [
+     "before-isn"
+    ],
+    "conflict_ranges": [],
+    "policy_divergent": false,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233343536373839616263646566",
+      "length": 16,
+      "sha256": "9f9f5111f7b27a781f1f1ddde5ebc2dd2b796bfc7365c9c28b548e564176929f"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233343536373839616263646566",
+      "length": 16,
+      "sha256": "9f9f5111f7b27a781f1f1ddde5ebc2dd2b796bfc7365c9c28b548e564176929f"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233343536373839616263646566",
+      "length": 16,
+      "sha256": "9f9f5111f7b27a781f1f1ddde5ebc2dd2b796bfc7365c9c28b548e564176929f"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233343536373839616263646566",
+      "length": 16,
+      "sha256": "9f9f5111f7b27a781f1f1ddde5ebc2dd2b796bfc7365c9c28b548e564176929f"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "anom-before-isn",
+   "isn": 67108870,
+   "pcap": "anom-before-isn.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Segment starting before the stream"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40026",
+   "description": "Q starts inside P and runs past its end. The bytes before P and P itself reach the endpoint in order and are ACKed before Q arrives, so Q tries to rewrite data the application may already have.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "51515151515151515151",
+     "off": 15,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      15,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233343536373839505050505051515151515151515151",
+      "length": 25,
+      "sha256": "ac71fb41c7e538dc0353e7e7a2c5bacca4358e38a2a1b8d313e36f65bace40df"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-tail-inorder",
+   "isn": 268435456,
+   "pcap": "ov-tail-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, tail, after P is delivered"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40027",
+   "description": "Q starts inside P and runs past its end. P then Q arrive while the stream prefix is still missing; the prefix arrives last.",
+   "events": [
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "51515151515151515151",
+     "off": 15,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      15,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233343536373839505050505051515151515151515151",
+      "length": 25,
+      "sha256": "ac71fb41c7e538dc0353e7e7a2c5bacca4358e38a2a1b8d313e36f65bace40df"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-tail-ooo-pq",
+   "isn": 536870912,
+   "pcap": "ov-tail-ooo-pq.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, tail, buffered beyond a hole (P first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40028",
+   "description": "Q starts inside P and runs past its end. Same as the P-first case with the arrival order of P and Q swapped.",
+   "events": [
+    {
+     "data_hex": "51515151515151515151",
+     "off": 15,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      15,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233343536373839505050505051515151515151515151",
+      "length": 25,
+      "sha256": "ac71fb41c7e538dc0353e7e7a2c5bacca4358e38a2a1b8d313e36f65bace40df"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-tail-ooo-qp",
+   "isn": 805306368,
+   "pcap": "ov-tail-ooo-qp.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, tail, buffered beyond a hole (Q first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40029",
+   "description": "Q starts before P and ends inside it. The bytes before P and P itself reach the endpoint in order and are ACKed before Q arrives, so Q tries to rewrite data the application may already have.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "51515151515151515151",
+     "off": 5,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      5,
+      15
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515050505050",
+      "length": 20,
+      "sha256": "7b571c52a8f201fa36c6bd3da5952d1c7d547f70f828e27f7d55ad24f069be63"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515050505050",
+      "length": 20,
+      "sha256": "5f918cf24141889f1412fecf309d18b2511f56dc330f078fd29f4db2d084eb14"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-head-inorder",
+   "isn": 268435457,
+   "pcap": "ov-head-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, head, after P is delivered"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40030",
+   "description": "Q starts before P and ends inside it. P then Q arrive while the stream prefix is still missing; the prefix arrives last.",
+   "events": [
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "51515151515151515151",
+     "off": 5,
+     "type": "seg"
+    },
+    {
+     "data_hex": "3031323334",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      15
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334515151515150505050505050505050",
+      "length": 20,
+      "sha256": "3bc3ec49bd3c6662b8409909cff76868d9a5cf0c9aaa16830173868257dcfca2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515050505050",
+      "length": 20,
+      "sha256": "7b571c52a8f201fa36c6bd3da5952d1c7d547f70f828e27f7d55ad24f069be63"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515050505050",
+      "length": 20,
+      "sha256": "7b571c52a8f201fa36c6bd3da5952d1c7d547f70f828e27f7d55ad24f069be63"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515050505050",
+      "length": 20,
+      "sha256": "7b571c52a8f201fa36c6bd3da5952d1c7d547f70f828e27f7d55ad24f069be63"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-head-ooo-pq",
+   "isn": 536870913,
+   "pcap": "ov-head-ooo-pq.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, head, buffered beyond a hole (P first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40031",
+   "description": "Q starts before P and ends inside it. Same as the P-first case with the arrival order of P and Q swapped.",
+   "events": [
+    {
+     "data_hex": "51515151515151515151",
+     "off": 5,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "3031323334",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      15
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515050505050",
+      "length": 20,
+      "sha256": "7b571c52a8f201fa36c6bd3da5952d1c7d547f70f828e27f7d55ad24f069be63"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334515151515150505050505050505050",
+      "length": 20,
+      "sha256": "3bc3ec49bd3c6662b8409909cff76868d9a5cf0c9aaa16830173868257dcfca2"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515050505050",
+      "length": 20,
+      "sha256": "7b571c52a8f201fa36c6bd3da5952d1c7d547f70f828e27f7d55ad24f069be63"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515050505050",
+      "length": 20,
+      "sha256": "7b571c52a8f201fa36c6bd3da5952d1c7d547f70f828e27f7d55ad24f069be63"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-head-ooo-qp",
+   "isn": 805306369,
+   "pcap": "ov-head-ooo-qp.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, head, buffered beyond a hole (Q first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40032",
+   "description": "Q lies strictly inside P. The bytes before P and P itself reach the endpoint in order and are ACKed before Q arrives, so Q tries to rewrite data the application may already have.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "5151515151",
+     "off": 12,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      12,
+      17
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383950505151515151505050",
+      "length": 20,
+      "sha256": "c5e57d6693acfeaed1dd7f35e58556dd92caa882ce25e70a06273fea7c35f0d7"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-contained-inorder",
+   "isn": 268435458,
+   "pcap": "ov-contained-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, contained, after P is delivered"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40033",
+   "description": "Q lies strictly inside P. P then Q arrive while the stream prefix is still missing; the prefix arrives last.",
+   "events": [
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "5151515151",
+     "off": 12,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      12,
+      17
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383950505151515151505050",
+      "length": 20,
+      "sha256": "c5e57d6693acfeaed1dd7f35e58556dd92caa882ce25e70a06273fea7c35f0d7"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-contained-ooo-pq",
+   "isn": 536870914,
+   "pcap": "ov-contained-ooo-pq.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, contained, buffered beyond a hole (P first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40034",
+   "description": "Q lies strictly inside P. Same as the P-first case with the arrival order of P and Q swapped.",
+   "events": [
+    {
+     "data_hex": "5151515151",
+     "off": 12,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      12,
+      17
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505151515151505050",
+      "length": 20,
+      "sha256": "c5e57d6693acfeaed1dd7f35e58556dd92caa882ce25e70a06273fea7c35f0d7"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-contained-ooo-qp",
+   "isn": 805306370,
+   "pcap": "ov-contained-ooo-qp.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, contained, buffered beyond a hole (Q first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40035",
+   "description": "Q strictly contains P. The bytes before P and P itself reach the endpoint in order and are ACKed before Q arrives, so Q tries to rewrite data the application may already have.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "5151515151515151515151515151515151515151",
+     "off": 5,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      5,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233345151515151515151515151515151515151515151",
+      "length": 25,
+      "sha256": "e4c8e80be2dfcfb5e3db5070a65222afc327021711d6a71cc7977d06aeb1ed76"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233343536373839515151515151515151515151515151",
+      "length": 25,
+      "sha256": "b6a1ceaf0201f07eb5259ea63f9214ddb380a7588b424e44fb08133b010a6346"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-covering-inorder",
+   "isn": 268435459,
+   "pcap": "ov-covering-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, covering, after P is delivered"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40036",
+   "description": "Q strictly contains P. P then Q arrive while the stream prefix is still missing; the prefix arrives last.",
+   "events": [
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "5151515151515151515151515151515151515151",
+     "off": 5,
+     "type": "seg"
+    },
+    {
+     "data_hex": "3031323334",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233345151515151505050505050505050505151515151",
+      "length": 25,
+      "sha256": "39eee22b5ee264fd4df7295c8b4716ec7821f824e904d296a68a90a14008b7ca"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233345151515151515151515151515151515151515151",
+      "length": 25,
+      "sha256": "e4c8e80be2dfcfb5e3db5070a65222afc327021711d6a71cc7977d06aeb1ed76"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233345151515151515151515151515151515151515151",
+      "length": 25,
+      "sha256": "e4c8e80be2dfcfb5e3db5070a65222afc327021711d6a71cc7977d06aeb1ed76"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233345151515151515151515151515151515151515151",
+      "length": 25,
+      "sha256": "e4c8e80be2dfcfb5e3db5070a65222afc327021711d6a71cc7977d06aeb1ed76"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-covering-ooo-pq",
+   "isn": 536870915,
+   "pcap": "ov-covering-ooo-pq.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, covering, buffered beyond a hole (P first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40037",
+   "description": "Q strictly contains P. Same as the P-first case with the arrival order of P and Q swapped.",
+   "events": [
+    {
+     "data_hex": "5151515151515151515151515151515151515151",
+     "off": 5,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "3031323334",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233345151515151515151515151515151515151515151",
+      "length": 25,
+      "sha256": "e4c8e80be2dfcfb5e3db5070a65222afc327021711d6a71cc7977d06aeb1ed76"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233345151515151505050505050505050505151515151",
+      "length": 25,
+      "sha256": "39eee22b5ee264fd4df7295c8b4716ec7821f824e904d296a68a90a14008b7ca"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233345151515151515151515151515151515151515151",
+      "length": 25,
+      "sha256": "e4c8e80be2dfcfb5e3db5070a65222afc327021711d6a71cc7977d06aeb1ed76"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233345151515151515151515151515151515151515151",
+      "length": 25,
+      "sha256": "e4c8e80be2dfcfb5e3db5070a65222afc327021711d6a71cc7977d06aeb1ed76"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-covering-ooo-qp",
+   "isn": 805306371,
+   "pcap": "ov-covering-ooo-qp.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, covering, buffered beyond a hole (Q first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40038",
+   "description": "Q starts where P starts and is longer. The bytes before P and P itself reach the endpoint in order and are ACKed before Q arrives, so Q tries to rewrite data the application may already have.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "515151515151515151515151515151",
+     "off": 10,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233343536373839515151515151515151515151515151",
+      "length": 25,
+      "sha256": "b6a1ceaf0201f07eb5259ea63f9214ddb380a7588b424e44fb08133b010a6346"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-start-longer-inorder",
+   "isn": 268435460,
+   "pcap": "ov-same-start-longer-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-start-longer, after P is delivered"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40039",
+   "description": "Q starts where P starts and is longer. P then Q arrive while the stream prefix is still missing; the prefix arrives last.",
+   "events": [
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "515151515151515151515151515151",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233343536373839515151515151515151515151515151",
+      "length": 25,
+      "sha256": "b6a1ceaf0201f07eb5259ea63f9214ddb380a7588b424e44fb08133b010a6346"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233343536373839515151515151515151515151515151",
+      "length": 25,
+      "sha256": "b6a1ceaf0201f07eb5259ea63f9214ddb380a7588b424e44fb08133b010a6346"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-start-longer-ooo-pq",
+   "isn": 536870916,
+   "pcap": "ov-same-start-longer-ooo-pq.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-start-longer, buffered beyond a hole (P first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40040",
+   "description": "Q starts where P starts and is longer. Same as the P-first case with the arrival order of P and Q swapped.",
+   "events": [
+    {
+     "data_hex": "515151515151515151515151515151",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "30313233343536373839515151515151515151515151515151",
+      "length": 25,
+      "sha256": "b6a1ceaf0201f07eb5259ea63f9214ddb380a7588b424e44fb08133b010a6346"
+     },
+     "last": {
+      "complete": true,
+      "hex": "30313233343536373839505050505050505050505151515151",
+      "length": 25,
+      "sha256": "610086c3d6e789449dced78891e0f88190f7792377d0988e0069b01b15553dd7"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "30313233343536373839515151515151515151515151515151",
+      "length": 25,
+      "sha256": "b6a1ceaf0201f07eb5259ea63f9214ddb380a7588b424e44fb08133b010a6346"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "30313233343536373839515151515151515151515151515151",
+      "length": 25,
+      "sha256": "b6a1ceaf0201f07eb5259ea63f9214ddb380a7588b424e44fb08133b010a6346"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-start-longer-ooo-qp",
+   "isn": 805306372,
+   "pcap": "ov-same-start-longer-ooo-qp.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-start-longer, buffered beyond a hole (Q first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40041",
+   "description": "Q starts where P starts and is shorter. The bytes before P and P itself reach the endpoint in order and are ACKed before Q arrives, so Q tries to rewrite data the application may already have.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "5151515151",
+     "off": 10,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      15
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515050505050",
+      "length": 20,
+      "sha256": "5f918cf24141889f1412fecf309d18b2511f56dc330f078fd29f4db2d084eb14"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-start-shorter-inorder",
+   "isn": 268435461,
+   "pcap": "ov-same-start-shorter-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-start-shorter, after P is delivered"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40042",
+   "description": "Q starts where P starts and is shorter. P then Q arrive while the stream prefix is still missing; the prefix arrives last.",
+   "events": [
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "5151515151",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      15
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515050505050",
+      "length": 20,
+      "sha256": "5f918cf24141889f1412fecf309d18b2511f56dc330f078fd29f4db2d084eb14"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-start-shorter-ooo-pq",
+   "isn": 536870917,
+   "pcap": "ov-same-start-shorter-ooo-pq.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-start-shorter, buffered beyond a hole (P first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40043",
+   "description": "Q starts where P starts and is shorter. Same as the P-first case with the arrival order of P and Q swapped.",
+   "events": [
+    {
+     "data_hex": "5151515151",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      15
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515050505050",
+      "length": 20,
+      "sha256": "5f918cf24141889f1412fecf309d18b2511f56dc330f078fd29f4db2d084eb14"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515050505050",
+      "length": 20,
+      "sha256": "5f918cf24141889f1412fecf309d18b2511f56dc330f078fd29f4db2d084eb14"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-start-shorter-ooo-qp",
+   "isn": 805306373,
+   "pcap": "ov-same-start-shorter-ooo-qp.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-start-shorter, buffered beyond a hole (Q first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40044",
+   "description": "Q ends where P ends and starts earlier. The bytes before P and P itself reach the endpoint in order and are ACKed before Q arrives, so Q tries to rewrite data the application may already have.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "515151515151515151515151515151",
+     "off": 5,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      5,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515151515151",
+      "length": 20,
+      "sha256": "0647110d475bcc3bfafd4373087b3b51236c8d1aa1e58c2fe317329a5113d00b"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515151515151",
+      "length": 20,
+      "sha256": "063c067e3585bd58dbed037ed1b5f71c72bda4b4482a311abb13ff059e9261ba"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-end-longer-inorder",
+   "isn": 268435462,
+   "pcap": "ov-same-end-longer-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-end-longer, after P is delivered"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40045",
+   "description": "Q ends where P ends and starts earlier. P then Q arrive while the stream prefix is still missing; the prefix arrives last.",
+   "events": [
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "515151515151515151515151515151",
+     "off": 5,
+     "type": "seg"
+    },
+    {
+     "data_hex": "3031323334",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334515151515150505050505050505050",
+      "length": 20,
+      "sha256": "3bc3ec49bd3c6662b8409909cff76868d9a5cf0c9aaa16830173868257dcfca2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515151515151",
+      "length": 20,
+      "sha256": "0647110d475bcc3bfafd4373087b3b51236c8d1aa1e58c2fe317329a5113d00b"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515151515151",
+      "length": 20,
+      "sha256": "0647110d475bcc3bfafd4373087b3b51236c8d1aa1e58c2fe317329a5113d00b"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515151515151",
+      "length": 20,
+      "sha256": "0647110d475bcc3bfafd4373087b3b51236c8d1aa1e58c2fe317329a5113d00b"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-end-longer-ooo-pq",
+   "isn": 536870918,
+   "pcap": "ov-same-end-longer-ooo-pq.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-end-longer, buffered beyond a hole (P first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40046",
+   "description": "Q ends where P ends and starts earlier. Same as the P-first case with the arrival order of P and Q swapped.",
+   "events": [
+    {
+     "data_hex": "515151515151515151515151515151",
+     "off": 5,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "3031323334",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515151515151",
+      "length": 20,
+      "sha256": "0647110d475bcc3bfafd4373087b3b51236c8d1aa1e58c2fe317329a5113d00b"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334515151515150505050505050505050",
+      "length": 20,
+      "sha256": "3bc3ec49bd3c6662b8409909cff76868d9a5cf0c9aaa16830173868257dcfca2"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515151515151",
+      "length": 20,
+      "sha256": "0647110d475bcc3bfafd4373087b3b51236c8d1aa1e58c2fe317329a5113d00b"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334515151515151515151515151515151",
+      "length": 20,
+      "sha256": "0647110d475bcc3bfafd4373087b3b51236c8d1aa1e58c2fe317329a5113d00b"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-end-longer-ooo-qp",
+   "isn": 805306374,
+   "pcap": "ov-same-end-longer-ooo-qp.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-end-longer, buffered beyond a hole (Q first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40047",
+   "description": "Q ends where P ends and starts later. The bytes before P and P itself reach the endpoint in order and are ACKed before Q arrives, so Q tries to rewrite data the application may already have.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "5151515151",
+     "off": 15,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      15,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505151515151",
+      "length": 20,
+      "sha256": "3d35e436b594e97964d8745ac03e04590f1de15a3ff8144a39c8be37826e2e88"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-end-shorter-inorder",
+   "isn": 268435463,
+   "pcap": "ov-same-end-shorter-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-end-shorter, after P is delivered"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40048",
+   "description": "Q ends where P ends and starts later. P then Q arrive while the stream prefix is still missing; the prefix arrives last.",
+   "events": [
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "5151515151",
+     "off": 15,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      15,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505151515151",
+      "length": 20,
+      "sha256": "3d35e436b594e97964d8745ac03e04590f1de15a3ff8144a39c8be37826e2e88"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-end-shorter-ooo-pq",
+   "isn": 536870919,
+   "pcap": "ov-same-end-shorter-ooo-pq.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-end-shorter, buffered beyond a hole (P first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40049",
+   "description": "Q ends where P ends and starts later. Same as the P-first case with the arrival order of P and Q swapped.",
+   "events": [
+    {
+     "data_hex": "5151515151",
+     "off": 15,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      15,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505151515151",
+      "length": 20,
+      "sha256": "3d35e436b594e97964d8745ac03e04590f1de15a3ff8144a39c8be37826e2e88"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-end-shorter-ooo-qp",
+   "isn": 805306375,
+   "pcap": "ov-same-end-shorter-ooo-qp.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-end-shorter, buffered beyond a hole (Q first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40050",
+   "description": "Q covers exactly P's range. The bytes before P and P itself reach the endpoint in order and are ACKed before Q arrives, so Q tries to rewrite data the application may already have.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "51515151515151515151",
+     "off": 10,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515151515151",
+      "length": 20,
+      "sha256": "063c067e3585bd58dbed037ed1b5f71c72bda4b4482a311abb13ff059e9261ba"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-range-inorder",
+   "isn": 268435464,
+   "pcap": "ov-same-range-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-range, after P is delivered"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40051",
+   "description": "Q covers exactly P's range. P then Q arrive while the stream prefix is still missing; the prefix arrives last.",
+   "events": [
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "51515151515151515151",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515151515151",
+      "length": 20,
+      "sha256": "063c067e3585bd58dbed037ed1b5f71c72bda4b4482a311abb13ff059e9261ba"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-range-ooo-pq",
+   "isn": 536870920,
+   "pcap": "ov-same-range-ooo-pq.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-range, buffered beyond a hole (P first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40052",
+   "description": "Q covers exactly P's range. Same as the P-first case with the arrival order of P and Q swapped.",
+   "events": [
+    {
+     "data_hex": "51515151515151515151",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515151515151",
+      "length": 20,
+      "sha256": "063c067e3585bd58dbed037ed1b5f71c72bda4b4482a311abb13ff059e9261ba"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515151515151",
+      "length": 20,
+      "sha256": "063c067e3585bd58dbed037ed1b5f71c72bda4b4482a311abb13ff059e9261ba"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383951515151515151515151",
+      "length": 20,
+      "sha256": "063c067e3585bd58dbed037ed1b5f71c72bda4b4482a311abb13ff059e9261ba"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-same-range-ooo-qp",
+   "isn": 805306376,
+   "pcap": "ov-same-range-ooo-qp.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, same-range, buffered beyond a hole (Q first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40053",
+   "description": "Q overlaps P by its last byte only. The bytes before P and P itself reach the endpoint in order and are ACKed before Q arrives, so Q tries to rewrite data the application may already have.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "51515151515151515151",
+     "off": 19,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      19,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050515151515151515151",
+      "length": 29,
+      "sha256": "2a7f8016b461f0e506251fae175e2738331dec73e085e5fe7f2855427ca2f9db"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505051515151515151515151",
+      "length": 29,
+      "sha256": "a8a5d91eaa1800d930f06c15b955ca31919bcd8c300931fb6a691964ead7f06e"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050515151515151515151",
+      "length": 29,
+      "sha256": "2a7f8016b461f0e506251fae175e2738331dec73e085e5fe7f2855427ca2f9db"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050515151515151515151",
+      "length": 29,
+      "sha256": "2a7f8016b461f0e506251fae175e2738331dec73e085e5fe7f2855427ca2f9db"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-one-byte-tail-inorder",
+   "isn": 268435465,
+   "pcap": "ov-one-byte-tail-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, one-byte-tail, after P is delivered"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40054",
+   "description": "Q overlaps P by its last byte only. P then Q arrive while the stream prefix is still missing; the prefix arrives last.",
+   "events": [
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "51515151515151515151",
+     "off": 19,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      19,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050515151515151515151",
+      "length": 29,
+      "sha256": "2a7f8016b461f0e506251fae175e2738331dec73e085e5fe7f2855427ca2f9db"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505051515151515151515151",
+      "length": 29,
+      "sha256": "a8a5d91eaa1800d930f06c15b955ca31919bcd8c300931fb6a691964ead7f06e"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050515151515151515151",
+      "length": 29,
+      "sha256": "2a7f8016b461f0e506251fae175e2738331dec73e085e5fe7f2855427ca2f9db"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050515151515151515151",
+      "length": 29,
+      "sha256": "2a7f8016b461f0e506251fae175e2738331dec73e085e5fe7f2855427ca2f9db"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-one-byte-tail-ooo-pq",
+   "isn": 536870921,
+   "pcap": "ov-one-byte-tail-ooo-pq.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, one-byte-tail, buffered beyond a hole (P first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40055",
+   "description": "Q overlaps P by its last byte only. Same as the P-first case with the arrival order of P and Q swapped.",
+   "events": [
+    {
+     "data_hex": "51515151515151515151",
+     "off": 19,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      19,
+      20
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505051515151515151515151",
+      "length": 29,
+      "sha256": "a8a5d91eaa1800d930f06c15b955ca31919bcd8c300931fb6a691964ead7f06e"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050515151515151515151",
+      "length": 29,
+      "sha256": "2a7f8016b461f0e506251fae175e2738331dec73e085e5fe7f2855427ca2f9db"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050515151515151515151",
+      "length": 29,
+      "sha256": "2a7f8016b461f0e506251fae175e2738331dec73e085e5fe7f2855427ca2f9db"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050515151515151515151",
+      "length": 29,
+      "sha256": "2a7f8016b461f0e506251fae175e2738331dec73e085e5fe7f2855427ca2f9db"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-one-byte-tail-ooo-qp",
+   "isn": 805306377,
+   "pcap": "ov-one-byte-tail-ooo-qp.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, one-byte-tail, buffered beyond a hole (Q first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40056",
+   "description": "Q overlaps P by its first byte only. The bytes before P and P itself reach the endpoint in order and are ACKed before Q arrives, so Q tries to rewrite data the application may already have.",
+   "events": [
+    {
+     "data_hex": "30313233343536373839",
+     "off": 0,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "off": 20,
+     "type": "ack"
+    },
+    {
+     "data_hex": "51515151515151515151",
+     "off": 1,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      1,
+      11
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3051515151515151515151505050505050505050",
+      "length": 20,
+      "sha256": "82ad2d62f246052405feb58cacd11332d1ec7de499987ddc3e78c4d135b54545"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3031323334353637383950505050505050505050",
+      "length": 20,
+      "sha256": "24929713ac38b413f55fa908246205d7e2b7e26518ee4e665223a556fb91b2e2"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3031323334353637383951505050505050505050",
+      "length": 20,
+      "sha256": "82d43c275e085b138e03080bb30e3eb0855ae5c75e8fd0fda14ddbedb3ff2356"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-one-byte-head-inorder",
+   "isn": 268435466,
+   "pcap": "ov-one-byte-head-inorder.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, one-byte-head, after P is delivered"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40057",
+   "description": "Q overlaps P by its first byte only. P then Q arrive while the stream prefix is still missing; the prefix arrives last.",
+   "events": [
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "51515151515151515151",
+     "off": 1,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      11
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3051515151515151515150505050505050505050",
+      "length": 20,
+      "sha256": "5cc77e1638e7afaa4af6097d17734c9346125467140ab6f0cff32f8c510bd032"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3051515151515151515151505050505050505050",
+      "length": 20,
+      "sha256": "82ad2d62f246052405feb58cacd11332d1ec7de499987ddc3e78c4d135b54545"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3051515151515151515151505050505050505050",
+      "length": 20,
+      "sha256": "82ad2d62f246052405feb58cacd11332d1ec7de499987ddc3e78c4d135b54545"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3051515151515151515151505050505050505050",
+      "length": 20,
+      "sha256": "82ad2d62f246052405feb58cacd11332d1ec7de499987ddc3e78c4d135b54545"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-one-byte-head-ooo-pq",
+   "isn": 536870922,
+   "pcap": "ov-one-byte-head-ooo-pq.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, one-byte-head, buffered beyond a hole (P first)"
+  },
+  {
+   "category": "overlap",
+   "client": "192.0.2.1:40058",
+   "description": "Q overlaps P by its first byte only. Same as the P-first case with the arrival order of P and Q swapped.",
+   "events": [
+    {
+     "data_hex": "51515151515151515151",
+     "off": 1,
+     "type": "seg"
+    },
+    {
+     "data_hex": "50505050505050505050",
+     "off": 10,
+     "type": "seg"
+    },
+    {
+     "data_hex": "30",
+     "off": 0,
+     "type": "seg"
+    }
+   ],
+   "expected": {
+    "ambiguous": true,
+    "anomalies": [],
+    "conflict_ranges": [
+     [
+      10,
+      11
+     ]
+    ],
+    "policy_divergent": true,
+    "streams": {
+     "first": {
+      "complete": true,
+      "hex": "3051515151515151515151505050505050505050",
+      "length": 20,
+      "sha256": "82ad2d62f246052405feb58cacd11332d1ec7de499987ddc3e78c4d135b54545"
+     },
+     "last": {
+      "complete": true,
+      "hex": "3051515151515151515150505050505050505050",
+      "length": 20,
+      "sha256": "5cc77e1638e7afaa4af6097d17734c9346125467140ab6f0cff32f8c510bd032"
+     },
+     "linux": {
+      "complete": true,
+      "hex": "3051515151515151515151505050505050505050",
+      "length": 20,
+      "sha256": "82ad2d62f246052405feb58cacd11332d1ec7de499987ddc3e78c4d135b54545"
+     },
+     "lowseq": {
+      "complete": true,
+      "hex": "3051515151515151515151505050505050505050",
+      "length": 20,
+      "sha256": "82ad2d62f246052405feb58cacd11332d1ec7de499987ddc3e78c4d135b54545"
+     }
+    }
+   },
+   "handshake": true,
+   "id": "ov-one-byte-head-ooo-qp",
+   "isn": 805306378,
+   "pcap": "ov-one-byte-head-ooo-qp.pcap",
+   "server": "192.0.2.2:80",
+   "title": "Overlap, one-byte-head, buffered beyond a hole (Q first)"
+  }
+ ],
+ "format": 1,
+ "generator": "packet-forge",
+ "policies": [
+  "first",
+  "last",
+  "lowseq",
+  "linux"
+ ],
+ "policy_docs": {
+  "first": "Earliest-captured claim wins every byte (retransmitted data never replaces what was seen).",
+  "last": "Latest-captured claim wins every byte (a naive 'overwrite on retransmit' tap).",
+  "linux": "Model of the Linux receive path: lowest start offset wins, then the longer claim, then the earlier capture; bytes already delivered in order are frozen; payload on a SYN is ignored (no Fast Open).  Checked against a live kernel by `packet-forge kernel-verify`.",
+  "lowseq": "Claim with the lowest start offset wins; ties go to the earlier capture."
+ }
+}

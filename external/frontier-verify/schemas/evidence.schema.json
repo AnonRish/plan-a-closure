@@ -1,0 +1,257 @@
+{
+  "$defs": {
+    "HardwareEvidence": {
+      "description": "Output of an AttestationProvider. `mock` and `maturity` are not\ndecorative -- frontier_verify.policies.evaluator actually reads `mock`\nand refuses to grant assurance above L1 when it's True and the policy\ndoesn't explicitly allow it. See frontier_verify/policies/evaluator.py.",
+      "properties": {
+        "provider_name": {
+          "title": "Provider Name",
+          "type": "string"
+        },
+        "maturity": {
+          "$ref": "#/$defs/Maturity"
+        },
+        "mock": {
+          "title": "Mock",
+          "type": "boolean"
+        },
+        "claims": {
+          "additionalProperties": true,
+          "title": "Claims",
+          "type": "object"
+        },
+        "raw_evidence_digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Evidence Digest"
+        },
+        "collected_at": {
+          "format": "date-time",
+          "title": "Collected At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider_name",
+        "maturity",
+        "mock"
+      ],
+      "title": "HardwareEvidence",
+      "type": "object"
+    },
+    "Maturity": {
+      "description": "The only vocabulary Frontier Verify is allowed to use when describing\nhow real a component or a piece of evidence is. See section 4 of the\nsource specification -- a component is not PRODUCTION_READY merely\nbecause it runs, and nothing may claim a maturity level it hasn't\nearned.",
+      "enum": [
+        "NOT_IMPLEMENTED",
+        "MOCK",
+        "SIMULATED",
+        "EXPERIMENTAL",
+        "RESEARCH",
+        "VALIDATED",
+        "PRODUCTION_READY"
+      ],
+      "title": "Maturity",
+      "type": "string"
+    },
+    "ModelIdentity": {
+      "description": "What model was (claimed to be) running. In Phase 1 every field here\nis self-reported by the prover -- nothing independently confirms it.\nSee docs/threat-model.md, question A.",
+      "properties": {
+        "model_digest": {
+          "title": "Model Digest",
+          "type": "string"
+        },
+        "weights_digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Weights Digest"
+        },
+        "tokenizer_digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tokenizer Digest"
+        },
+        "architecture_digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Architecture Digest"
+        },
+        "config_digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Config Digest"
+        },
+        "quantization": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quantization"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Version"
+        }
+      },
+      "required": [
+        "model_digest"
+      ],
+      "title": "ModelIdentity",
+      "type": "object"
+    },
+    "RuntimeIdentity": {
+      "description": "What serving stack was (claimed to be) running it. Same self-report\ncaveat as ModelIdentity.",
+      "properties": {
+        "serving_engine": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Serving Engine"
+        },
+        "engine_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Engine Version"
+        },
+        "container_digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Container Digest"
+        },
+        "hardware_summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hardware Summary"
+        }
+      },
+      "title": "RuntimeIdentity",
+      "type": "object"
+    }
+  },
+  "description": "The bundle a prover submits: what model, on what runtime, on what\n(attested-or-mock) hardware, for what workload.",
+  "properties": {
+    "evidence_id": {
+      "title": "Evidence Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "model_identity": {
+      "$ref": "#/$defs/ModelIdentity"
+    },
+    "runtime_identity": {
+      "$ref": "#/$defs/RuntimeIdentity"
+    },
+    "hardware_evidence": {
+      "$ref": "#/$defs/HardwareEvidence"
+    },
+    "workload_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Workload Ref"
+    }
+  },
+  "required": [
+    "evidence_id",
+    "model_identity",
+    "runtime_identity",
+    "hardware_evidence"
+  ],
+  "title": "Evidence",
+  "type": "object"
+}

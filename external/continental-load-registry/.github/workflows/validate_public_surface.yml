@@ -1,0 +1,517 @@
+name: Validate public research surface
+
+on:
+  push:
+    paths:
+      - "index.html"
+      - "track3.html"
+      - "closed-cases.html"
+      - "closed-cases.css"
+      - "CLOSED_CASE_PROTOCOL.md"
+      - "STRICT_DISCOVERY_RESEARCH.md"
+      - "validate_strict_discovery_candidates.py"
+      - "build_ambiguity_classification_summary.py"
+      - "validate_track3_complete_coverage.py"
+      - "plan-a.html"
+      - "research.html"
+      - "api.html"
+      - "bulk-download.html"
+      - "global-compute-universe.html"
+      - "company-registry.html"
+      - "observatory-nav.css"
+      - "observatory-nav.js"
+      - "*.py"
+      - ".github/workflows/**"
+      - "data/**"
+      - "PLAN_A.md"
+      - "CONTRIBUTING.md"
+      - "CITATION.cff"
+      - "CITATION.md"
+      - "CLASSIFICATION_AUDIT_2026-09-27.md"
+      - "STRICT_DISCOVERY_RESEARCH.md"
+      - "README.md"
+      - "llms.txt"
+      - "robots.txt"
+      - "sitemap.xml"
+      - "CI_AUDIT_2026-09-26.md"
+      - "data/ci/commit_audit.json"
+      - "data/track3/ai2040_plan_a_mapping.json"
+      - "data/track3/ai2040_plan_a_traceability.json"
+      - "data/track3/plan_a_audit_schema.json"
+      - "data/track3_evidence_schema.json"
+      - "data/large_load_scope.json"
+      - "data/supplemental_large_load_evidence.json"
+      - "data/supplemental_large_load_evidence.csv"
+      - "data/project_level_extractions.json"
+      - "data/project_level_extractions.csv"
+      - "data/project_level_map.json"
+      - "data/miso_unresolved_large_loads.csv"
+      - "data/data_universe_checklist.csv"
+      - "data/data_universe_checklist.json"
+      - "data/supplemental_aggregate_map.json"
+      - "data/market_universe_manifest.json"
+      - "data/market_universe_manifest.csv"
+      - "data/map_layer_manifest.json"
+      - "data/map_layer_manifest.csv"
+      - "data/caiso_cluster_history.json"
+      - "data/caiso_cluster_history.csv"
+      - ".github/workflows/validate_public_surface.yml"
+  # Bot commits pushed with the default GITHUB_TOKEN do not start push workflows,
+  # so re-run the validators after every workflow that commits data.
+  workflow_run:
+    workflows:
+      - "Track 3 automated data pipeline"
+      - "Sync MISO complete public queue"
+      - "Sync SPP active public queue"
+      - "Sync CAISO complete public queue"
+      - "Sync PJM complete Cycle Service Request universe"
+    types: [completed]
+  pull_request:
+    paths:
+      - "index.html"
+      - "track3.html"
+      - "plan-a.html"
+      - "research.html"
+      - "api.html"
+      - "bulk-download.html"
+      - "observatory-nav.css"
+      - "observatory-nav.js"
+      - "*.py"
+      - ".github/workflows/**"
+      - "data/**"
+      - "PLAN_A.md"
+      - "CONTRIBUTING.md"
+      - "CITATION.cff"
+      - "CITATION.md"
+      - "README.md"
+      - "llms.txt"
+      - "robots.txt"
+      - "sitemap.xml"
+      - "CI_AUDIT_2026-09-26.md"
+      - "data/ci/commit_audit.json"
+      - "data/track3/ai2040_plan_a_mapping.json"
+      - "data/track3/ai2040_plan_a_traceability.json"
+      - "data/track3/plan_a_audit_schema.json"
+      - "data/track3_evidence_schema.json"
+      - "data/large_load_scope.json"
+      - "data/supplemental_large_load_evidence.json"
+      - "data/supplemental_large_load_evidence.csv"
+      - "data/project_level_extractions.json"
+      - "data/project_level_extractions.csv"
+      - "data/project_level_map.json"
+      - "data/supplemental_aggregate_map.json"
+      - "data/market_universe_manifest.json"
+      - "data/market_universe_manifest.csv"
+      - "data/map_layer_manifest.json"
+      - "data/map_layer_manifest.csv"
+      - "data/caiso_cluster_history.json"
+      - "data/caiso_cluster_history.csv"
+      - ".github/workflows/validate_public_surface.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Validate machine-readable Plan A / Track 3 files
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          required = [
+              "data/track3/ai2040_plan_a_mapping.json",
+              "data/track3/ai2040_plan_a_traceability.json",
+              "data/track3/plan_a_audit_schema.json",
+              "data/track3_evidence_schema.json",
+          ]
+          for path in required:
+              obj = json.loads(Path(path).read_text(encoding="utf-8"))
+              assert obj, path
+
+          mapping = json.loads(Path(required[0]).read_text(encoding="utf-8"))
+          trace = json.loads(Path(required[1]).read_text(encoding="utf-8"))
+          schema = json.loads(Path(required[3]).read_text(encoding="utf-8"))
+          assert len(mapping["mappings"]) >= 16
+          assert len(trace["rows"]) >= 12
+          assert len(schema["domains"]) >= 15
+          print("PASS: Plan A / Track 3 base contracts")
+
+      - name: Validate large-load accounting and map contracts
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path("data")
+
+          scope = json.loads((root / "large_load_scope.json").read_text(encoding="utf-8"))
+          d = scope["definitions"]
+          current_records = d["current_row_level"]["records"]
+          current_capacity = float(d["current_row_level"]["capacity_gw"])
+          extra_miso_records = d["additional_known_miso"]["records"]
+          extra_miso_capacity = float(d["additional_known_miso"]["capacity_gw"])
+          assert d["current_row_level"]["records"] > 0
+          assert d["expanded_known_scope"]["records"] == current_records + extra_miso_records
+          assert abs(float(d["expanded_known_scope"]["capacity_gw"]) - (current_capacity + extra_miso_capacity)) < 1e-9
+          assert d["project_level_extractions"]["records"] == 271
+          assert d["project_level_map"]["records"] == 271
+          assert d["project_level_map"]["mapped_records"] == 271
+          assert d["supplemental_evidence_units"]["records"] == 61
+          assert d["supplemental_aggregate_map"]["records"] == 66
+          assert d["supplemental_aggregate_map"]["mapped_records"] == 66
+          assert d["caiso_historical_cluster_series"]["records"] == 435
+          assert d["caiso_historical_cluster_series"]["capacity_gw"] == 121.204
+
+          supplemental = json.loads((root / "supplemental_large_load_evidence.json").read_text(encoding="utf-8"))
+          assert len(supplemental["records"]) == 61
+          assert supplemental["record_count"] == 61
+          supp_ids = [r["id"] for r in supplemental["records"]]
+          assert len(supp_ids) == len(set(supp_ids))
+
+          projects = json.loads((root / "project_level_extractions.json").read_text(encoding="utf-8"))
+          assert projects["record_count"] == len(projects["records"]) == 271
+          project_ids = [r["id"] for r in projects["records"]]
+          assert len(project_ids) == len(set(project_ids))
+          for r in projects["records"]:
+              assert r["id"] and r["evidence_type"] and r["source_url"].startswith("https://")
+
+          project_map = json.loads((root / "project_level_map.json").read_text(encoding="utf-8"))
+          assert project_map["record_count"] == len(project_map["records"]) == 271
+          assert project_map["mapped_count"] == 271
+          map_ids = {r["id"] for r in project_map["records"]}
+          assert map_ids == set(project_ids)
+          assert all(r.get("lat") is not None and r.get("lon") is not None for r in project_map["records"])
+
+          aggregate_map = json.loads((root / "supplemental_aggregate_map.json").read_text(encoding="utf-8"))
+          assert aggregate_map["record_count"] == len(aggregate_map["records"]) == 66
+          assert aggregate_map["mapped_count"] == 66
+          assert all(r.get("lat") is not None and r.get("lon") is not None for r in aggregate_map["records"])
+
+          # The one unlocated contract must remain unpinned in the project map.
+          woostor = next(r for r in projects["records"] if r["id"] == "ALABAMA-POWER-WOOSTOR-CONTRACT-2026")
+          assert not woostor.get("location")
+          print("PASS: large-load / project / map accounting")
+
+      - name: Validate market-universe manifests and CSV parity
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path("data")
+          manifest = json.loads((root / "market_universe_manifest.json").read_text(encoding="utf-8"))
+          assert len(manifest["markets"]) == 11
+          g = manifest["global_layers"]
+          assert g["project_level_extractions"]["records"] == 271
+          assert g["project_level_extractions"]["mapped_records"] == 271
+          assert g["supplemental_evidence_units"]["records"] == 61
+          assert g["supplemental_aggregate_map"]["records"] == 66
+          assert g["supplemental_aggregate_map"]["mapped_records"] == 66
+
+          checklist = json.loads((root / "data_universe_checklist.json").read_text(encoding="utf-8"))
+          assert len(checklist["records"]) == 11
+          assert {x["id"] for x in checklist["records"]} == {"CAISO","MISO","PJM","ERCOT","SPP","NYISO","ISO-NE","AESO","IESO_ON","UTILITIES_OUTSIDE_MARKETS","BPA"}
+          checklist_csv = list(csv.DictReader((root / "data_universe_checklist.csv").open("r", encoding="utf-8", newline="")))
+          assert len(checklist_csv) == 11
+          map_manifest = json.loads((root / "map_layer_manifest.json").read_text(encoding="utf-8"))
+          assert len(map_manifest["layers"]) == 12
+          layer_by_id = {x["id"]: x for x in map_manifest["layers"]}
+          assert layer_by_id["PROJECT_LEVEL"]["records"] == 271
+          assert layer_by_id["PROJECT_LEVEL"]["mapped_records"] == 271
+          assert layer_by_id["SUPPLEMENTAL_AGGREGATES"]["records"] == 66
+          assert layer_by_id["SUPPLEMENTAL_AGGREGATES"]["mapped_records"] == 66
+          assert layer_by_id["SUPPLEMENTAL_EVIDENCE"]["records"] == 61
+          assert layer_by_id["SUPPLEMENTAL_EVIDENCE"]["mapped_records"] is None
+          assert layer_by_id["EPOCH_AI"]["records"] == 93
+          assert layer_by_id["CONNECTION_TARGETS"]["records"] == 93
+          assert layer_by_id["MISO_COMPLETE_QUEUE"]["records"] == 3873
+          assert layer_by_id["MISO_COMPLETE_QUEUE"]["records_ge_100mw"] == 2997
+          assert layer_by_id["MISO_COMPLETE_QUEUE"]["unresolved_ge_100_location"] == 153
+          assert layer_by_id["SPP_ACTIVE_QUEUE"]["records"] == 3076
+          assert layer_by_id["SPP_ACTIVE_QUEUE"]["records_ge_100mw"] == 2332
+          bpa = json.loads((root / "bpa_large_load_registry.json").read_text(encoding="utf-8"))
+          assert bpa["record_count"] == len(bpa["records"]) > 0
+          assert bpa["mapped_record_count"] == sum(1 for r in bpa["records"] if isinstance(r.get("map_point"), list) and len(r["map_point"]) == 2)
+          assert bpa["unmapped_record_count"] == bpa["record_count"] - bpa["mapped_record_count"]
+          assert layer_by_id["BPA_LARGE_LOAD"]["records"] == bpa["record_count"]
+          assert layer_by_id["BPA_LARGE_LOAD"]["mapped_records"] == bpa["mapped_record_count"]
+          assert layer_by_id["BPA_LARGE_LOAD"]["file"] == "data/bpa_large_load_registry.json"
+          evidence = json.loads((root / "track3/evidence_records.json").read_text(encoding="utf-8"))
+          assert evidence["record_count"] == len(evidence["records"]) > 0
+          legacy_epoch_evidence = json.loads((root / "epoch_site_evidence_records.json").read_text(encoding="utf-8"))
+          assert legacy_epoch_evidence["record_count"] == len(legacy_epoch_evidence["records"]) == 102
+
+          aggregate_map_csv = list(csv.DictReader((root / "map_layer_manifest.csv").open("r", encoding="utf-8", newline="")))
+          agg = next(r for r in aggregate_map_csv if r["id"] == "SUPPLEMENTAL_AGGREGATES")
+          assert int(agg["records"]) == int(agg["mapped_records"]) == 66
+          project_csv = list(csv.DictReader((root / "project_level_extractions.csv").open("r", encoding="utf-8", newline="")))
+          assert len(project_csv) == 271
+          supp_csv = list(csv.DictReader((root / "supplemental_large_load_evidence.csv").open("r", encoding="utf-8", newline="")))
+          assert len(supp_csv) == 61
+          miso_csv = list(csv.DictReader((root / "miso_unresolved_large_loads.csv").open("r", encoding="utf-8", newline="")))
+          assert len(miso_csv) == 153
+          manifest_csv = list(csv.DictReader((root / "market_universe_manifest.csv").open("r", encoding="utf-8", newline="")))
+          assert len(manifest_csv) == 11
+          map_csv = list(csv.DictReader((root / "map_layer_manifest.csv").open("r", encoding="utf-8", newline="")))
+          assert len(map_csv) == 12
+          bpa_json = json.loads((root / "bpa_large_load_registry.json").read_text(encoding="utf-8"))
+          assert bpa_json["record_count"] == len(bpa_json["records"]) > 0
+          assert float(bpa_json.get("threshold_mw", 0)) == 100.0
+          assert all(
+              r.get("capacity_claims")
+              and float(r["capacity_claims"][0].get("value_mw", 0)) >= float(bpa_json["threshold_mw"])
+              for r in bpa_json["records"]
+          )
+          population = bpa_json.get("source", {}).get("source_population_accounting", {})
+          assert int(population.get("eligible_rows_at_threshold_mw", -1)) == bpa_json["record_count"]
+          assert int(population.get("raw_l_series_rows_on_record", -1)) >= bpa_json["record_count"]
+          assert bpa_json["unmapped_record_count"] == bpa_json["record_count"] - bpa_json["mapped_record_count"]
+          bpa_csv = list(csv.DictReader((root / "bpa_large_load_registry.csv").open("r", encoding="utf-8", newline="")))
+          assert len(bpa_csv) == bpa_json["record_count"]
+          official_url = bpa_json["source"].get("official_workbook_url")
+          source_sha = bpa_json["source"].get("raw_official_snapshot_sha256")
+          if official_url:
+              assert official_url.endswith("InterconnectionQueueOutput.xlsx")
+          if source_sha:
+              assert len(source_sha) == 64
+              assert all(r.get("source_provenance", {}).get("workbook_sha256") == source_sha for r in bpa_json["records"])
+              assert all(r.get("source_url") == official_url for r in bpa_json["records"])
+              mapped_bpa = [r for r in bpa_json["records"] if isinstance(r.get("map_point"), list) and len(r["map_point"]) == 2]
+              assert len(mapped_bpa) == bpa_json["mapped_record_count"]
+              assert all(isinstance(r.get("map_provenance"), dict) for r in mapped_bpa)
+              assert all(r["map_provenance"].get("source_url") for r in mapped_bpa)
+              assert all(r["map_provenance"].get("precision") == r.get("map_precision") for r in mapped_bpa)
+          else:
+              assert bpa_json["source"].get("raw_official_snapshot_retained") is False
+              assert all(r.get("source_provenance") is None or "workbook_sha256" not in r.get("source_provenance", {}) for r in bpa_json["records"])
+          history = json.loads((root / "caiso_cluster_history.json").read_text(encoding="utf-8"))
+          assert sum(r["projects"] for r in history["records"][:7]) == 435
+          assert sum(r["capacity_mw"] for r in history["records"][:7]) == 121204
+          assert history["records"][7]["projects"] == 48
+          assert history["records"][7]["capacity_mw"] == 14421
+          print("PASS: manifest / CSV parity / CAISO history")
+
+      - name: Validate current queue snapshot contracts when present
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("data")
+          expected = {
+              "miso_public_queue.json": 3873,
+              "spp_public_queue.json": 3076,
+          }
+          for filename, count in expected.items():
+              obj = json.loads((root / filename).read_text(encoding="utf-8"))
+              assert obj["record_count"] == len(obj["records"]) == count
+              print(f"PASS: {filename} {count} rows")
+
+          status = json.loads((root / "queue_layer_status.json").read_text(encoding="utf-8"))
+          feeds = {x["id"]: x for x in status["feeds"]}
+          assert feeds["MISO"]["snapshot_present"] is True
+          assert feeds["SPP"]["snapshot_present"] is True
+          assert feeds["MISO"]["record_count"] == 3873
+          assert feeds["MISO"]["unresolved_ge_100_location"] == 153
+          assert feeds["SPP"]["record_count"] == 3076
+          print("PASS: queue-layer runtime status")
+          PY
+
+      - name: Validate website-facing project/map counts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          html = Path("index.html").read_text(encoding="utf-8")
+          readme = Path("README.md").read_text(encoding="utf-8")
+
+          assert "Browse all 271 extracted project-level records" in html
+          assert 'placeholder="Search 271 project records"' in html
+          assert re.search(r'<p class="mono text-xl">271</p><p class="text-xs mt-1" style="color:var\(--ink-faint\);">Project-level records', html)
+          assert "The project-level layer has grown to **271 records**" in readme
+          assert "271 mapped project records" in readme
+          assert "data/map_layer_manifest.json" in readme or "map layer manifest" in readme.lower()
+          assert "The supplemental evidence file now contains **61 source/evidence units**" in readme
+          print("PASS: website / README project universe references")
+
+      - name: Validate inline JavaScript
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          for html_name in ("index.html", "track3.html", "plan-a.html", "closed-cases.html"):
+              html = Path(html_name).read_text(encoding="utf-8")
+              scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", html, flags=re.S | re.I)
+              for i, script in enumerate(scripts, 1):
+                  Path(f"/tmp/{html_name}-{i}.js").write_text(script, encoding="utf-8")
+              print(f"{html_name}: {len(scripts)} script blocks")
+          PY
+          for f in /tmp/index.html-*.js /tmp/track3.html-*.js /tmp/plan-a.html-*.js /tmp/closed-cases.html-*.js; do
+            node --check "$f"
+          done
+
+      - name: Validate critical public artifacts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          critical = [
+              "data/queue_layer_status.json",
+              "data/miso_public_queue.json",
+              "data/spp_public_queue.json",
+              "data/caiso_public_queue.json",
+              "data/pjm_cycle_public_queue.json",
+              "data/miso_unresolved_large_loads.json",
+              "data/physical_verification_layer.json",
+              "data/track3/remote_sensing_observation_targets.json",
+              "data/track3/time_series_verification.json",
+              "data/track3/evidence_records.json",
+              "data/track3/public_web_claims.json",
+              "data/track3/public_research_leads.json",
+              "data/track3/site_status.json",
+              "data/track3/observation_queue.json",
+              "data/track3/research_queue.json",
+              "data/track3/facility_provenance.json",
+              "data/track3/entity_resolution.json",
+              "data/project_level_extractions.json",
+              "data/bpa_large_load_registry.json",
+              "data/bpa_large_load_registry.csv",
+              "data/project_level_map.json",
+              "data/supplemental_large_load_evidence.json",
+              "data/supplemental_aggregate_map.json",
+              "data/website_completeness_audit.json",
+          ]
+          for path in critical:
+              p=Path(path)
+              assert p.exists(), f"missing public artifact: {path}"
+              assert p.stat().st_size > 0, f"empty public artifact: {path}"
+              if p.suffix == ".json":
+                  json.loads(p.read_text(encoding="utf-8"))
+          status=json.loads(Path("data/queue_layer_status.json").read_text(encoding="utf-8"))
+          for feed in status["feeds"]:
+              if feed["snapshot_present"]:
+                  p=Path(feed["snapshot"])
+                  assert p.exists() and p.stat().st_size > 0, f"queue snapshot missing/empty: {feed['id']}"
+          targets=json.loads(Path("data/track3/remote_sensing_observation_targets.json").read_text(encoding="utf-8"))
+          physical=json.loads(Path("data/physical_verification_layer.json").read_text(encoding="utf-8"))
+          assert targets["record_count"] == len(targets["records"]) == 93
+          assert targets["summary"]["derived_observation_count"] == physical["summary"]["derived_observation_count"] > 0
+          assert targets["summary"]["sites_with_any_derived_observation"] == physical["summary"]["derived_observation_sites"] == 92
+          print("PASS: critical public artifacts exist, are non-empty, parse as JSON, and reconcile Track 3 physical counts")
+          PY
+
+      - name: Validate closed-case and strict discovery contracts
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          cases = json.loads(Path("data/track3/ambiguous_case_studies.json").read_text(encoding="utf-8"))
+          strict = json.loads(Path("data/track3/strict_discovery_candidates.json").read_text(encoding="utf-8"))
+
+          assert len(cases["cases"]) == 4
+          for case in cases["cases"]:
+              q = case["queue"]
+              assert str(q["project_type"]).strip().lower() in {"load", "new load facility", "increase load"}
+              assert q.get("classification_basis")
+              assert case.get("unresolved_items")
+
+          ids = [x["queue_id"] for x in strict["candidates"]]
+          assert len(ids) == len(set(ids))
+          assert len(ids) == 5
+          for x in strict["candidates"]:
+              assert x["capacity_mw"] >= 100
+              assert x["load_status"] == "PUBLICLY_CLASSIFIED_LOAD"
+              assert x["identity_gap"]
+              assert x["physical_gap"]
+
+          protocol = Path("CLOSED_CASE_PROTOCOL.md").read_text(encoding="utf-8")
+          assert "Candidate admission gate" in protocol
+          assert "Generation, surplus, transmission" in protocol
+
+          print("PASS: closed-case and strict discovery contracts")
+          PY
+
+      - name: Run closed-case validator
+        run: python validate_ambiguous_case_studies.py
+      - name: Run strict discovery candidate validator
+        run: python validate_strict_discovery_candidates.py
+      - name: Reconcile broad ambiguity classification summary
+        run: python build_ambiguity_classification_summary.py --check
+      - name: Validate complete Track 3 coverage contract
+        run: python validate_track3_complete_coverage.py
+
+      - name: Validate normalized public-web claims
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          src=json.loads(Path("data/track3/public_web_enrichment_2026-09-27.json").read_text(encoding="utf-8"))
+          claims=json.loads(Path("data/track3/public_web_claims.json").read_text(encoding="utf-8"))
+          source_records=src["records"]
+          claim_rows=claims["claims"]
+          assert len(source_records) == len(claim_rows)
+          def source_key(x):
+              payload={"site_name":x.get("site_name"),"field":x.get("field"),"value":x.get("value"),
+                       "relationship":x.get("relationship"),"source":x.get("source"),
+                       "source_urls":x.get("source_urls") or [],"publication_date":x.get("publication_date"),
+                       "source_record_id":x.get("evidence_id") or x.get("source_record_id")}
+              return json.dumps(payload,sort_keys=True,ensure_ascii=False,separators=(",",":"))
+          assert len({source_key(x) for x in source_records}) == len(source_records)
+          assert {source_key(x) for x in source_records} == {source_key(x) for x in claim_rows}
+          assert len({x["claim_id"] for x in claim_rows}) == len(claim_rows)
+          assert all(x.get("source_urls") for x in claim_rows)
+          assert all(x.get("epoch_id") for x in claim_rows if x.get("claim_scope") == "site_level_public_web")
+          assert all(x.get("claim_scope") in {"site_level_public_web","state_or_multi_site_public_web"} for x in claim_rows)
+          print(f"PASS: {len(claim_rows)} public-web claims")
+          PY
+
+      - name: Validate normalized public research leads
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("data/track3/public_research_leads.json").read_text(encoding="utf-8"))
+          rows=d["records"]
+          assert d["accounting"]["lead_count"] == len(rows) == 54
+          assert d["accounting"]["site_count"] == 34
+          assert len({x["lead_id"] for x in rows}) == len(rows)
+          assert all(x["epoch_id"] and x["field"] and x["finding"] for x in rows)
+          assert all(x["status"] in {"PUBLIC_LEAD_REVIEW_REQUIRED","RETAINED_SOURCE","PUBLIC_SOURCE"} for x in rows)
+          print(f"PASS: {len(rows)} public research leads")
+          PY
+
+      - name: Validate canonical cross-artifact consistency
+        run: python validate_cross_artifact_consistency.py
+
+      - name: Validate discovery files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          robots = Path("robots.txt").read_text(encoding="utf-8")
+          sitemap = Path("sitemap.xml").read_text(encoding="utf-8")
+          assert "Sitemap: https://anonrish.github.io/continental-load-registry/sitemap.xml" in robots
+          urls = re.findall(r"<loc>(.*?)</loc>", sitemap)
+          assert urls
+          for url in urls:
+              assert url.startswith("https://anonrish.github.io/continental-load-registry/")
+          for target in ("index.html","track3.html","plan-a.html"):
+              assert f"https://anonrish.github.io/continental-load-registry/{'' if target=='index.html' else target}" in urls
+          print("PASS: robots.txt and sitemap.xml")
+          PY

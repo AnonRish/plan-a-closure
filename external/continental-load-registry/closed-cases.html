@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Closed Cases · Continental Large-Load Registry</title>
+<meta name="description" content="Closed-case laboratory for the Continental Large-Load Registry Track 3 research workflow.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="observatory-nav.css">
+<link rel="stylesheet" href="closed-cases.css">
+</head>
+<body>
+<main class="cc-page">
+  <section class="cc-hero">
+    <div>
+      <div class="cc-kicker">TRACK 3 · CLOSED-CASE LABORATORY</div>
+      <h1>Stop widening.<br><span>Start closing.</span></h1>
+      <p>Four ambiguous/controlled load candidates taken through the same public-evidence workflow. The objective is not to prove that every site can be identified; it is to show exactly what happens when a case is pushed from a raw load signal to a reproducible disposition.</p>
+      <div class="cc-pills">
+        <span>141-record broad pool</span>
+        <span>3 pilot cases</span>
+        <span>0 forced answers</span>
+      </div>
+    </div>
+    <div class="cc-hero-card">
+      <div class="cc-mini-label">CURRENT PILOT</div>
+      <div class="cc-hero-stat" id="caseCount">—</div>
+      <div class="cc-mini-copy">closed cases retained in the machine-readable evidence bundle</div>
+      <div class="cc-hero-rule"></div>
+      <div class="cc-flow">
+        <span>QUEUE</span><i>→</i><span>ENTITY</span><i>→</i><span>LOCATION</span><i>→</i><span>PHYSICAL</span><i>→</i><span>ADJUDICATION</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="cc-section">
+    <div class="cc-section-head">
+      <div>
+        <div class="cc-kicker">WHY THESE CASES</div>
+        <h2>A method test, not a victory lap</h2>
+      </div>
+      <p>Epoch remains a useful independent reference set, but the pilot starts from facilities the registry itself finds ambiguous. That is where the method has to do discovery and disambiguation rather than merely cross-reference an already-known site.</p>
+    </div>
+    <div class="cc-dims">
+      <div><b>01</b><strong>Data-center resolution</strong><span>Can an unresolved large-load signal be tied to a public data-center identity?</span></div>
+      <div><b>02</b><strong>Industrial resolution</strong><span>Can the same workflow correctly land on a non-data-center end use?</span></div>
+      <div><b>03</b><strong>Honest non-closure</strong><span>Can the workflow stop without turning missing evidence into a forced label?</span></div>
+    </div>
+  </section>
+
+  <section class="cc-section">
+    <div class="cc-section-head">
+      <div>
+        <div class="cc-kicker">CASE FILES</div>
+        <h2>End-to-end dispositions</h2>
+      </div>
+      <p id="generated">Loading retained case bundle…</p>
+    </div>
+    <div id="cases" class="cc-cases"></div>
+  </section>
+
+  <section class="cc-section">
+    <div class="cc-section-head">
+      <div>
+        <div class="cc-kicker">NEXT CASES</div>
+        <h2>Strict admitted load candidates</h2>
+      </div>
+      <p>These are the next closure targets after applying the explicit load-classification gate. They are a research queue, not claims of hidden facilities or outcome predictions.</p>
+    </div>
+    <div id="nextCandidates" class="cc-dims"></div>
+  </section>
+
+  <section class="cc-section cc-method">
+    <div class="cc-section-head">
+      <div>
+        <div class="cc-kicker">CLOSURE STANDARD</div>
+        <h2>What “closed” means here</h2>
+      </div>
+      <p>Closure is a terminal evidence state. It does not mean every gate produced a positive finding.</p>
+    </div>
+    <div class="cc-gates">
+      <div><span>01</span><strong>Queue</strong><small>specific public load record</small></div>
+      <div><span>02</span><strong>Entity</strong><small>resolved or bounded mismatch</small></div>
+      <div><span>03</span><strong>Location</strong><small>defensible site target</small></div>
+      <div><span>04</span><strong>Evidence</strong><small>claim-scoped public sources</small></div>
+      <div><span>05</span><strong>Physical</strong><small>acquired, degraded, or blocked</small></div>
+      <div><span>06</span><strong>Electrical</strong><small>transformer/service search</small></div>
+      <div><span>07</span><strong>Adjudication</strong><small>disposition + boundaries</small></div>
+    </div>
+    <div class="cc-note"><b>Important:</b> queue MW is not measured load, satellite observation is not compute proof, and a “no public record” outcome is not evidence of absence.</div>
+  </section>
+</main>
+
+<script>
+const esc=s=>String(s===undefined||s===null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pill=(label,kind)=>'<span class="cc-badge '+(kind||'neutral')+'">'+esc(label)+'</span>';
+const shortStatus=s=>String(s||'').replace(/_/g,' ').replace(/\b\w/g,m=>m.toUpperCase());
+
+function sourceList(c){
+  return (c.public_evidence||[]).map(e=>'<li><a href="'+esc(e.url)+'" target="_blank" rel="noopener">'+esc(e.source)+'</a><span>'+esc(e.what_it_proves)+'</span></li>').join('');
+}
+function gateRows(c){
+  const rows=[
+    ['Queue',c.queue&&c.queue.status,c.queue&&c.queue.details],
+    ['Entity',c.entity_resolution&&c.entity_resolution.status,(c.entity_resolution&& (c.entity_resolution.resolved_entity||c.entity_resolution.resolved_project||c.entity_resolution.boundary||c.entity_resolution.mismatch))],
+    ['Location',c.location&&c.location.status,[c.location&&c.location.address,c.location&&c.location.precision].filter(Boolean).join(' · ')],
+    ['Physical',c.physical_observations&&c.physical_observations.status,String(c.physical_observations&&c.physical_observations.derived_observation_count||0)+' retained derived observations'],
+    ['Electrical',c.transformer_check&&c.transformer_check.status,c.transformer_check&&c.transformer_check.summary]
+  ];
+  return rows.map(r=>'<div class="cc-gate-row"><span>'+esc(r[0])+'</span>'+pill(shortStatus(r[1]),r[1]==='FOUND'||r[1]==='RESOLVED'?'good':'warn')+'<p>'+esc(r[2])+'</p></div>').join('');
+}
+function adjudicationClass(s){
+  if(s==='CONFIRMED_DATA_CENTER')return 'good';
+  if(s==='INCONCLUSIVE_AFTER_SEARCH')return 'warn';
+  return 'neutral';
+}
+function renderCase(x,i){
+  return '<article class="cc-case">'
+    +'<div class="cc-case-top"><div>'
+    +'<div class="cc-case-index">CASE '+String(i+1).padStart(2,'0')+' · '+esc(x.case_id)+'</div>'
+    +'<h3>'+esc(x.project_name)+'</h3>'
+    +'<div class="cc-case-meta">'+esc(x.rto)+' · '+esc(x.queue_id)+' · '+esc(x.capacity_mw)+' MW</div>'
+    +'</div><div class="cc-adjudication">'+pill(shortStatus(x.adjudication),adjudicationClass(x.adjudication))+'</div></div>'
+    +'<div class="cc-closure">'+esc(shortStatus(x.closure_state))+'</div>'
+    +'<div class="cc-summary">'+esc(x.pilot_role)+'</div>'
+    +'<div class="cc-gates-grid">'+gateRows(x)+'</div>'
+    +'<div class="cc-two-col"><div><div class="cc-subhead">What the retained sources establish</div><ul class="cc-sources">'+sourceList(x)+'</ul></div>'
+    +'<div><div class="cc-subhead">Boundaries that remain</div><ul class="cc-unresolved">'+(x.unresolved_items||[]).map(v=>'<li>'+esc(v)+'</li>').join('')+'</ul></div></div>'
+    +'<div class="cc-method-note"><b>Methods note:</b> '+esc(x.methods_note)+'</div>'
+    +'</article>';
+}
+async function load(){
+  const [c,p]=await Promise.all([
+    fetch('data/track3/ambiguous_case_studies.json?cb=20260927',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('case bundle unavailable');return r.json();}),
+    fetch('data/track3/ambiguous_case_physical_observations.json?cb=20260927',{cache:'no-store'}).then(r=>r.json())
+  ]);
+  document.getElementById('caseCount').textContent=c.cases.length;
+  document.getElementById('generated').textContent='Generated '+c.generated_on+' · '+p.derived_observation_count+' derived physical observations across the pilot bundle.';
+  document.getElementById('cases').innerHTML=c.cases.map(renderCase).join('');
+}
+async function loadNextCandidates(){
+  try{
+    const d=await fetch('data/track3/strict_discovery_research_packets.json?cb=20260927',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('strict candidate packet unavailable');return r.json();});
+    const el=document.getElementById('nextCandidates');
+    if(!el)return;
+    el.innerHTML=d.candidates.map((x,i)=>{
+      const sources=(x.source_ladder||[]).filter(s=>s.url).slice(0,3).map(s=>'<a class="cc-candidate-source" href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.kind||'source')+' ↗</a>').join('');
+      const gates=(x.next_gates||[]).slice(0,4).map(g=>'<span class="cc-gate-chip">'+esc(g.replace(/_/g,' '))+'</span>').join('');
+      const role=(x.research_role||'').toLowerCase().includes('control')?'CONTROL':'PRIMARY TARGET';
+      return '<div><b>'+String(i+1).padStart(2,'0')+'</b><span class="cc-role">'+esc(role)+'</span><strong>'+esc(x.project_name)+'</strong><span>'+esc(x.rto)+' · '+esc(x.queue_id)+' · '+esc(x.capacity_mw)+' MW<br>'+esc(x.current_identity_gap)+'<br>'+esc(x.current_physical_gap)+'</span><div class="cc-candidate-sources">'+sources+'</div><div class="cc-gate-chips">'+gates+'</div><a class="cc-candidate-link" href="STRICT_DISCOVERY_RESEARCH.md">Research packet →</a></div>';
+    }).join('')+
+      '<div style="grid-column:1/-1;background:transparent;border-style:dashed;min-height:auto"><strong>Admission rule</strong><span>Explicit source-level load classification is required. Missing developer information alone does not qualify as discovery evidence.</span><a class="cc-candidate-link" href="data/track3/strict_discovery_candidates.json">Open strict candidate ledger →</a></div>';
+  }catch(e){
+    const el=document.getElementById('nextCandidates');
+    if(el)el.innerHTML='<div class="cc-error">'+esc(e.message)+'</div>';
+  }
+}
+load().catch(e=>document.getElementById('cases').innerHTML='<div class="cc-error">'+esc(e.message)+'</div>');
+loadNextCandidates();
+</script>
+<script src="observatory-nav.js" defer></script>
+</body>
+</html>

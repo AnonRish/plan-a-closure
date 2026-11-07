@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Interconnection Queues vs Satellite / Permit Mapping · Blind Spots</title>
+<meta name="description" content="A methodological comparison of public interconnection records and satellite/permit mapping for AI data-center and compute verification research.">
+<style>
+:root{--ink:#16233A;--soft:#526175;--faint:#7d8b9d;--paper:#eef2ed;--panel:#fbfcfa;--line:#d7deda;--strong:#b7c2bc;--blue:#2d5d91;--amber:#a85e0a;--amberbg:#f3e3c9}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 system-ui,-apple-system,Segoe UI,sans-serif}.wrap{max-width:980px;margin:auto;padding:0 22px}header{padding:44px 0 28px;border-bottom:1px solid var(--line)}h1{font-size:clamp(32px,6vw,54px);line-height:1.02;letter-spacing:-.04em;margin:10px 0 14px}h2{font-size:22px;margin:34px 0 10px}h3{font-size:16px;margin:22px 0 8px}.kicker,.mono{font:600 11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.09em;color:var(--faint)}.lead{font-size:17px;color:var(--soft);max-width:850px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:18px 0}.notice{background:var(--amberbg);border:1px solid var(--strong)}a{color:inherit}.btn{display:inline-block;padding:8px 11px;border:1px solid var(--strong);border-radius:8px;text-decoration:none;font-size:12px;margin-right:6px;margin-bottom:6px}.btn:hover{background:var(--amberbg)}table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:13px}th{color:var(--soft);font-weight:600}blockquote{margin:14px 0;padding:12px 15px;border-left:3px solid var(--blue);background:var(--panel)}code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em}.sources li{margin:7px 0}footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 42px;color:var(--faint);font-size:12px}
+</style></head><body>
+<header><div class="wrap"><div class="kicker">Track 3 · methodological comparison</div>
+<h1>Interconnection Queues vs. Satellite / Permit Mapping</h1>
+<p class="lead">What public electrical records reveal that physical mapping does not, what physical mapping reveals that queues do not, and why their disagreement is itself a useful research object.</p>
+<div><a class="btn" href="index.html">← Main registry</a><a class="btn" href="plan-a.html">Plan A bridge</a><a class="btn" href="ai-data-center-explorer.html">AI data-center explorer</a></div></div></header>
+<main class="wrap">
+<section class="panel notice"><strong>Scope boundary.</strong> The interconnection core is North America-only public-evidence coverage. Its strongest direct use is the Phase 1-style question of what large compute/load is publicly evidenced and who is associated with it; it is not a bilateral U.S.–China verification system. The public-source boundary also means a genuinely covert project could avoid these signals. The defensible capability claim is to <strong>raise the cost of hiding and map the ambiguous middle</strong>, not to claim discovery of every secret facility.</section>
+
+<h2>1. Two different observation layers</h2>
+<h3>Interconnection / connection records</h3>
+<p>A queue or connection record is an <strong>electrical-system observation</strong>. Depending on the market, public records can expose requested capacity, project/request identity, point of interconnection, study status, dates, developer/applicant fields, and transmission or distribution relationships.</p>
+<p>The timing advantage is that an interconnection request can exist <strong>before physical construction is visible</strong>. It can therefore reveal large-load intent while a project is still a planning or study object.</p>
+<p>The hard boundary is equally important: it only sees projects that enter the public connection process represented by the source. It can miss compute built on existing capacity, behind-the-meter or privately supplied generation, existing service arrangements, unclear customers, cancelled/renamed projects, and jurisdictions without useful public queue data.</p>
+<h3>Satellite imagery / permits / physical mapping</h3>
+<p>Satellite and permit evidence is a <strong>physical-construction observation</strong>. It can reveal land clearing, building shells, roof completion, substations, cooling equipment, turbines, batteries, roads, construction sequencing and other visible infrastructure, while permits can add building, mechanical and electrical documentation.</p>
+<p>Its advantage is physical realization: it can show that something was actually built rather than merely requested. Its blind spot is that intent can precede visible construction, and physical evidence alone may not identify the exact tenant, current hardware population, or workload.</p>
+
+<h2>2. The timing distinction</h2>
+<div class="panel"><p class="mono">QUEUE / CONNECTION</p><p>project request → study / approval → construction may follow</p><p class="mono">SATELLITE / PERMIT</p><p>land / construction / equipment → commissioning → physical operation becomes observable</p></div>
+<p>The intervals are project- and market-specific. An interconnection record can therefore provide an <strong>earlier signal</strong> than imagery for some projects, while imagery can provide a <strong>later physical confirmation</strong> of what the electrical record represented.</p>
+<p>Neither layer should be collapsed into a single “facility found” field.</p>
+
+<h2>3. The overlap is more informative than either list alone</h2>
+<p>The repository preserves the September 2026 Epoch AI snapshot as a separate evidence layer: <strong>93 sites</strong>, with <strong>545 dated timeline observations</strong> and <strong>227 chip-quantity observations</strong>. The current build also maintains a conservative connection crosswalk for all 93 Epoch sites.</p>
+<table><thead><tr><th>Relationship</th><th>Interpretation</th></tr></thead><tbody>
+<tr><td>Queue evidence + physical evidence</td><td>Electrical intent and physical realization point toward the same project/site; identity and capacity still require careful matching.</td></tr>
+<tr><td>Queue evidence without physical evidence</td><td>Could indicate an earlier-stage, delayed, cancelled, non-public physical realization, or an identity/geography problem.</td></tr>
+<tr><td>Physical evidence without queue evidence</td><td>Could indicate existing-capacity expansion, another connection pathway, private generation, insufficient queue coverage, or unresolved identity.</td></tr>
+<tr><td>Neither</td><td><strong>No public signal in these layers</strong>, not evidence that no project or compute exists.</td></tr></tbody></table>
+
+<h2>4. Why the Epoch cross-reference matters</h2>
+<p>Epoch's current public AI-data-center dataset describes independent estimates based on high-resolution satellite imagery, permits and public documents, with site timelines and estimates of IT power, compute and cost. Its September 24, 2026 release covers <strong>93 sites</strong> and reports <strong>13.5 GW of IT power</strong>.</p>
+<p>The registry starts from a different observation stream: public electrical-system records. It tries to resolve project/entity/site relationships without treating queue MW and AI-data-center IT MW as identical quantities.</p>
+<blockquote><strong>Where do the two methods agree, where do they disagree, and what does each disagreement tell us to investigate next?</strong></blockquote>
+
+<h2>5. Relation to Naci Cankaya's work</h2>
+<p>Cankaya's 2024 BlueDot project, <em>Are you secretly training AI?</em>, explicitly explored detecting covert AI training through physical signatures including power consumption, cooling requirements and computational hardware characteristics. The project describes itself as a theoretical exploration and a four-week project rather than an empirical dataset.</p>
+<p>The registry is a different kind of contribution: it applies the <strong>grid-interconnection slice</strong> of that physical-signature idea at nine real North American organized-market public systems, with source preservation, entity resolution, dated captures and an explicit ambiguous tier.</p>
+<blockquote><strong>You explored a detection category from unavoidable physical signatures; I built a public-data implementation of the grid-interconnection slice of that idea at nine-market scale.</strong></blockquote>
+
+<h2>6. Relation to AI 2040 / Plan A</h2>
+<p>This registry is best treated as a <strong>supporting observability layer</strong>, not as the international verification regime itself. Its strongest direct contribution is the Phase 1-style accounting question:</p>
+<blockquote><strong>What large compute/load is publicly evidenced, and who is associated with it?</strong></blockquote>
+<p>It does not by itself provide bilateral U.S.–China coverage, treaty-grade inspection, hardware attestation, workload verification, or a method for discovering facilities intentionally designed to leave no public signal.</p>
+
+<h2>7. The two hard limits</h2>
+<h3>Geographic limit</h3><p>The main interconnection registry is North American. It therefore cannot by itself provide the bilateral U.S.–China visibility that a mature international Track 3 verification system would require.</p>
+<h3>Disclosure limit</h3><p>The registry is built from public evidence. A genuinely covert project would have an incentive to avoid public queue, permit, utility and similar disclosure signals.</p>
+<p><strong>Absence of a public signal is an unresolved evidence state, not evidence of absence.</strong></p>
+
+<h2>8. Research implication</h2>
+<p>The high-value next step is not simply adding more facilities. It is systematically measuring the <strong>disagreement set</strong> between electrical, physical, and other independent signals: queue first, physical evidence later, reconcile identity and capacity, retain divergence as a research target, add independent evidence where available, and never silently promote unresolved cases.</p>
+
+<h2>Sources</h2>
+<ul class="sources">
+<li><a href="https://epoch.ai/data/ai-data-centers">Epoch AI — AI data centers</a> (updated September 24, 2026).</li>
+<li><a href="https://epoch.ai/data/data-centers-documentation/records">Epoch AI — AI data-center records documentation</a>.</li>
+<li><a href="https://blog.bluedot.org/p/are-you-secretly-training-ai-methods-for-uncovering-covert-ai-training-a-framework-for-feasibility-and-future-research">Naci Cankaya — Are you secretly training AI?</a> (December 17, 2024).</li>
+<li><a href="https://nacicankaya.substack.com/p/research-note-the-fundamentals-and">Naci Cankaya — Secure network taps for verifying AI datacenter use</a> (April 2026).</li>
+<li><a href="https://ai-2040.com/supplements/verification-plan/get-involved">AI 2040 — Get involved in verification</a>.</li>
+</ul>
+</main><footer><div class="wrap">Independent open-source research infrastructure · scope and limitations are deliberately explicit.</div></footer>
+</body></html>

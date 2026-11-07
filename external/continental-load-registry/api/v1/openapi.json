@@ -1,0 +1,183 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Continental Registry Static API",
+    "version": "v1",
+    "description": "Static machine-readable endpoints for the Continental Registry core queue, 93-site Track 3 facility universe, evidence/provenance/verification layers, public enrichment bridge, remote-sensing acquisition targets and transformer evidence."
+  },
+  "servers": [
+    {
+      "url": "https://anonrish.github.io/continental-load-registry"
+    }
+  ],
+  "paths": {
+    "/api/v1/facilities.json": {
+      "get": {
+        "summary": "List the 93 Track 3 facility records",
+        "responses": {
+          "200": {
+            "description": "JSON facility index"
+          }
+        }
+      }
+    },
+    "/data/facility_records/index.json": {
+      "get": {
+        "summary": "List the 1,540 queue registry facility-record shards",
+        "responses": {
+          "200": {
+            "description": "RTO shard index"
+          }
+        }
+      }
+    },
+    "/data/facility_records/{rto}/{shard}.json": {
+      "get": {
+        "summary": "Fetch a queue/facility record shard",
+        "parameters": [
+          {
+            "name": "rto",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shard",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Facility record shard"
+          }
+        }
+      }
+    },
+    "/data/external/epoch_ai/crosswalk.csv": {
+      "get": {
+        "summary": "Fetch Epoch-to-grid crosswalk",
+        "responses": {
+          "200": {
+            "description": "Crosswalk CSV"
+          }
+        }
+      }
+    },
+    "/data/external/epoch_ai/crosswalk.json": {
+      "get": {
+        "summary": "Fetch Epoch-to-grid crosswalk JSON",
+        "responses": {
+          "200": {
+            "description": "Crosswalk JSON"
+          }
+        }
+      }
+    },
+    "/api/v1/facilities.csv": {
+      "get": {
+        "summary": "List the 93 Track 3 facilities as CSV",
+        "responses": {
+          "200": {
+            "description": "CSV facility index"
+          }
+        }
+      }
+    },
+    "/data/track3/evidence_records.json": {
+      "get": {
+        "summary": "Fetch Track 3 evidence ledger",
+        "responses": {
+          "200": {
+            "description": "Evidence records"
+          }
+        }
+      }
+    },
+    "/data/track3/facility_provenance.json": {
+      "get": {
+        "summary": "Fetch facility provenance ledger",
+        "responses": {
+          "200": {
+            "description": "Static JSON resource"
+          }
+        }
+      }
+    },
+    "/data/track3/summary.json": {
+      "get": {
+        "summary": "Fetch canonical Track 3 summary",
+        "responses": {
+          "200": {
+            "description": "Static JSON resource"
+          }
+        }
+      }
+    },
+    "/data/track3/observation_queue.json": {
+      "get": {
+        "summary": "Fetch Track 3 observation acquisition queue",
+        "responses": {
+          "200": {
+            "description": "Static JSON resource"
+          }
+        }
+      }
+    },
+    "/data/track3/research_complete_no_public_record.json": {
+      "get": {
+        "summary": "Fetch completed site-specific searches with no retained public record",
+        "responses": {
+          "200": {
+            "description": "Static JSON resource"
+          }
+        }
+      }
+    },
+    "/data/track3/remote_sensing_observation_targets.json": {
+      "get": {
+        "summary": "Fetch 93-site optical/TIR/SAR acquisition target ledger",
+        "responses": {
+          "200": {
+            "description": "Static JSON resource"
+          }
+        }
+      }
+    },
+    "/data/track3/transformer_supply_chain_events.json": {
+      "get": {
+        "summary": "Fetch source-backed transformer supply-chain event ledger",
+        "responses": {
+          "200": {
+            "description": "Static JSON resource"
+          }
+        }
+      }
+    },
+    "/data/external/epoch_ai/queue_crosswalk.json": {
+      "get": {
+        "summary": "Fetch 93-site Epoch-to-grid queue crosswalk",
+        "responses": {
+          "200": {
+            "description": "Static JSON resource"
+          }
+        }
+      }
+    },
+    "/data/external/intel_accelerator_enrichment.json": {
+      "get": {
+        "summary": "Fetch 93-site public project enrichment bridge",
+        "responses": {
+          "200": {
+            "description": "Static JSON resource"
+          }
+        }
+      }
+    }
+  }
+}

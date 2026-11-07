@@ -1,0 +1,11 @@
+[package]
+name = "tap_reader_adapter"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+# Pinned to the commit this adapter was written and tested against.
+tap_reader = { git = "https://github.com/AnonRish/ai-2040-verification", rev = "0199a4bd0411d682a3d02286148bdbf0e44d1e1d" }
+
+[workspace]

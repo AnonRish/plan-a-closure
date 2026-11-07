@@ -1,0 +1,13 @@
+{
+  "alpha": 0.05,
+  "window": 200,
+  "windows_per_scenario": 400,
+  "alarm_rate": {
+    "honest i.i.d. (false-alarm rate)": 0.03,
+    "honest bursty (false-alarm rate)": 0.0375,
+    "naive 4-level channel, 2 bits/packet, vs i.i.d.": 1.0,
+    "exact-marginal quantile channel, 1 bit(s)/packet, vs i.i.d.": 0.0275,
+    "exact-marginal quantile channel, 3 bit(s)/packet, vs i.i.d.": 0.05,
+    "marginal-only quantile channel, 2 bits/packet, vs bursty": 1.0
+  }
+}

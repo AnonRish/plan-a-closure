@@ -1,0 +1,93 @@
+# Manual retrigger: 2026-09-26T21:00 ET — rebuild complete public queue snapshot if source is available.
+# Run after exact CAISO workbook-schema alignment.
+# Triggered after parser verification on 2026-09-26.
+# Manual refresh trigger prepared 2026-09-26; scheduled and workflow_dispatch refreshes remain enabled.
+name: Sync CAISO complete public queue
+
+on:
+  schedule:
+    - cron: "20 7 * * *"
+  push:
+    paths:
+      - "sync_caiso_public_queue.py"
+      - ".github/workflows/sync_caiso_public_queue.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: track3-canonical-writers-main
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas openpyxl requests
+      - name: Self-test parser
+        run: python sync_caiso_public_queue.py --selftest
+      - name: Download and normalize complete CAISO queue
+        run: python sync_caiso_public_queue.py --output-dir data
+      - name: Validate output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("data")
+          q = json.loads((root/"caiso_public_queue.json").read_text(encoding="utf-8"))
+          assert q["record_count"] == len(q["records"]) > 0
+          assert set(q["sheet_counts"]) == {"Grid GenerationQueue", "Completed Generation Projects", "Withdrawn Generation Projects"}
+          assert sum(q["sheet_counts"].values()) == q["record_count"]
+          assert (root/"caiso_public_queue.csv").stat().st_size > 0
+          summary = json.loads((root/"caiso_public_queue_summary.json").read_text(encoding="utf-8"))
+          assert summary["record_count"] == q["record_count"]
+          assert summary["records_with_county_and_state"] > 0
+          print("PASS: complete CAISO public queue dataset")
+          print("records:", q["record_count"])
+          print("sheets:", q["sheet_counts"])
+          print(">=100MW:", summary["records_ge_100mw"])
+          PY
+      - name: Update queue layer status
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          now=json.loads(Path("data/caiso_public_queue_summary.json").read_text(encoding="utf-8"))
+          status_path=Path("data/queue_layer_status.json")
+          obj=json.loads(status_path.read_text(encoding="utf-8"))
+          feed=next(f for f in obj["feeds"] if f["id"]=="CAISO")
+          feed["snapshot_present"]=True
+          feed["last_capture"]=now["captured_at"]
+          feed["record_count"]=now["record_count"]
+          if "records_ge_100mw" in now: feed["records_ge_100mw"]=now["records_ge_100mw"]
+          if "missing_ge_100_location" in now: feed["unresolved_ge_100_location"]=now["missing_ge_100_location"]
+          status_path.write_text(json.dumps(obj,indent=2)+"\n",encoding="utf-8")
+          PY
+      - name: Refresh derived counts in public artifacts
+        run: python refresh_derived_counts.py
+      - name: Commit refreshed CAISO queue
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/caiso_public_queue.json data/caiso_public_queue.csv data/caiso_public_queue_summary.json
+          git add data/queue_layer_status.json data/map_layer_manifest.json
+          if git diff --cached --quiet; then
+            echo "No CAISO queue changes to commit."
+            exit 0
+          fi
+          git commit -m "Automated CAISO complete public queue sync: $(date -u +%Y-%m-%d)"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main

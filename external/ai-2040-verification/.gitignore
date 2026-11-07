@@ -1,0 +1,18 @@
+# Rust
+tap_reader/target/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Generated data / model artifacts (see README — regenerate via train.py etc.)
+*.pkl
+shakespeare.txt
+vocab.pkl
+tau.txt
+.artifacts
+
+# OS cruft
+.DS_Store

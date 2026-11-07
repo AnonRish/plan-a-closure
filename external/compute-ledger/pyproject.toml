@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "compute-ledger"
+version = "0.1.0"
+description = "Chip-stock accounting and declared-versus-estimated reconciliation with uncertainty, checked against the AI 2040 Plan A compute figures"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "hypothesis>=6", "numpy>=1.26", "scipy>=1.11"]
+
+[project.scripts]
+compute-ledger = "compute_ledger.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+compute_ledger = ["data/*.json"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

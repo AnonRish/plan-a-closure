@@ -1,0 +1,29 @@
+{
+  "gpus_per_facility": 5702,
+  "gpus_per_inference_unit": 8,
+  "units_per_rack_assumption": 6,
+  "units_per_facility": 712.75,
+  "racks_per_facility": 118.79166666666667,
+  "taps_per_facility": {
+    "facility": 1.0,
+    "rack": 118.79166666666667,
+    "server": 712.75
+  },
+  "fleet_sweep": {
+    "100": {
+      "facility": 100.0,
+      "rack": 11879.166666666668,
+      "server": 71275.0
+    },
+    "300": {
+      "facility": 300.0,
+      "rack": 35637.5,
+      "server": 213825.0
+    },
+    "1000": {
+      "facility": 1000.0,
+      "rack": 118791.66666666667,
+      "server": 712750.0
+    }
+  }
+}

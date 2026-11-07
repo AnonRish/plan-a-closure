@@ -1,0 +1,64 @@
+name: Track 3 strict discovery physical acquisition
+
+on:
+  push:
+    paths:
+      - "acquire_strict_discovery_physical.py"
+      - "data/track3/strict_discovery_physical_targets.json"
+      - ".github/workflows/track3_strict_discovery_physical.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: track3-canonical-writers-main
+  cancel-in-progress: false
+
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install physical acquisition dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests numpy rasterio planetary-computer pystac-client
+      - name: Validate syntax
+        run: python -m py_compile acquire_strict_discovery_physical.py acquire_physical_verification.py
+      - name: Acquire strict discovery physical observations
+        run: python acquire_strict_discovery_physical.py
+      - name: Validate output semantics
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("data/track3/strict_discovery_physical_observations.json").read_text(encoding="utf-8"))
+          assert d["target_count"] >= 1
+          assert d["observation_count"] >= d["derived_observation_count"] >= 0
+          for r in d["records"]:
+              if r.get("status") == "INGESTED_DERIVED":
+                  assert r.get("scene_id")
+                  assert r.get("stac_item_url")
+                  assert r.get("observed_on")
+                  assert r.get("metrics") is not None
+          print("PASS: strict discovery physical observation artifact")
+          print("targets=", d["target_count"], "observations=", d["observation_count"], "derived=", d["derived_observation_count"])
+          PY
+      - name: Commit strict discovery physical artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/track3/strict_discovery_physical_observations.json data/track3/strict_discovery_physical_observations.csv
+          if git diff --cached --quiet; then
+            echo "No strict discovery physical changes."
+            exit 0
+          fi
+          git commit -m "Publish strict discovery physical observations"
+          git fetch origin main
+          git rebase --autostash origin/main
+          git push origin HEAD:main

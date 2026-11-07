@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Global Compute Universe · Continental Load Registry</title>
+<meta name="description" content="Federated database of AI data centers, broader compute facilities and large campuses assembled from Epoch AI, Compute Atlas and Data Center Index with source-aware deduplication.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<style>
+:root{--ink:#16233A;--soft:#58677A;--faint:#7D8A9C;--paper:#EEF2ED;--panel:#FBFCFA;--line:#D7DEDA;--strong:#B7C2BC;--amber:#A85E0A;--amber-soft:#F3E3C9;--teal:#33604F;--teal-soft:#DBE9E2;--blue:#2E5B8C}
+:root[data-theme="dark"]{--ink:#E9EEF3;--soft:#AEBBCB;--faint:#7C8AA0;--paper:#0F1620;--panel:#161F2B;--line:#293445;--strong:#3A4759;--amber:#E3A458;--amber-soft:#3A2E1B;--teal:#7FB69E;--teal-soft:#17332A;--blue:#78A8D6}
+*{box-sizing:border-box}html,body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif}a{color:inherit}button,input,select{font:inherit}
+.wrap{max-width:1500px;margin:0 auto;padding:0 18px}.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}.faint{color:var(--faint)}.soft{color:var(--soft)}
+.nav{position:sticky;top:0;z-index:50;padding:8px 0;background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.navin{max-width:1500px;margin:auto;padding:0 18px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}.nav a,.nav button{display:inline-flex;align-items:center;border:1px solid var(--line);background:var(--panel);padding:7px 10px;border-radius:9px;text-decoration:none;font-size:11px}.nav a:hover,.nav button:hover{background:var(--amber-soft)}
+.hero{padding:34px 0 22px}.eyebrow{text-transform:uppercase;letter-spacing:.13em;font:500 10px 'IBM Plex Mono',monospace;color:var(--faint)}h1{font-size:clamp(2.25rem,5vw,4.4rem);line-height:.96;letter-spacing:-.05em;margin:8px 0 12px}h2{font-size:19px;margin:0 0 6px}h3{font-size:14px;margin:0 0 5px}.hero p{max-width:1000px;font-size:14px;line-height:1.65;color:var(--soft)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}.card{border:1px solid var(--line);border-radius:11px;padding:13px;background:var(--panel)}.metric{font:600 24px/1 'IBM Plex Mono',monospace}.card p{margin:5px 0 0;font-size:10px;color:var(--faint);line-height:1.35}
+.source-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.source{border:1px solid var(--line);border-radius:11px;padding:12px;background:var(--paper)}.source b{display:block;font-size:12px}.source .n{font:600 19px 'IBM Plex Mono',monospace;margin-top:5px}.source small{display:block;color:var(--soft);line-height:1.45;margin-top:4px}.tag{display:inline-flex;padding:3px 6px;border:1px solid var(--strong);border-radius:999px;font:600 8px 'IBM Plex Mono',monospace;letter-spacing:.03em}.tag.live{background:var(--teal-soft);color:var(--teal)}.tag.ext{background:var(--amber-soft);color:var(--amber)}
+.controls{display:grid;grid-template-columns:2fr repeat(5,minmax(130px,1fr));gap:8px}.controls input,.controls select{width:100%;border:1px solid var(--strong);background:var(--panel);color:var(--ink);border-radius:8px;padding:9px 10px;font-size:11px}
+.actions{display:flex;gap:7px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--strong);background:var(--panel);color:var(--ink);border-radius:8px;padding:8px 10px;font-size:11px;cursor:pointer}.btn:hover{background:var(--amber-soft)}.btn.primary{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.statusline{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.notice{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-size:11px;line-height:1.5;color:var(--soft)}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px}table{width:100%;min-width:1180px;border-collapse:collapse}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{position:sticky;top:0;background:var(--panel);z-index:2;font:500 9px 'IBM Plex Mono',monospace;text-transform:uppercase;color:var(--soft)}td{font-size:10.5px}tbody tr:hover{background:var(--amber-soft)}
+.badge{display:inline-block;border:1px solid var(--strong);border-radius:999px;padding:2px 6px;font:600 8px 'IBM Plex Mono',monospace;white-space:nowrap}.badge.e{background:var(--teal-soft);color:var(--teal)}.badge.c{background:#E5EDF6;color:var(--blue)}.badge.d{background:var(--amber-soft);color:var(--amber)}
+.pagination{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px}.pageinfo{font:500 9px 'IBM Plex Mono',monospace;color:var(--faint)}
+#map{height:500px;border:1px solid var(--line);border-radius:10px;overflow:hidden}.mapnote{font-size:10px;color:var(--faint);margin-top:7px}
+.detail{display:none;position:fixed;inset:0;background:rgba(9,15,24,.58);z-index:100;padding:15px;overflow:auto}.detail.open{display:block}.dialog{max-width:1050px;margin:20px auto;background:var(--panel);border:1px solid var(--strong);border-radius:14px;padding:18px;box-shadow:0 30px 90px rgba(0,0,0,.3)}.dialog-head{display:flex;justify-content:space-between;gap:12px;align-items:start}.detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.kv{border:1px solid var(--line);border-radius:9px;padding:9px;background:var(--paper)}.kv dt{font:500 8px 'IBM Plex Mono',monospace;text-transform:uppercase;color:var(--faint)}.kv dd{margin:4px 0 0;font-size:11px;line-height:1.45}.sources{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}.sources a{display:block;font-size:10px;line-height:1.5;margin:3px 0;word-break:break-word}
+.footer{padding:26px 0 45px;border-top:1px solid var(--line);margin-top:28px;font-size:10px;color:var(--faint);line-height:1.6}
+@media(max-width:1100px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}.controls{grid-template-columns:2fr 1fr 1fr}.source-grid{grid-template-columns:1fr}}@media(max-width:700px){.cards{grid-template-columns:1fr 1fr}.controls{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}.wrap{padding-inline:10px}.navin{padding-inline:10px}}@media(max-width:460px){.cards{grid-template-columns:1fr}}
+</style>
+<link rel="stylesheet" href="observatory-nav.css">
+</head>
+<body>
+<div class="nav"><div class="navin">
+<a href="index.html">← Main registry</a><a href="company-registry.html">Company DB</a><a href="track3.html">Track 3</a><a href="research.html">Research ops</a><a href="api.html">API</a><a href="bulk-download.html">Downloads</a>
+<button id="theme">Toggle theme</button>
+</div></div>
+
+<main class="wrap">
+<section class="hero">
+<div class="eyebrow">Global discovery layer · federated data surface</div>
+<h1>A database broader than Epoch.</h1>
+<p>This page joins source-backed facility universes instead of treating any one index as the world census. Epoch remains the frontier-AI anchor; Compute Atlas expands the U.S. compute footprint; Data Center Index expands the global campus footprint. Overlaps are linked, not double-counted in the conservative unique view, and every record keeps its source universe and provenance.</p>
+<div class="actions"><a class="btn primary" href="data/global_compute_universe_sources_2026-09-27.json">Source manifest</a><a class="btn" href="https://epoch.ai/data/ai-data-centers/directory" target="_blank" rel="noopener">Epoch explorer</a><a class="btn" href="https://www.compute-atlas.com/" target="_blank" rel="noopener">Compute Atlas</a><a class="btn" href="https://datacenterindex.ai/data" target="_blank" rel="noopener">Data Center Index</a></div>
+</section>
+
+<section class="cards">
+<div class="card"><div class="metric" id="mRecords">—</div><p>source records loaded</p></div>
+<div class="card"><div class="metric" id="mUnique">—</div><p>conservative unique facilities</p></div>
+<div class="card"><div class="metric" id="mGeo">—</div><p>records with coordinates</p></div>
+<div class="card"><div class="metric" id="mAi">—</div><p>AI-focused / likely AI records</p></div>
+<div class="card"><div class="metric" id="mSources">3</div><p>independent source universes</p></div>
+</section>
+
+<section class="panel">
+<div class="statusline"><div><h2>Coverage architecture</h2><div class="soft" style="font-size:11px">Counts are source-local. The unique view is deliberately conservative and does not claim a global census.</div></div><div id="loadStatus" class="tag ext">loading</div></div>
+<div class="source-grid" style="margin-top:10px" id="sourceCards"></div>
+</section>
+
+<section class="panel">
+<h2>Explore the union</h2>
+<div class="notice"><b>Important:</b> a record can be a campus, building, compute facility or broader power/compute asset depending on the source. Use the source and type filters to avoid mixing unlike populations. “Missing” means not established from that source; it never means zero.</div>
+<div class="controls" style="margin-top:10px">
+<input id="q" placeholder="Search facility, operator, city, state, country or source ID">
+<select id="source"><option value="">All sources</option><option value="Epoch AI">Epoch AI</option><option value="Compute Atlas">Compute Atlas</option><option value="Data Center Index">Data Center Index</option></select>
+<select id="type"><option value="">All types</option><option value="data_center">Data center</option><option value="crypto_mining">Crypto mining</option><option value="power_generation">Power generation</option><option value="campus">Campus</option><option value="other">Other / program</option></select>
+<select id="status"><option value="">All statuses</option><option value="operational">Operational</option><option value="under_construction">Under construction</option><option value="permitted">Permitted</option><option value="proposed">Proposed / planned</option><option value="cancelled">Cancelled</option><option value="other">Other</option></select>
+<select id="ai"><option value="">AI filter</option><option value="ai">AI-focused / likely AI</option><option value="non_ai">Not classified as AI</option></select>
+<select id="geo"><option value="">Location</option><option value="geo">Has coordinates</option><option value="no_geo">No coordinates</option></select>
+</div>
+<div class="actions" style="margin-top:10px"><button class="btn" id="exportCsv">Export current view CSV</button><button class="btn" id="reset">Reset filters</button><span class="pageinfo" id="countInfo">—</span></div>
+<div class="tablewrap"><table><thead><tr><th>Facility</th><th>Source</th><th>Type</th><th>Operator / developer</th><th>Location</th><th>Capacity</th><th>Status</th><th>AI signal</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="pagination"><button class="btn" id="prev">← Previous</button><span class="pageinfo" id="pageInfo">—</span><button class="btn" id="next">Next →</button></div>
+</section>
+
+<section class="panel">
+<h2>Map surface</h2>
+<div id="map"></div>
+<div class="mapnote">Only records with published coordinates are mapped. The map is an exploration aid, not evidence that an unpinned record does not exist.</div>
+</section>
+
+<section class="panel">
+<h2>How this gets wider over time</h2>
+<div class="notice">The page prefers local snapshots generated by the registry's sync workflow, with live-source fallback when a snapshot is not yet available. The architecture is designed to add additional source universes without merging them blindly: source discovery → normalization → conservative entity resolution → provenance → searchable surface → historical snapshot.</div>
+</section>
+</main>
+
+<div class="detail" id="detail"><div class="dialog">
+<div class="dialog-head"><div><div class="eyebrow">Record detail</div><h2 id="dTitle">—</h2><div class="soft" id="dSub">—</div></div><button class="btn" id="dClose">Close</button></div>
+<div class="detail-grid" id="dGrid"></div><div class="sources" id="dSources"></div>
+</div></div>
+
+<footer class="wrap footer">Data attribution: Epoch AI Frontier Data Centers (CC BY 4.0); Compute Atlas (CC BY 4.0); Data Center Index (CC BY 4.0). This interface is a federated research surface, not a claim of a complete worldwide census. Source-local counts and licenses are documented in the source manifest.</footer>
+
+<script>
+const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));
+const norm=s=>String(s??"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+const fmt=s=>String(s??"").replaceAll("_"," ");
+const safeUrl=u=>/^https?:/i.test(String(u??""))?String(u):"";
+let ALL=[], VIEW=[], page=0, perPage=50, map, cluster;
+
+function rec(source,r){
+  if(source==="Epoch AI"){
+    const loc=r.location||r.coordinates||{};
+    const lat=Number(r.lat ?? loc.lat ?? r.latitude), lon=Number(r.lon ?? r.lng ?? loc.lon ?? r.longitude);
+    const op=r.owner||r.operator||r.developer||"";
+    const cap=r.power_mw ?? r.powerMw ?? r.current_power_mw ?? r.currentPowerMw ?? r.capacity_mw ?? r.capacityMw;
+    const st=r.status||r.project_status||"";
+    const ai=true;
+    return {source,id:r.id||r.slug||r.name,name:r.name||r.title||r.id,operator:op,type:"data_center",city:r.city||loc.city||"",state:r.state||loc.state||"",country:r.country||loc.country||"",lat:Number.isFinite(lat)?lat:null,lon:Number.isFinite(lon)?lon:null,capacity:cap,units:"MW",status:String(st),ai,confidence:"source-published",url:r.source_url||r.url||"",raw:r};
+  }
+  if(source==="Compute Atlas"){
+    const loc=r.location||{};
+    const lat=Number(loc.lat),lon=Number(loc.lon);
+    const ai=["confirmed","likely","mixed"].includes(String(r.aiClassification||"").toLowerCase());
+    return {source,id:r.id,name:r.name||r.id,operator:r.operator||"",type:r.facilityType||"other",city:loc.city||"",state:loc.state||"",country:"United States",lat:Number.isFinite(lat)?lat:null,lon:Number.isFinite(lon)?lon:null,capacity:r.capacityMw?.planned ?? r.capacityMw?.operational ?? null,units:"MW",status:r.status||"",ai,confidence:r.confidence||"",url:(r.sources&&r.sources[0]&&r.sources[0].url)||"https://www.compute-atlas.com/",raw:r};
+  }
+  return {source,id:r.external_id||r.slug||r.name,name:r.name||r.title||r.external_id,operator:r.developer||"",type:r.counted==="yes"?"campus":"other",city:r.city||"",state:r.state_code||"",country:r.country||"",lat:null,lon:null,capacity:r.capacity_planned_mw ?? null,units:"MW",status:r.status||"",ai:true,confidence:r.capacity_basis||"",url:r.url||"https://datacenterindex.ai/data",raw:r};
+}
+
+function key(r){
+  const place=norm([r.city,r.state,r.country].join(" "));
+  return norm(r.name)+"|"+place;
+}
+
+async function getJson(url, fallback){
+  try{const x=await fetch(url,{cache:"no-store"}); if(!x.ok) throw new Error(String(x.status)); return await x.json();}
+  catch(e){return fallback? await fetch(fallback,{cache:"no-store"}).then(x=>x.json()).catch(()=>null):null;}
+}
+
+async function load(){
+  const sources=[
+    {name:"Epoch AI",local:"data/external/epoch_ai/registry.json",live:"https://anonrish.github.io/continental-load-registry/data/external/epoch_ai/registry.json",count:93,kind:"frontier AI anchor"},
+    {name:"Compute Atlas",local:"data/external/compute_atlas/facilities.json",live:"https://www.compute-atlas.com/api/facilities",count:2228,kind:"U.S. compute universe"},
+    {name:"Data Center Index",local:"data/external/data_center_index/campuses.json",live:"https://datacenterindex.ai/data/datacenterindex-campuses.json",count:901,kind:"global campus universe"}
+  ];
+  const status=document.getElementById("loadStatus");
+  for(const s of sources){
+    let data=null, mode="snapshot";
+    try{const x=await fetch(s.local,{cache:"no-store"}); if(x.ok) data=await x.json(); else throw new Error("no local");}catch(e){
+      mode="live";
+      try{const x=await fetch(s.live,{cache:"no-store"}); if(x.ok) data=await x.json();}catch(err){data=null;}
+    }
+    if(s.name==="Compute Atlas") data=Array.isArray(data)?data:(data?.facilities||[]);
+    else if(s.name==="Data Center Index") data=Array.isArray(data)?data:(data?.items||data?.records||[]);
+    else data=Array.isArray(data)?data:(data?.records||data?.sites||[]);
+    if(!Array.isArray(data)){s.loaded=0;s.mode="error";continue;}
+    s.loaded=data.length;s.mode=mode;
+    for(const r of data){const x=rec(s.name,r); x.sourceMode=mode; ALL.push(x);}
+  }
+  buildSources(sources);
+  dedupe();
+  render();
+  status.textContent=(ALL.length?"ready":"error"); status.className="tag "+(ALL.length?"live":"ext");
+}
+
+function dedupe(){
+  const groups=new Map();
+  for(const r of ALL){const k=key(r); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(r);}
+  VIEW=[];
+  for(const arr of groups.values()){
+    const primary=[...arr].sort((a,b)=>{
+      const rank={"Epoch AI":1,"Compute Atlas":2,"Data Center Index":3};
+      return (rank[a.source]||9)-(rank[b.source]||9);
+    })[0];
+    primary.sources=arr.map(x=>({source:x.source,id:x.id,url:x.url}));
+    primary.source_count=arr.length;
+    VIEW.push(primary);
+  }
+}
+
+function buildSources(sources){
+  document.getElementById("sourceCards").innerHTML=sources.map(s=>'<div class="source"><div><b>'+esc(s.name)+'</b> <span class="tag '+(s.mode==="error"?"ext":"live")+'">'+esc(s.mode||"pending")+'</span></div><div class="n">'+(s.loaded??0).toLocaleString()+'</div><small>'+esc(s.kind)+' · reference '+s.count.toLocaleString()+'</small><small><a href="'+esc(s.live)+'" target="_blank" rel="noopener">source endpoint</a></small></div>').join("");
+  document.getElementById("mSources").textContent=String(sources.filter(s=>s.loaded).length);
+}
+
+function filters(){
+  const q=norm(document.getElementById("q").value), source=document.getElementById("source").value, type=document.getElementById("type").value, status=document.getElementById("status").value, ai=document.getElementById("ai").value, geo=document.getElementById("geo").value;
+  VIEW=VIEW.filter(r=>{
+    const text=norm([r.name,r.id,r.operator,r.city,r.state,r.country,r.source].join(" "));
+    if(q&&!text.includes(q)) return false;
+    if(source&&r.source!==source) return false;
+    if(type&&r.type!==type) return false;
+    if(status){
+      const s=String(r.status).toLowerCase();
+      const ok=status==="other"?s&&!["operational","under_construction","permitted","proposed","planned","cancelled"].includes(s):status==="proposed"?["proposed","planned","announced"].includes(s):s===status;
+      if(!ok) return false;
+    }
+    if(ai==="ai"&&!r.ai) return false;
+    if(ai==="non_ai"&&r.ai) return false;
+    if(geo==="geo"&&(r.lat==null||r.lon==null)) return false;
+    if(geo==="no_geo"&&(r.lat!=null&&r.lon!=null)) return false;
+    return true;
+  });
+  renderTableOnly();
+}
+
+const baseView=()=>{dedupe(); const q=document.getElementById("q").value; return VIEW;};
+
+function render(){
+  document.getElementById("mRecords").textContent=ALL.length.toLocaleString();
+  document.getElementById("mUnique").textContent=VIEW.length.toLocaleString();
+  document.getElementById("mGeo").textContent=VIEW.filter(r=>r.lat!=null&&r.lon!=null).length.toLocaleString();
+  document.getElementById("mAi").textContent=VIEW.filter(r=>r.ai).length.toLocaleString();
+  renderMap();
+  renderTableOnly();
+}
+
+function renderTableOnly(){
+  const all=VIEW.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  const total=all.length, pages=Math.max(1,Math.ceil(total/perPage)); page=Math.min(page,pages-1);
+  const slice=all.slice(page*perPage,(page+1)*perPage);
+  document.getElementById("countInfo").textContent=total.toLocaleString()+" matching unique facilities";
+  document.getElementById("pageInfo").textContent="Page "+(page+1)+" / "+pages;
+  document.getElementById("prev").disabled=page===0;document.getElementById("next").disabled=page>=pages-1;
+  document.getElementById("rows").innerHTML=slice.map((r,i)=>'<tr><td><b>'+esc(r.name)+'</b><div class="faint mono">'+esc(r.id)+'</div></td><td><span class="badge '+(r.source==="Epoch AI"?"e":r.source==="Compute Atlas"?"c":"d")+'">'+esc(r.source)+'</span><div class="faint">'+(r.source_count||1)+' source(s)</div></td><td>'+esc(fmt(r.type))+'</td><td>'+esc(r.operator||"—")+'</td><td>'+esc([r.city,r.state,r.country].filter(Boolean).join(", ")||"—")+'</td><td>'+((r.capacity==null||r.capacity==="")?"—":esc(String(r.capacity)+" "+r.units))+'</td><td>'+esc(fmt(r.status)||"—")+'</td><td>'+(r.ai?'<span class="badge e">AI signal</span>':'<span class="badge d">not classified</span>')+'</td><td><button class="btn" data-row="'+i+'">Details</button></td></tr>').join("");
+  document.querySelectorAll("#rows button").forEach((b,idx)=>b.addEventListener("click",()=>openDetail(slice[idx])));
+}
+
+function renderMap(){
+  if(!map){map=L.map("map",{worldCopyJump:true}).setView([30,-20],2);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap contributors"}).addTo(map);cluster=L.markerClusterGroup({chunkedLoading:true});map.addLayer(cluster);}
+  cluster.clearLayers();
+  for(const r of VIEW.filter(x=>x.lat!=null&&x.lon!=null)){
+    const m=L.marker([r.lat,r.lon]);m.bindPopup('<b>'+esc(r.name)+'</b><br>'+esc(r.source)+'<br>'+esc([r.city,r.state,r.country].filter(Boolean).join(", ")));cluster.addLayer(m);
+  }
+}
+
+function openDetail(r){
+  document.getElementById("dTitle").textContent=r.name||"Record";
+  document.getElementById("dSub").textContent=[r.source,r.id].filter(Boolean).join(" · ");
+  const vals=[
+    ["Source",r.source],["Type",fmt(r.type)],["Operator / developer",r.operator||"Not established"],["Status",fmt(r.status)||"Not established"],["Capacity",r.capacity==null?"Not established":r.capacity+" "+r.units],["AI classification",r.ai?"AI-focused / likely AI":"Not classified"],["Confidence",r.confidence||"Not stated"],["Location",[r.city,r.state,r.country].filter(Boolean).join(", ")||"Not established"],["Coordinates",(r.lat!=null&&r.lon!=null)?r.lat+", "+r.lon:"Not published in source layer"]
+  ];
+  document.getElementById("dGrid").innerHTML=vals.map(v=>'<div class="kv"><dt>'+esc(v[0])+'</dt><dd>'+esc(v[1])+'</dd></div>').join("");
+  const srcs=(r.sources||[{source:r.source,url:r.url}]).map(s=>{const u=safeUrl(s.url);return '<div><b>'+esc(s.source)+'</b> '+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(u)+'</a>':"")+'</div>';}).join("");
+  document.getElementById("dSources").innerHTML='<div class="eyebrow">Linked source universes</div>'+srcs;
+  document.getElementById("detail").classList.add("open");
+}
+
+function csvCell(v){return '"'+String(v??"").replace(/"/g,'""')+'"';}
+function exportCsv(){
+  const headers=["name","source","id","type","operator","city","state","country","capacity_mw","status","ai_signal","lat","lon"];
+  const rows=[headers,...VIEW.map(r=>[r.name,r.source,r.id,r.type,r.operator,r.city,r.state,r.country,r.capacity,r.status,r.ai,r.lat,r.lon])];
+  const blob=new Blob([rows.map(row=>row.map(csvCell).join(",")).join("\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="global-compute-universe-current-view.csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+["q","source","type","status","ai","geo"].forEach(id=>document.getElementById(id).addEventListener(id==="q"?"input":"change",()=>{page=0;const before=VIEW.length;dedupe();filters();}));
+document.getElementById("prev").addEventListener("click",()=>{if(page>0){page--;renderTableOnly();}});
+document.getElementById("next").addEventListener("click",()=>{const pages=Math.max(1,Math.ceil(VIEW.length/perPage));if(page<pages-1){page++;renderTableOnly();}});
+document.getElementById("reset").addEventListener("click",()=>{["q","source","type","status","ai","geo"].forEach(id=>document.getElementById(id).value="");page=0;dedupe();render();});
+document.getElementById("exportCsv").addEventListener("click",exportCsv);
+document.getElementById("dClose").addEventListener("click",()=>document.getElementById("detail").classList.remove("open"));
+document.getElementById("detail").addEventListener("click",e=>{if(e.target.id==="detail")e.currentTarget.classList.remove("open");});
+document.getElementById("theme").addEventListener("click",()=>{const d=document.documentElement;const next=d.dataset.theme==="dark"?"light":"dark";d.dataset.theme=next;localStorage.setItem("clr-theme",next);});
+const saved=localStorage.getItem("clr-theme");if(saved)document.documentElement.dataset.theme=saved;
+load();
+</script>
+</body>
+</html>

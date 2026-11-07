@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Track 3 Research Operations Console</title>
+<meta name="description" content="One-task research workflows for every unresolved publisher field and open Track 3 domain cell in the Continental Load Registry.">
+<style>
+:root{--ink:#16233A;--soft:#5C6B80;--faint:#8693A4;--paper:#EEF2ED;--panel:#FBFCFA;--line:#D7DEDA;--strong:#B7C2BC;--amber:#A85E0A;--amber-soft:#F3E3C9;--teal:#33604F;--teal-soft:#DBE9E2}
+@media(prefers-color-scheme:dark){:root{--ink:#E9EEF3;--soft:#AEBBCB;--faint:#7C8AA0;--paper:#0F1620;--panel:#161F2B;--line:#293445;--strong:#3A4759;--amber:#E3A458;--amber-soft:#3A2E1B;--teal:#7FB69E;--teal-soft:#17332A}}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}.wrap{max-width:1500px;margin:auto;padding:24px 18px 60px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.faint{color:var(--faint)}.soft{color:var(--soft)}
+h1{font-size:clamp(2rem,4vw,3.6rem);line-height:1;margin:10px 0 12px;letter-spacing:-.04em}h2{margin:0 0 8px;font-size:20px}h3{margin:0 0 6px;font-size:15px}
+a{color:inherit}.tools{display:flex;gap:8px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;padding:8px 10px;border:1px solid var(--strong);border-radius:8px;text-decoration:none;background:var(--panel);font-size:12px}.btn:hover{background:var(--amber-soft)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px}.hero{padding:12px 0 8px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:10px;color:var(--faint)}
+.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:14px}.metric{font:600 28px/1 ui-monospace,monospace}.card p{margin:6px 0 0;color:var(--soft);font-size:12px}
+.steps{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}.step{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--paper)}.step b{display:block;font:600 11px ui-monospace,monospace}.step span{display:block;margin-top:4px;color:var(--soft);font-size:11px}
+.barrow{display:grid;grid-template-columns:220px minmax(120px,1fr) 70px;gap:8px;align-items:center;margin:7px 0}.bar{height:10px;border-radius:999px;background:var(--paper);overflow:hidden}.bar>i{display:block;height:100%;background:var(--amber);border-radius:inherit}.barrow .label{font-size:11px}.count{text-align:right;font:600 11px ui-monospace,monospace}
+.filters{display:grid;grid-template-columns:2fr repeat(4,minmax(150px,1fr));gap:8px}.filters input,.filters select{width:100%;padding:9px;border:1px solid var(--strong);border-radius:8px;background:var(--panel);color:var(--ink)}
+.queue-meta{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:9px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}.table{width:100%;min-width:1100px;border-collapse:collapse}.table th,.table td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}.table th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);position:sticky;top:0;background:var(--panel)}.table td{font-size:11px}.pill{display:inline-block;border:1px solid var(--strong);padding:2px 6px;border-radius:999px;font:600 9px ui-monospace,monospace}.p0{background:var(--amber-soft);color:var(--amber)}.p1{background:var(--teal-soft);color:var(--teal)}
+.qs a{display:block;margin:2px 0}.action{display:flex;gap:5px;flex-wrap:wrap}.tiny{font-size:10px}.details{margin-top:5px;color:var(--soft);line-height:1.45}
+.notice{padding:11px 12px;border:1px solid var(--strong);border-radius:10px;background:var(--paper);font-size:12px}.notice strong{color:var(--ink)}
+.footer-note{font-size:11px;color:var(--faint);margin-top:14px}
+@media(max-width:1100px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}.steps{grid-template-columns:repeat(3,minmax(0,1fr))}.filters{grid-template-columns:1fr 1fr}.barrow{grid-template-columns:170px minmax(100px,1fr) 55px}}
+@media(max-width:620px){.cards{grid-template-columns:1fr}.steps{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr}}
+</style>
+<link rel="stylesheet" href="observatory-nav.css">
+
+<style id="RESEARCH-UI-V3">
+/* RESEARCH-UI-V3 */
+#researchViewDeck{position:sticky;top:0;z-index:120;margin:0 -1px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--panel) 90%,transparent);backdrop-filter:blur(16px) saturate(130%);box-shadow:0 8px 26px rgba(8,18,32,.06)}
+.rdeck{max-width:1500px;margin:auto;padding:8px 18px}
+.rdeck-top{display:flex;align-items:center;gap:9px}
+.rmark{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--ink);color:var(--panel);font:700 10px ui-monospace,monospace}
+.rname{font-size:12px;font-weight:700}
+.rlive{margin-left:auto;font:500 8px ui-monospace,monospace;color:var(--faint);letter-spacing:.08em;text-transform:uppercase}
+.rtabs{display:flex;gap:5px;overflow:auto;scrollbar-width:none;padding-top:7px}
+.rtabs::-webkit-scrollbar{display:none}
+.rtab{border:1px solid transparent;background:transparent;color:var(--soft);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:10px;font-weight:650;white-space:nowrap}
+.rtab:hover{background:var(--amber-soft);color:var(--ink)}
+.rtab.active{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.rhidden{display:none!important}
+.research-shell{scroll-margin-top:104px}
+@media(max-width:620px){.rdeck{padding-inline:10px}.rname{display:none}.rlive{font-size:7px}}
+</style>
+</head>
+<body>
+
+<!-- RESEARCH-UI-V3 -->
+<div id="researchViewDeck">
+  <div class="rdeck">
+    <div class="rdeck-top"><div class="rmark">OPS</div><div class="rname">Track 3 Research Operations</div><div class="rlive">task queue · evidence handoff</div></div>
+    <nav class="rtabs" role="tablist" aria-label="Research views">
+      <button class="rtab active" type="button" data-rview="overview" role="tab" aria-selected="true">Overview</button>
+      <button class="rtab" type="button" data-rview="backlog" role="tab" aria-selected="false">Backlog</button>
+      <button class="rtab" type="button" data-rview="tasks" role="tab" aria-selected="false">Task Queue</button>
+      <button class="rtab" type="button" data-rview="handoff" role="tab" aria-selected="false">Handoff</button>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+<section class="hero">
+<div class="tools"><a class="btn" href="track3.html">← Track 3 registry</a><a class="btn" href="index.html">Main registry</a><a class="btn" href="RESEARCH_WORKFLOWS.md">Workflow specification</a><a class="btn" href="data/track3/research_work_queue.csv">Research CSV</a><a class="btn" href="data/track3/research_submission_schema.json">Submission schema</a><a class="btn" href="data/track3/publisher_completeness_matrix_2026-09-27.json">Publisher matrix</a><a class="btn" href="data/track3/domain_completeness_matrix_2026-09-27.json">Domain matrix</a></div>
+<div class="eyebrow mono" style="margin-top:20px">Track 3 · research operations · generated from canonical sweep</div>
+<h1>Research Operations Console</h1>
+<p class="soft" style="max-width:1000px">Every remaining publisher field and open Track 3 domain cell is represented as a one-task research job. Each job carries a site-specific search ladder, search links, evidence-capture requirements, acceptance rule, rejection rule, and canonical handoff path.</p>
+</section>
+
+<section class="cards" style="margin-top:16px">
+<div class="card"><div id="pubCount" class="metric">—</div><p>open public-source publisher fields</p></div>
+<div class="card"><div id="domCount" class="metric">—</div><p>open Track 3 domain cells</p></div>
+<div class="card"><div id="totalCount" class="metric">—</div><p>open publisher research tasks</p></div>
+<div class="card"><div id="obsCount" class="metric">—</div><p>follow-on observation tasks</p></div>
+<div class="card"><div id="siteCount" class="metric">—</div><p>canonical sites represented</p></div>
+</section>
+
+<section class="panel">
+<h2>Strict admitted load-discovery queue</h2>
+<p class="soft">Five candidates have passed the source-level load-admission gate. These are research cases, not claims of hidden facilities; a candidate remains open until entity, physical, electrical, and adjudication gates close.</p>
+<div id="strictQueue" class="cards" style="margin-top:10px"></div>
+<div class="tools" style="margin-top:10px"><a class="btn" href="closed-cases.html">Open closed-case laboratory</a><a class="btn" href="STRICT_DISCOVERY_RESEARCH.md">Open research packet</a><a class="btn" href="data/track3/strict_discovery_research_packets.json">Open JSON</a></div>
+</section>
+
+<section class="panel">
+<h2>One-task research workflow</h2>
+<div class="steps" id="steps"></div>
+<div class="notice" style="margin-top:10px"><strong>Evidence boundary:</strong> search results and public leads are discovery inputs. A lead is not canonical evidence until the source is reviewed and the claim is ingested with provenance. A NO_PUBLIC_RECORD disposition is a research outcome, not evidence of absence.</div>
+</section>
+
+<section class="panel">
+<h2>Publisher backlog by field</h2>
+<div id="pubBars"></div>
+<h2 style="margin-top:16px">Track 3 domain backlog</h2>
+<div id="domBars"></div>
+</section>
+
+<section class="panel">
+<div class="queue-meta"><div><h2 style="margin-bottom:2px">All one-by-one tasks</h2><div id="meta" class="soft tiny">Loading…</div></div><div class="tools"><button class="btn" id="prev">← Previous</button><button class="btn" id="next">Next →</button></div></div>
+<div class="filters">
+<input id="search" placeholder="Search site, Epoch ID, task, objective or action">
+<select id="kind"><option value="">All task types</option><option value="publisher">Publisher</option><option value="track3_domain">Track 3 domain</option></select>
+<select id="priority"><option value="">All priorities</option><option value="P0">P0</option><option value="P1">P1</option></select>
+<select id="field"><option value="">All fields</option></select>
+<select id="domain"><option value="">All domains</option></select>
+</div>
+<div class="tablewrap" style="margin-top:10px">
+<table class="table"><thead><tr><th>Task</th><th>Site</th><th>Target</th><th>Priority</th><th>Search ladder</th><th>Exact search links</th><th>Evidence rule</th></tr></thead>
+<tbody id="rows"></tbody></table>
+</div>
+<div class="queue-meta" style="margin-top:10px"><div id="pageMeta" class="tiny soft">—</div><div class="tools"><button class="btn" id="prev2">←</button><button class="btn" id="next2">→</button></div></div>
+</section>
+
+<section class="panel">
+<h2>How a completed task becomes registry data</h2>
+<p class="soft">The research operator records a result disposition plus source provenance using the submission schema. The canonical Track 3 builders then determine whether the source supports an existing field/domain state. This preserves the distinction between discovery, site-specific evidence, derived observation, and unknown/unassessed states.</p>
+<div class="tools">
+<a class="btn" href="data/track3/research_submission_template.json">Open submission template</a>
+<a class="btn" href="data/track3/research_backlog_summary.json">Backlog summary JSON</a>
+<a class="btn" href="data/track3/site_missing_information_sweep_2026-09-27.json">Source sweep JSON</a>
+</div>
+<div class="footer-note">The backlog is regenerated by GitHub Actions from the latest site-missing-information sweep. The generator asserts that the task counts equal the canonical unresolved/open-cell counts before writing outputs.</div>
+</section>
+</div>
+<script>
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+const fmt=s=>String(s||"").replaceAll("_"," ");
+let Q=[], page=0, perPage=50, filtered=[];
+function setBars(id,map){
+ const el=document.getElementById(id), vals=Object.values(map), max=Math.max(1,...vals);
+ el.innerHTML=Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="barrow"><div class="label">'+esc(fmt(k))+'</div><div class="bar"><i style="width:'+((v/max)*100).toFixed(1)+'%"></i></div><div class="count">'+v+'</div></div>').join('');
+}
+function populateSelects(){
+ const f=[...new Set(Q.filter(x=>x.kind==="publisher").map(x=>x.field).filter(Boolean))].sort();
+ const d=[...new Set(Q.filter(x=>x.kind==="track3_domain").map(x=>x.domain).filter(Boolean))].sort();
+ document.getElementById("field").innerHTML='<option value="">All fields</option>'+f.map(x=>'<option>'+esc(x)+'</option>').join('');
+ document.getElementById("domain").innerHTML='<option value="">All domains</option>'+d.map(x=>'<option>'+esc(x)+'</option>').join('');
+}
+function target(t){return t.kind==="publisher"?t.field:t.domain}
+function refresh(){
+ const s=document.getElementById("search").value.toLowerCase(), k=document.getElementById("kind").value, p=document.getElementById("priority").value, f=document.getElementById("field").value,d=document.getElementById("domain").value;
+ filtered=Q.filter(x=>{
+  if(k&&x.kind!==k)return false;if(p&&x.priority!==p)return false;if(f&&x.field!==f)return false;if(d&&x.domain!==d)return false;
+  if(!s)return true;
+  return [x.task_id,x.site_name,x.epoch_id,x.objective,x.existing_next_action,target(x)].join(" ").toLowerCase().includes(s);
+ });
+ page=Math.min(page,Math.max(0,Math.ceil(filtered.length/perPage)-1));render();
+}
+function render(){
+ const start=page*perPage, slice=filtered.slice(start,start+perPage);
+ document.getElementById("rows").innerHTML=slice.map(t=>{
+  const qs=(t.search_links||[]).map((u,i)=>'<a target="_blank" rel="noopener" href="'+esc(u)+'">Search '+(i+1)+'</a>').join('');
+  const ladder=(t.search_sequence||[]).map(x=>esc(x)).join(" → ");
+  const rule='<strong>Accept:</strong> '+esc(t.acceptance_rule)+'<br><strong>Reject:</strong> '+esc(t.reject_rule);
+  return '<tr><td><span class="mono tiny">'+esc(t.task_id)+'</span><div class="action" style="margin-top:5px"><button class="btn tiny" onclick="navigator.clipboard&&navigator.clipboard.writeText('+JSON.stringify(t.task_id)+')">Copy ID</button></div></td>'+
+    '<td><strong>'+esc(t.site_name)+'</strong><div class="faint mono tiny">'+esc(t.epoch_id)+'</div><div class="tiny">'+esc(t.country)+' · '+esc(t.state_province||"—")+' · '+esc(t.current_it_power_mw==null?"—":t.current_it_power_mw+" MW")+'</div></td>'+
+    '<td><strong>'+esc(fmt(target(t)))+'</strong><div class="details">'+esc(t.workflow_label)+'</div></td>'+
+    '<td><span class="pill '+(t.priority==="P0"?"p0":"p1")+'">'+esc(t.priority)+'</span></td>'+
+    '<td class="details">'+ladder+'</td><td class="qs">'+qs+'</td><td class="details">'+rule+'<div style="margin-top:4px"><strong>Capture:</strong> '+esc((t.evidence_to_capture||[]).join("; "))+'</div></td></tr>';
+ }).join('')||'<tr><td colspan="7" class="faint">No tasks match the current filters.</td></tr>';
+ const pages=Math.max(1,Math.ceil(filtered.length/perPage));
+ document.getElementById("meta").textContent=filtered.length+" matching tasks · page "+(page+1)+" / "+pages+" · generated from the dated canonical sweep";
+ document.getElementById("pageMeta").textContent=(filtered.length?start+1:0)+"–"+Math.min(start+perPage,filtered.length)+" of "+filtered.length;
+ document.getElementById("prev").disabled=document.getElementById("prev2").disabled=page===0;
+ document.getElementById("next").disabled=document.getElementById("next2").disabled=page>=pages-1;
+}
+function move(delta){page=Math.max(0,page+delta);render();window.scrollTo({top:document.querySelector(".tablewrap").getBoundingClientRect().top+window.scrollY-20,behavior:"smooth"})}
+async function loadStrictQueue(){
+ try{
+  const d=await fetch("data/track3/strict_discovery_research_packets.json?v=1",{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("strict queue unavailable");return r.json()});
+  const el=document.getElementById("strictQueue");
+  if(!el)return;
+  el.innerHTML=(d.candidates||[]).map((x,i)=>{
+   const sources=(x.source_ladder||[]).filter(s=>s.url).slice(0,2).map(s=>'<a class="btn tiny" target="_blank" rel="noopener" href="'+esc(s.url)+'">'+esc(s.kind||"source")+' ↗</a>').join("");
+   const gates=(x.next_gates||[]).slice(0,3).map(g=>'<span class="pill p1">'+esc(g.replace(/_/g," "))+'</span>').join(" ");
+   return '<div class="card"><div class="metric" style="font-size:13px">'+String(i+1).padStart(2,"0")+'</div><h3>'+esc(x.project_name)+'</h3><p class="tiny mono">'+esc(x.rto)+' · '+esc(x.queue_id)+' · '+esc(x.capacity_mw)+' MW</p><p class="tiny soft">'+esc(x.current_identity_gap)+'</p><p class="tiny soft">'+esc(x.current_physical_gap)+'</p><div class="tools" style="margin-top:8px">'+sources+'</div><div style="margin-top:8px">'+gates+'</div></div>';
+  }).join("");
+ }catch(e){
+  const el=document.getElementById("strictQueue");if(el)el.innerHTML='<div class="notice">Strict queue failed to load: '+esc(e.message)+'</div>';
+ }
+}
+async function load(){
+ const params=new URLSearchParams(window.location.search);
+ const initialQuery=params.get("q")||"";
+ if(initialQuery){const el=document.getElementById("search");if(el)el.value=initialQuery;}
+
+ const [q,w]=await Promise.all([
+  fetch("data/track3/research_work_queue.json?v=1",{cache:"no-store"}).then(r=>r.json()),
+  fetch("data/track3/research_workflows.json?v=1",{cache:"no-store"}).then(r=>r.json())
+ ]);
+ Q=q.tasks||[];
+ document.getElementById("pubCount").textContent=q.summary?.publisher_tasks??0;
+ document.getElementById("domCount").textContent=q.summary?.domain_tasks??0;
+ document.getElementById("totalCount").textContent=q.summary?.publisher_tasks??Q.filter(x=>x.kind==="publisher").length;
+ document.getElementById("obsCount").textContent=q.summary?.follow_on_observation_tasks??0;
+ document.getElementById("siteCount").textContent=q.summary?.sites??new Set(Q.map(x=>x.epoch_id)).size;
+ document.getElementById("steps").innerHTML=(w.workflow_order||[]).map(x=>'<div class="step"><b>'+esc(x)+'</b><span>'+esc(w.stages?.[x]||"")+'</span></div>').join('');
+ setBars("pubBars",q.summary?.publisher_by_field||{});
+ setBars("domBars",q.summary?.domain_by_domain||{});
+ populateSelects();refresh();
+}
+["search","kind","priority","field","domain"].forEach(id=>document.getElementById(id).addEventListener("input",()=>{page=0;refresh()}));
+["prev","prev2"].forEach(id=>document.getElementById(id).onclick=()=>move(-1));
+["next","next2"].forEach(id=>document.getElementById(id).onclick=()=>move(1));
+load().catch(e=>{document.getElementById("meta").textContent="Research queue failed to load: "+e.message});
+loadStrictQueue();
+</script>
+<script src="observatory-nav.js" defer></script>
+
+<script>
+/* RESEARCH-UI-V3 controller */
+(()=> {
+  const sections=[...document.querySelectorAll('.wrap > section')];
+  sections.forEach((s,i)=>{
+    const h=s.querySelector('h1,h2,h3')?.textContent||'';
+    const view=i===0||i===1||/One-task research workflow|Strict admitted load-discovery queue/i.test(h)?'overview'
+      :/backlog by field/i.test(h)?'backlog'
+      :/All one-by-one tasks/i.test(h)?'tasks'
+      :'handoff';
+    s.dataset.rview=view;s.classList.add('research-shell');
+  });
+  const tabs=[...document.querySelectorAll('.rtab')];
+  function set(v){
+    sections.forEach(s=>s.classList.toggle('rhidden',s.dataset.rview!==v));
+    tabs.forEach(b=>{const on=b.dataset.rview===v;b.classList.toggle('active',on);b.setAttribute('aria-selected',String(on));});
+    localStorage.setItem('research-active-view',v);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  tabs.forEach(b=>b.addEventListener('click',()=>set(b.dataset.rview)));
+  const stored=localStorage.getItem('research-active-view');
+  set(tabs.some(b=>b.dataset.rview===stored)?stored:'overview');
+})();
+</script>
+
+</body>
+</html>

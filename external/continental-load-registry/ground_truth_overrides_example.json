@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "_help": "FICTIONAL example showing the format. The RTO/queue_id below match nothing in the registry, so copying this file as-is only produces an 'unmatched override' line in the dossier's audit section.",
+  "overrides": [
+    {
+      "rto": "IESO",
+      "queue_id": "EXAMPLE-0000",
+      "verified_label": "Confirmed Data Center Campus",
+      "verified_operator": "Example Data Centres Ltd.",
+      "confirmed_by": "A. Researcher",
+      "confirmed_on": "2026-10-04",
+      "evidence": [
+        {
+          "citation": "Example Township council minutes, 2026-06-10, item 7.2 (site plan approval, 60 MW campus)",
+          "url": "https://example.org/council/minutes-2026-06-10.pdf",
+          "accessed_on": "2026-10-04",
+          "type": "council_minutes"
+        },
+        {
+          "citation": "Environmental Registry of Ontario notice for an Environmental Compliance Approval naming the same operator"
+        }
+      ],
+      "notes": "Free text. For example: which parcel, and why the registry's queue MW differs from the permit."
+    }
+  ]
+}

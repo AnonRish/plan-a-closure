@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "packet-forge"
+version = "0.1.0"
+description = "Adversarial TCP segment-overlap corpus, pcap generator and normalising reassembler for testing network taps"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "hypothesis>=6", "scapy>=2.5"]
+
+[project.scripts]
+packet-forge = "packet_forge.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+  "kernel: needs root + /dev/net/tun and replays segments into the live Linux TCP stack",
+  "external: needs tshark/tcpdump",
+  "rust: needs a Rust toolchain",
+]

@@ -1,0 +1,71 @@
+# Continental Large-Load Interconnection & Telemetry Registry
+
+Independent open-source research infrastructure contributing data, provenance, and reproducible tooling to AI 2040 Plan A Track 3 research.
+
+## Stable public pages
+
+- Main registry: https://anonrish.github.io/continental-load-registry/
+- Track 3 Evidence Observatory: https://anonrish.github.io/continental-load-registry/track3.html
+- AI 2040 Plan A / Track 3 research bridge: https://anonrish.github.io/continental-load-registry/plan-a.html
+
+## Primary AI 2040 references
+
+- Track 3: https://ai-2040.com/supplements/verification-plan/get-involved
+- Plan A — Covert AI Projects: https://ai-2040.com/print/covert-ai-projects
+- Plan A scenario: https://ai-2040.com/print/scenario?book=1&plan=A
+
+## Machine-readable repository artifacts
+
+- Track 3 mapping: https://github.com/AnonRish/continental-load-registry/blob/main/data/track3/ai2040_plan_a_mapping.json
+- Recommendation / Appendix B traceability: https://github.com/AnonRish/continental-load-registry/blob/main/data/track3/ai2040_plan_a_traceability.json
+- Plan A audit-chain schema: https://github.com/AnonRish/continental-load-registry/blob/main/data/track3/plan_a_audit_schema.json
+- Track 3 evidence schema: https://github.com/AnonRish/continental-load-registry/blob/main/data/track3_evidence_schema.json
+- External source snapshot manifest: https://github.com/AnonRish/continental-load-registry/blob/main/data/track3/external_source_snapshots.json
+- Complete commit CI audit: https://github.com/AnonRish/continental-load-registry/blob/main/data/ci/commit_audit.json
+- Repository CI audit narrative: https://github.com/AnonRish/continental-load-registry/blob/main/CI_AUDIT_2026-09-26.md
+- Contribution protocol: https://github.com/AnonRish/continental-load-registry/blob/main/CONTRIBUTING.md
+- Citation metadata: https://github.com/AnonRish/continental-load-registry/blob/main/CITATION.cff
+
+## Scope
+
+The repository is not an AI Futures Project publication, does not speak for AI 2040, and does not certify a treaty or verification regime. AI 2040 references should be cited separately from repository-derived observations.
+
+## Current Track 3 evidence boundary
+
+The repository currently preserves a 93-site Epoch frontier-AI site layer plus North American grid/connection evidence, selected site-level electricity and cooling observations, and aggregate global compute source snapshots. Several Plan A Track 3 elements remain partial or design-only, including full production reconciliation, transaction-level recursive transfer tracing, physical inspections, serial continuity, decommissioning/recycling verification, statistical sampling, untraced-pool accounting, and site-level remote sensing.
+
+## Citation
+
+AnonRish, Continental Large-Load Interconnection & Telemetry Registry: AI 2040 Plan A Track 3 research contribution, 2026.
+
+For factual claims, cite the repository artifact and the underlying publisher/source that supports the claim.
+
+
+## Large-load data-universe artifacts
+
+- Core / expanded scope accounting: https://github.com/AnonRish/continental-load-registry/blob/main/data/large_load_scope.json
+- Market universe manifest: https://github.com/AnonRish/continental-load-registry/blob/main/data/market_universe_manifest.json
+- 271 project-level records: https://github.com/AnonRish/continental-load-registry/blob/main/data/project_level_extractions.json
+- 271 mapped project records: https://github.com/AnonRish/continental-load-registry/blob/main/data/project_level_map.json
+- 93 Epoch connection-research targets: https://github.com/AnonRish/continental-load-registry/blob/main/data/epoch_connection_research_targets.json
+- 121 Epoch site-level evidence records (legacy/derived export): https://github.com/AnonRish/continental-load-registry/blob/main/data/epoch_site_evidence_records.json
+- 61 supplemental large-load evidence units: https://github.com/AnonRish/continental-load-registry/blob/main/data/supplemental_large_load_evidence.json
+- 66 mapped aggregate/historical evidence footprints: https://github.com/AnonRish/continental-load-registry/blob/main/data/supplemental_aggregate_map.json
+- CAISO historical cluster series: https://github.com/AnonRish/continental-load-registry/blob/main/data/caiso_cluster_history.json
+- PJM large-load submission history: https://github.com/AnonRish/continental-load-registry/blob/main/data/pjm_large_load_submission_history.json
+
+## Map semantics
+
+The main dashboard map separates core queue/facility rows, project-level records, Epoch AI site observations, connection-research targets, and aggregate/historical footprints. A map point with county/city/state precision is display geometry and is not evidence of a street-level facility location or queue membership.
+
+- Unified public-data catalog: https://github.com/AnonRish/continental-load-registry/blob/main/data/public_data_catalog.json
+
+
+## Global AI data-center coverage
+
+- Current Epoch explorer mirror: https://github.com/AnonRish/continental-load-registry/blob/main/data/external/epoch_ai/registry.json (93/93 current records)
+- Coverage/discovery ledger: https://github.com/AnonRish/continental-load-registry/blob/main/data/global_ai_datacenter_coverage_2026-09-27.json
+- Coverage CSV: https://github.com/AnonRish/continental-load-registry/blob/main/data/global_ai_datacenter_coverage_2026-09-27.csv
+- Coverage methodology: https://github.com/AnonRish/continental-load-registry/blob/main/GLOBAL_AI_DATA_CENTER_COVERAGE.md
+
+This layer distinguishes complete capture of the current Epoch explorer from the much harder problem of global facility census. External candidate records are research leads until entity-resolved and source-verified.

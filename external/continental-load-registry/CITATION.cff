@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: "Continental Large-Load Interconnection & Telemetry Registry"
+message: "Please cite this repository when using its registry, Track 3 evidence layer, or AI 2040 Plan A contribution mapping."
+type: software
+version: "2.3"
+date-released: 2026-09-26
+authors:
+  - family-names: "AnonRish"
+repository-code: "https://github.com/AnonRish/continental-load-registry"
+repository: "https://github.com/AnonRish/continental-load-registry"
+url: "https://anonrish.github.io/continental-load-registry/"
+keywords:
+  - AI verification
+  - AI 2040
+  - Plan A
+  - Track 3
+  - compute verification
+  - data centers
+  - electricity
+  - interconnection
+  - provenance
+abstract: "Open-source ETL and evidence infrastructure for large-load interconnection data, frontier AI data-center research, and AI 2040 Plan A Track 3 verification research."

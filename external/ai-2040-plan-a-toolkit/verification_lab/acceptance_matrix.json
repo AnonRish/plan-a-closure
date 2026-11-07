@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "status_semantics": {"PASS":"all required observations satisfy threshold","FAIL":"a required observed property violates threshold","UNKNOWN":"required observation unavailable"},
+  "workstreams": [
+    {"id":1,"metric":"capture line rate","bench_target_gbps":1600,"hard_requirement":"no unaccounted loss at declared line rate"},
+    {"id":2,"metric":"sustained capture capacity","bench_target":">= aggregate mirrored traffic for declared deployment with redundancy"},
+    {"id":3,"metric":"capture reduction","bench_target":"measure payload-copy, hash-only and sampled-copy bandwidth savings without losing auditability"},
+    {"id":4,"metric":"directional path integrity","bench_target":"no unallowlisted storage->inference or reverse edge"},
+    {"id":5,"metric":"repeatability","bench_target":"100/100 identical outputs under a fixed manifest and challenge"},
+    {"id":6,"metric":"packet identity","bench_target":"no sequence gaps or duplicate IDs in controlled capture"},
+    {"id":7,"metric":"detection assurance","bench_target":"measured detection curve agrees with preregistered statistical target"},
+    {"id":8,"metric":"frontier algorithm coverage","bench_target":"every admitted model family has a named maintained recomputation algorithm"},
+    {"id":9,"metric":"red-team coverage","bench_target":"all catalogued adaptive, rebinding, drift and starvation cases exercised"},
+    {"id":10,"metric":"server integrity","bench_target":"tamper response is fail-closed and has an independent observer"},
+    {"id":11,"metric":"tap installation","bench_target":"configuration, enclosure and link state independently challenged"},
+    {"id":12,"metric":"report integrity","bench_target":"append-only report chain verifies from an external root"},
+    {"id":13,"metric":"physical inspection","bench_target":"all mandatory inspection items have evidence digests"},
+    {"id":14,"metric":"memory wipe","bench_target":"challenge-bound readback test passes for every declared sensitive region"},
+    {"id":15,"metric":"side-channel residual capacity","bench_target":"measured residual capacity is below preregistered bound"},
+    {"id":16,"metric":"warden performance","bench_target":"false-positive and false-negative rates measured on labeled traces"},
+    {"id":17,"metric":"completeness invariant","bench_target":"missing evidence never yields PASS"}
+  ]
+}

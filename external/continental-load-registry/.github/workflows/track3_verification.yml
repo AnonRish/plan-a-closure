@@ -1,0 +1,115 @@
+name: Track 3 verification bundle and attestation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'data/track3/detection_universe.json'
+      - 'data/track3/verification_protocol.json'
+      - 'data/track3/absence_testing.json'
+      - 'data/track3/evidence_records.json'
+      - 'data/track3/site_status.json'
+      - 'data/track3/summary.json'
+      - 'data/track3/time_series_verification.json'
+      - 'data/track3/power_observations.json'
+      - 'data/track3/remote_sensing_observations.json'
+      - 'data/track3/physical_source_manifest.json'
+      - 'data/track3/building_footprints_index.json'
+      - 'data/physical_verification_layer.json'
+      - 'data/external/epoch_ai/registry.json'
+      - 'data/track3/verification_results.json'
+      - 'build_track3_verification.py'
+      - 'verify_track3.py'
+      - '.github/workflows/track3_verification.yml'
+# Serialize verifier runs; generated artifacts are committed back to main.
+# Final verification may be manually re-dispatched after bot-generated pipeline commits.
+concurrency:
+  group: track3-canonical-writers-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+jobs:
+  verify-and-attest:
+    # Accept bot commits produced by the upstream Track 3 pipeline, but do not self-trigger from this workflow's own verification commit.
+    if: github.event_name != 'push' || github.actor != 'github-actions[bot]' || !startsWith(github.event.head_commit.message, 'Refresh Track 3 verification results')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Rebuild verification artifacts
+        run: python build_track3_verification.py
+      - name: Run verification
+        run: python verify_track3.py
+      - name: Build audit bundle
+        run: |
+          tar -czf track3-verification-bundle.tar.gz \
+            data/track3/detection_universe.json \
+            data/track3/verification_protocol.json \
+            data/track3/absence_testing.json \
+            data/track3/verification_results.json \
+            verify_track3.py
+      - name: Upload audit bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: track3-verification-bundle
+          path: track3-verification-bundle.tar.gz
+      - name: Generate cryptographic attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: track3-verification-bundle.tar.gz
+      - name: Reconcile verification result attestation state
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path=Path("data/track3/verification_results.json")
+          obj=json.loads(path.read_text(encoding="utf-8"))
+          obj.setdefault("summary",{})["artifact_attestation_status"]="SIGNED_AND_UPLOADED"
+          obj["summary"]["attestation_workflow_run_id"]="${{ github.run_id }}"
+          obj["summary"]["attestation_bundle"]="track3-verification-bundle.tar.gz"
+          path.write_text(json.dumps(obj,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+          PY
+
+      - name: Record attestation status
+        run: |
+          cat > data/track3/attestation_status.json <<EOF
+          {
+            "schema_version": 1,
+            "status": "SIGNED_AND_UPLOADED",
+            "workflow_run_id": "${{ github.run_id }}",
+            "workflow": "${{ github.workflow }}",
+            "source_commit": "${{ github.sha }}",
+            "attestation_method": "GitHub Artifact Attestations / Sigstore",
+            "bundle": "track3-verification-bundle.tar.gz",
+            "recorded_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "note": "Bundle-level cryptographic attestation; does not certify the underlying empirical claims."
+          }
+          EOF
+      - name: Commit generated verification artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/track3/detection_universe.json data/track3/verification_protocol.json data/track3/absence_testing.json data/track3/verification_results.json data/track3/attestation_status.json
+          if git diff --cached --quiet; then
+            echo "No generated verification changes to commit."
+            exit 0
+          fi
+          git commit -m "Refresh Track 3 verification results"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase --autostash -X theirs origin/main; then
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+            else
+              git rebase --abort || true
+            fi
+            sleep 3
+          done
+          echo "Unable to publish Track 3 verification results after retries."
+          exit 1

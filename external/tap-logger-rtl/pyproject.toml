@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tap-logger-rtl"
+version = "0.1.0"
+description = "Verilog SHA-256 hash-chain frame logger, with the Python reference, verifier and simulation harness it is checked against"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "hypothesis>=6"]
+
+[project.scripts]
+tap-log-verify = "tlref.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["tlref*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+  "slow: gate-level simulation or long simulations",
+]

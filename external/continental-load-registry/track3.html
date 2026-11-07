@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Track 3 · Complete Evidence Registry</title>
+<meta name="description" content="Complete public Track 3 evidence registry for frontier AI compute: site identity, grid connection, service, regulation, construction, power, remote sensing, cooling, transformers, chips, tenancy, provenance and governance.">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#16233A;--ink-soft:#4E5D72;--ink-faint:#8493A6;--paper:#EEF2ED;--panel:#FBFCFA;--line:#D7DEDA;--line-strong:#B7C2BC;--amber:#A85E0A;--amber-soft:#F3E3C9;--amber-line:#D9A25C;--teal:#33604F;--teal-soft:#DBE9E2}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#E9EEF3;--ink-soft:#AEBBCB;--ink-faint:#7C8AA0;--paper:#0F1620;--panel:#161F2B;--line:#293445;--line-strong:#3A4759;--amber:#E3A458;--amber-soft:#3A2E1B;--amber-line:#8A6329;--teal:#7FB69E;--teal-soft:#17332A}}
+:root[data-theme=dark]{--ink:#E9EEF3;--ink-soft:#AEBBCB;--ink-faint:#7C8AA0;--paper:#0F1620;--panel:#161F2B;--line:#293445;--line-strong:#3A4759;--amber:#E3A458;--amber-soft:#3A2E1B;--amber-line:#8A6329;--teal:#7FB69E;--teal-soft:#17332A}
+*{box-sizing:border-box}html,body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif}a{color:var(--ink)}button,input,select{font:inherit}
+.wrap{max-width:1320px;margin:0 auto;padding:0 18px}.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}.faint{color:var(--ink-faint)}.soft{color:var(--ink-soft)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px}.hero{padding:30px 0 20px;border-bottom:1px solid var(--line)}.hero h1{font-size:32px;line-height:1.08;margin:9px 0}.hero p{max-width:1000px;line-height:1.55}.tools{display:flex;gap:8px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);background:transparent;color:var(--ink);border-radius:8px;padding:8px 11px;text-decoration:none;font-size:12px;cursor:pointer}.btn:hover{background:var(--amber-soft)}.btn.primary{background:var(--ink);color:var(--panel)}
+.section{margin:22px 0}.section h2{font-size:20px;margin:0 0 5px}.small{font-size:11px;line-height:1.5}.grid{display:grid;gap:12px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}@media(min-width:850px){.cards{grid-template-columns:repeat(6,minmax(0,1fr))}}.card{padding:14px}.num{font-size:23px;font-weight:600}.label{font-size:10px;color:var(--ink-faint);margin-top:4px;line-height:1.35}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}.bar>span{display:block;height:100%;background:var(--teal)}
+.status{display:inline-flex;padding:3px 7px;border-radius:999px;border:1px solid var(--line-strong);font-size:10px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}.status.good{background:var(--teal-soft);color:var(--teal)}.status.warn{background:var(--amber-soft);color:var(--amber)}.status.neutral{color:var(--ink-soft)}
+input,select{width:100%;background:var(--panel);color:var(--ink);border:1px solid var(--line-strong);border-radius:8px;padding:10px 11px;font-size:12px}.controls{display:grid;gap:9px;grid-template-columns:1fr}@media(min-width:850px){.controls{grid-template-columns:2fr 1fr 1fr}}
+.scroll{overflow:auto}table{width:100%;border-collapse:collapse;font-size:11px}th{color:var(--ink-soft);font-weight:500;text-align:left;border-bottom:1px solid var(--line-strong);padding:8px}td{border-bottom:1px solid var(--line);padding:8px;vertical-align:top}.right{text-align:right}
+.track3-console{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
+.track3-statebar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-bottom:12px}
+.track3-statebtn{appearance:none;text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:10px 11px;cursor:pointer;min-height:62px}
+.track3-statebtn:hover{background:var(--amber-soft);border-color:var(--line-strong)}
+.track3-statebtn.active{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.track3-statebtn .track3-state-count{display:block;font:600 18px/1 'IBM Plex Mono',monospace}
+.track3-statebtn .track3-state-label{display:block;margin-top:6px;font-size:9px;line-height:1.25;opacity:.72}
+.track3-table{min-width:1180px}
+.track3-table tbody tr:hover{background:var(--amber-soft)}
+.track3-table .site-col{min-width:190px}
+.track3-table .state-col{min-width:180px}
+.track3-table .action-col{min-width:390px;line-height:1.5}
+.track3-table .location-col{min-width:105px}
+@media(max-width:900px){.track3-statebar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.track3-statebar{grid-template-columns:1fr}}
+
+.tag{display:inline-block;font-size:10px;padding:3px 6px;margin:2px 3px 2px 0;border:1px solid var(--line);border-radius:999px}.goodbox{background:var(--teal-soft);border:1px solid color-mix(in srgb,var(--teal) 35%,transparent);border-radius:10px}.warnbox{background:var(--amber-soft);border:1px solid var(--amber-line);border-radius:10px}
+.kvs{display:grid;grid-template-columns:180px 1fr;gap:5px;font-size:11px}.kvs div:nth-child(odd){color:var(--ink-faint)}
+.detail{display:none;position:fixed;inset:0;background:rgba(10,16,25,.58);z-index:50;padding:16px;overflow:auto}.detail.open{display:block}.dialog{max-width:1180px;margin:0 auto;background:var(--panel);border:1px solid var(--line-strong);border-radius:14px;padding:18px;box-shadow:0 20px 70px rgba(0,0,0,.3)}
+.evidence{padding:11px;border:1px solid var(--line);border-radius:9px;margin-top:7px}.evidence h4{margin:0 0 4px;font-size:12px}.code{white-space:pre-wrap;word-break:break-word;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:10px;font-size:10px}
+.domain-card{border:1px solid var(--line);border-radius:10px;padding:13px}.domain-card h3{font-size:13px;margin:0}.domain-card p{font-size:11px;line-height:1.5;color:var(--ink-soft)}.matrix td,.matrix th{font-size:9.5px}.cell{display:inline-block;padding:3px 4px;border-radius:4px;border:1px solid var(--line);white-space:nowrap}.cell.good{background:var(--teal-soft);color:var(--teal)}.cell.warn{background:var(--amber-soft);color:var(--amber)}#facilityMap{height:520px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}.map-mini-legend{padding:8px 10px;background:var(--panel);border:1px solid var(--line);border-radius:8px;font-size:10px;color:var(--ink-soft)}
+.footer{border-top:1px solid var(--line);margin-top:30px;padding:22px 0 40px}
+.progress-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.chart-card{padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.chart-title{font-size:12px;font-weight:600}.chart-note{font-size:10px;color:var(--ink-faint);line-height:1.45;margin-top:3px}.chart{width:100%;height:190px;display:block}
+.chart-axis{stroke:var(--line-strong);stroke-width:1}.chart-gridline{stroke:var(--line);stroke-width:1}.chart-fill{fill:var(--teal-soft)}.chart-stroke{fill:none;stroke:var(--teal);stroke-width:2.5}.chart-warn{fill:var(--amber-soft);stroke:var(--amber);stroke-width:1.2}.chart-point{fill:var(--teal);stroke:var(--panel);stroke-width:1.5}.chart-text{fill:var(--ink-soft);font:9px 'IBM Plex Mono',monospace}.chart-big{fill:var(--ink);font:700 22px 'IBM Plex Mono',monospace}
+.site-evidence-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.site-evidence-field{border:1px solid var(--line);border-radius:9px;padding:10px;background:var(--panel)}.site-evidence-field dt{font-size:9px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em}.site-evidence-field dd{font-size:11px;margin:4px 0 0;line-height:1.45}
+.track3-matrix-note{padding:10px 11px;border:1px solid var(--line);border-radius:9px;background:var(--paper);font-size:10px;color:var(--ink-soft);line-height:1.5}
+@media(max-width:980px){.progress-grid{grid-template-columns:1fr 1fr}.site-evidence-fields{grid-template-columns:1fr}}
+@media(max-width:650px){.progress-grid{grid-template-columns:1fr}}
+</style>
+<!-- TRACK3-PUBLIC-SURFACE-V2 -->
+<link rel="stylesheet" href="observatory-nav.css">
+
+<style id="TRACK3-UI-V3">
+/* TRACK3-UI-V3 */
+#track3ViewDeck{position:sticky;top:0;z-index:120;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--panel) 90%,transparent);backdrop-filter:blur(16px) saturate(135%);box-shadow:0 8px 26px rgba(8,18,32,.07)}
+.t3-deck{max-width:1320px;margin:auto;padding:9px 18px}
+.t3-top{display:flex;align-items:center;gap:9px}
+.t3-mark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--ink);color:var(--panel);font:700 10px 'IBM Plex Mono',monospace}
+.t3-name{font-size:12px;font-weight:700;letter-spacing:-.01em}
+.t3-live{margin-left:auto;font:500 8px 'IBM Plex Mono',monospace;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.08em}
+.t3-tabs{display:flex;gap:5px;overflow:auto;scrollbar-width:none;padding-top:7px}
+.t3-tabs::-webkit-scrollbar{display:none}
+.t3-tab{border:1px solid transparent;background:transparent;color:var(--ink-soft);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:10px;font-weight:650;white-space:nowrap}
+.t3-tab:hover{background:var(--amber-soft);color:var(--ink)}
+.t3-tab.active{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.t3-view-hidden{display:none!important}
+.t3-section-shell{scroll-margin-top:108px}
+@media(max-width:620px){.t3-deck{padding-inline:10px}.t3-name{display:none}.t3-live{font-size:7px}}
+</style>
+</head>
+<body>
+
+<!-- TRACK3-UI-V3 -->
+<div id="track3ViewDeck">
+  <div class="t3-deck">
+    <div class="t3-top"><div class="t3-mark">T3</div><div class="t3-name">Track 3 Evidence Observatory</div><div class="t3-live">complete evidence surface · focused views</div></div>
+    <nav class="t3-tabs" role="tablist" aria-label="Track 3 views">
+      <button class="t3-tab active" type="button" data-t3-view="summary" role="tab" aria-selected="true">Summary</button>
+      <button class="t3-tab" type="button" data-t3-view="sites" role="tab" aria-selected="false">Sites &amp; Map</button>
+      <button class="t3-tab" type="button" data-t3-view="physical" role="tab" aria-selected="false">Physical</button>
+      <button class="t3-tab" type="button" data-t3-view="evidence" role="tab" aria-selected="false">Evidence</button>
+      <button class="t3-tab" type="button" data-t3-view="operations" role="tab" aria-selected="false">Operations</button>
+      <button class="t3-tab" type="button" data-t3-view="reference" role="tab" aria-selected="false">Reference</button>
+    </nav>
+  </div>
+</div>
+
+<header class="hero"><div class="wrap">
+<div class="tools">
+<a class="btn" href="index.html">← Main registry</a>
+<a class="btn" href="plan-a.html">AI 2040 Plan A bridge</a>
+<button class="btn" id="theme">Toggle theme</button>
+<a class="btn" href="TRACK3.md">Track 3 source document</a><a class="btn" href="track3-complete-coverage.html">Complete coverage / gap register</a><a class="btn" href="research.html">Research Operations Console</a><a class="btn" href="closed-cases.html">Closed-case laboratory</a>
+<a class="btn" href="data/track3_evidence_schema.json">Evidence schema</a>
+<a class="btn" href="data/module1_radar_spec.json">Module 1 specification</a>
+<a class="btn" href="api.html">Public API</a><a class="btn" href="bulk-download.html">Bulk downloads</a>
+<a class="btn" href="data/module1_radar_summary.json">Module 1 audit</a><a class="btn" href="TRACK3_RELEASE_2026-09-28.md">Release snapshot</a><a class="btn" href="data/track3/external_capability_handoff_2026-09-28.json">External handoff</a><a class="btn" href="data/track3/interval_power_telemetry_protocol.json">Interval telemetry contract</a><a class="btn" href="data/track3/physical_target_leads.json">Physical target leads</a>
+</div>
+<div class="mono faint" style="font-size:10px;margin-top:18px;text-transform:uppercase;letter-spacing:.08em">Track 3 · complete evidence surface · revision 2026-09-28</div>
+<h1>Track 3 Evidence Registry</h1>
+<div class="notice" style="margin-top:12px"><strong>Honest state:</strong> This is a public evidence layer, not a facility-wide certification system. The current 93-site universe has 631 retained derived remote-sensing observations across 92 sites and two defensible site-specific queue IDs; the closed-case laboratory now contains 4 cases and 18 derived physical observations across 3 defensibly locatable cases; the remaining facility-level state is <b>INCONCLUSIVE</b> until the defined end-to-end evidence gates are met. Missing public records remain research outcomes, not evidence of absence.</div>
+<div class="notice" style="margin-top:8px"><strong>Current physical-target lead:</strong> For OpenAI Stargate UAE, Reuters reported on September 11, 2026 that two people familiar with planning confirmed the complex is near Al Dhafra Air Base. This is an area-level secondary lead only; no parcel, polygon, or canonical coordinate is promoted from it.</div>
+
+<p class="soft">A complete publication surface for the Track 3 evidence model: the 93-site frontier-AI reference universe, grid and connection research, service and regulatory evidence, construction and physical infrastructure, power observations, remote-sensing requirements, cooling, transformers, chip inventory and compute accounting, tenancy, source provenance, entity-resolution rules, geospatial policy, and governance references.</p>
+</div></header>
+
+<main class="wrap">
+<section class="section"><div id="cards" class="grid cards"></div></section><section class="section panel" style="padding:16px">
+<div style="display:flex;justify-content:space-between;gap:12px;align-items:end;flex-wrap:wrap">
+<div><h2>Full Track 3 coverage matrix</h2><p id="t3CompletenessMeta" class="soft small">Loading the current implementation inventory…</p></div>
+<div class="tools"><a class="btn" href="data/track3/track3_completeness_matrix.json">Machine-readable matrix</a><a class="btn" href="TRACK3_COMPLETE_COVERAGE.md">Reviewer view</a></div>
+</div>
+<div id="t3CoverageStats" class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-top:12px"></div>
+<div class="scroll" style="margin-top:12px"><table class="matrix"><thead><tr><th>Track 3 element</th><th>Status</th><th>Repository evidence</th><th>Blocking gap</th></tr></thead><tbody id="t3CoverageBody"></tbody></table></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<div style="display:flex;justify-content:space-between;gap:12px;align-items:end;flex-wrap:wrap">
+<div><h2>Global compute-accounting bridge</h2><p id="globalAccountingMeta" class="soft small">Loading retained publisher snapshots…</p></div>
+<div class="tools"><a class="btn" href="data/track3/global_compute_supply_chain.json">Supply-chain ledger</a><a class="btn" href="track3_certificate.py">Certificate model</a><a class="btn" href="track3_audit_chain.py">Audit chain</a><a class="btn" href="data/track3/h100e_conversion.json">H100e conversion</a><a class="btn" href="data/track3/untraced_compute_pool.json">Untraced pool</a></div>
+</div>
+<div id="globalAccountingStats" class="grid" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-top:12px"></div>
+<div class="track3-matrix-note" style="margin-top:12px"><strong>Critical boundary:</strong> aggregate owner/sales/component snapshots are real evidence layers, but they do not constitute the transaction-level chain required for a numerical covert-compute certificate. The residual untraced pool remains <span class="mono">UNKNOWN</span> until that chain is closed.</div>
+</section>
+
+
+<section class="section panel" style="padding:16px"><div class="goodbox" style="padding:12px"><strong>New empirical closure layer:</strong> Four closed cases from the registry's 141-record broad ambiguity research pool now have published queue/entity/location/public-record/physical/transformer adjudications. Two have bounded classifications; one remains <span class="mono">INCONCLUSIVE_AFTER_SEARCH</span> because a defensible physical coordinate could not be established. <a href="ambiguous-case-studies.html">Open the case studies →</a></div></section>
+<section class="section panel" style="padding:16px">
+<div style="display:flex;justify-content:space-between;gap:12px;align-items:end;flex-wrap:wrap">
+<div><h2>Track 3 progress &amp; time-series dashboard</h2><p id="progressMeta" class="soft small">Loading current canonical counts…</p></div>
+<div class="tools"><a class="btn" href="data/track3/time_series_verification.json">Time-series verification JSON</a><a class="btn" href="data/track3/observation_queue.json">Observation queue JSON</a></div>
+</div>
+<div id="progressCharts" class="progress-grid" style="margin-top:12px"></div>
+</section>
+
+
+<section class="section panel" style="padding:16px">
+<div class="goodbox" style="padding:12px">
+<strong>Evidence semantics</strong>
+<div class="small soft" style="margin-top:4px">UNKNOWN, PENDING_RESEARCH, SOURCE_AVAILABLE_NOT_INGESTED and NOT_INGESTED are explicit states. They never become evidence of absence. Queue MW, utility service capacity, contracted demand, energized capacity, Epoch IT power, chip power and measured load remain separate measurements.</div>
+</div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Track 3 definition &amp; architecture</h2>
+<p class="soft small">The canonical Track 3 document describes an auditable evidence graph for whether material AI compute can be accounted for through public physical, electrical, hardware and independent evidence.</p>
+<div id="architecture" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(270px,1fr));margin-top:12px"></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>All Track 3 evidence domains</h2>
+<p class="soft small">Every Epoch site has a machine-readable status for each domain below, even when no evidence is currently ingested.</p>
+<div id="domainCards" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:12px"></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Five-domain Module 1 radar specification</h2>
+<div id="physics" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(310px,1fr));margin-top:12px"></div>
+<div id="governance" style="margin-top:12px"></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Site × domain coverage matrix</h2>
+<p id="matrixMeta" class="soft small">Loading…</p>
+<div class="scroll" style="margin-top:12px"><table class="matrix"><thead id="matrixHead"></thead><tbody id="matrixBody"></tbody></table></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<div style="display:flex;justify-content:space-between;gap:10px;align-items:end;flex-wrap:wrap">
+<div><h2>Track 3 research console</h2><p class="soft small" style="max-width:900px;margin-top:4px">The console is driven by the canonical Track 3 site-status artifact. It separates verified site-specific queue records from site-level evidence, from sites that still need a site-specific search, and from searches that found no retained public record.</p>
+<div class="tools" style="margin-top:8px">
+<a class="btn" href="data/track3/site_status.json">Site status JSON</a>
+<a class="btn" href="data/track3/evidence_records.json">Evidence records JSON</a>
+<a class="btn" href="data/track3/research_queue.json">Grid research queue</a>
+<a class="btn" href="data/track3/observation_queue.json">Observation acquisition queue</a>
+<a class="btn" href="data/track3/power_observations.json">Power observations</a>
+</div></div>
+</div>
+<div id="track3StateBar" class="track3-statebar track3-console" aria-label="Track 3 grid-state filters"></div>
+<div style="min-width:min(1100px,100%);display:grid;gap:9px;grid-template-columns:2fr repeat(5,minmax(130px,1fr));margin-top:12px">
+<input id="search" placeholder="Search facility, Epoch ID, developer/owner, utility, queue ID, address or project…">
+<select id="siteCountry"><option value="">All countries</option></select>
+<select id="siteProvince"><option value="">All states / provinces</option></select>
+<select id="siteUtility"><option value="">All utilities / grid systems</option></select>
+<select id="siteOwner"><option value="">All developers / owners</option></select>
+<select id="siteSort"><option value="power">IT power, descending</option><option value="evidence">evidence count, descending</option><option value="name">site name, A–Z</option></select><select id="siteState" style="display:none" aria-hidden="true"><option value=""></option><option value="VERIFIED_SITE_SPECIFIC"></option><option value="SITE_LEVEL_EVIDENCE"></option><option value="PENDING_RESEARCH"></option><option value="RESEARCHED_NO_PUBLIC_RECORD"></option></select>
+</div>
+<p id="siteMeta" class="soft small" style="margin-top:8px">Loading 93 sites · canonical Track 3 site-status data</p>
+<div class="scroll" style="margin-top:12px">
+<table class="track3-table">
+<thead><tr>
+<th class="site-col">Site</th>
+<th>Epoch ID</th>
+<th class="location-col">State / province</th>
+<th class="location-col">Grid / utility jurisdiction</th>
+<th class="state-col">Grid state</th>
+<th class="right">Epoch IT MW</th>
+<th class="right">Evidence</th>
+<th class="action-col">Next research action</th>
+<th>Open</th>
+</tr></thead>
+<tbody id="siteRows"></tbody>
+</table>
+</div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Track 3 facility map</h2>
+<p id="facilityMapMeta" class="soft small">Loading 93 facility coordinates…</p>
+<p class="small faint">North America · country boundaries · U.S. state boundaries · Canadian province boundaries · Mexican state boundaries</p>
+<div id="facilityMap"></div>
+<div class="tools" style="margin-top:10px"><a class="btn" href="data/epoch_ai_map.json">Facility map JSON</a><a class="btn" href="data/epoch_ai_map.csv">Facility map CSV</a></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<div style="display:flex;justify-content:space-between;gap:10px;align-items:end;flex-wrap:wrap">
+<div><h2>Full evidence ledger</h2><p id="evidenceMeta" class="soft small">Loading…</p></div>
+<div class="tools"><a class="btn" href="data/track3/evidence_records.json">Open JSON</a></div>
+</div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Site</th><th>Domain</th><th>Evidence type</th><th>Claim scope</th><th>Source</th><th>Status</th><th>Confidence</th><th>Observed</th><th>Captured</th><th>Basis</th></tr></thead><tbody id="evidenceRows"></tbody></table></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Observation acquisition program</h2>
+<p id="obsMeta" class="soft small">Loading…</p>
+<div id="obsCards" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-top:12px"></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Site</th><th>Domain</th><th>Priority</th><th>Current state</th><th>Required fields</th><th>Action</th><th>Grid source</th><th>Other sources</th></tr></thead><tbody id="obsRows"></tbody></table></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Time-series verification</h2>
+<p id="tsMeta" class="soft small">Loading…</p>
+<div class="tools" style="margin-top:10px">
+<a class="btn" href="data/track3/time_series_verification.json">Time-series JSON</a>
+<a class="btn" href="data/track3/time_series_verification.csv">Event CSV</a>
+</div>
+<div id="tsCards" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-top:12px"></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Verification item</th><th>Status</th><th>Coverage</th></tr></thead><tbody id="tsChecklist"></tbody></table></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Site</th><th>Date</th><th>Buildings operational</th><th>IT MW</th><th>Total MW</th><th>Δ IT MW</th><th>Δ Total MW</th><th>Temporal status</th></tr></thead><tbody id="tsRows"></tbody></table></div>
+</section>
+<section class="section panel" style="padding:16px">
+<h2>Observed power, cooling &amp; Epoch physical records</h2>
+<div class="tools" style="margin-top:10px">
+<a class="btn" href="data/track3/power_observations.json">Power JSON</a>
+<a class="btn" href="data/track3/cooling_observations.json">Cooling JSON</a>
+<a class="btn" href="data/external/epoch_ai/data_centers.csv">Epoch raw site CSV</a>
+<a class="btn" href="data/external/epoch_ai/data_center_timelines.csv">Epoch timeline CSV</a>
+<a class="btn" href="data/external/epoch_ai/data_centers_chip_quantities.csv">Epoch chip CSV</a>
+<a class="btn" href="data/external/epoch_ai/registry.json">Epoch normalized registry</a>
+</div>
+<div id="observationsSummary" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:12px"></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Site</th><th>Type</th><th>Date/period</th><th>Value</th><th>Equipment / chips</th><th>Source</th></tr></thead><tbody id="physicalRows"></tbody></table></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<div style="display:flex;justify-content:space-between;gap:12px;align-items:end;flex-wrap:wrap">
+<div>
+<h2>93-site missing-information research sweep · 986-task backlog</h2>
+<p id="sweepMeta" class="soft small">Loading one-by-one field inventory…</p>
+</div>
+<div class="tools">
+<a class="btn" href="research.html">Open Research Operations Console</a><a class="btn" href="data/track3/research_work_queue.csv">Research queue CSV</a><a class="btn" href="data/track3/research_workflows.json">Workflow playbooks JSON</a><a class="btn" href="data/track3/site_missing_information_sweep_2026-09-27.json">Sweep JSON</a>
+<a class="btn" href="data/track3/site_missing_information_sweep_2026-09-27.csv">Sweep CSV</a>
+</div>
+</div>
+<div class="track3-matrix-note" style="margin-top:10px">
+<strong>Research rule:</strong> this ledger enumerates missing information from the canonical Track 3 data and records public-source leads separately. The linked Research Operations Console turns every effective unresolved publisher field and every open Track 3 domain cell into one reproducible research task with site-specific search links and evidence rules. A lead does not change a canonical evidence state until the source is reviewed and ingested with provenance.
+</div>
+<div style="display:grid;gap:9px;grid-template-columns:minmax(0,2fr) minmax(180px,1fr);margin-top:12px">
+<input id="sweepSearch" placeholder="Search any of the 93 sites, fields, research leads or next action…">
+<select id="sweepView"><option value="all">All 93 sites</option><option value="leads">Sites with public research leads</option><option value="open">Sites with open Track 3 domains</option></select>
+</div>
+<div class="scroll" style="margin-top:12px">
+<table>
+<thead><tr><th>Site</th><th>Publisher information still unresolved</th><th>Open Track 3 domains</th><th>Public research leads found</th><th>Next research action</th><th>Open</th></tr></thead>
+<tbody id="sweepRows"></tbody>
+</table>
+</div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Facility-level evidence &amp; provenance</h2>
+<p id="provMeta" class="soft small">Loading…</p>
+<div class="tools" style="margin-top:10px"><a class="btn" href="data/track3/facility_provenance.json">Provenance JSON</a><a class="btn" href="data/track3/facility_provenance_records.csv">Provenance CSV</a><a class="btn" href="data/track3_facility_provenance_schema.json">Provenance schema</a><a class="btn" href="data/track3/provenance_snapshots/PROV-1aa29cec822cad26.json">Snapshot manifest</a></div>
+<div id="provCards" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-top:12px"></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Facility</th><th>Raw source</th><th>Publication date</th><th>Capture</th><th>Exact fields</th><th>Corroboration</th><th>Conflict</th><th>Last verified</th><th>Audit</th><th>Snapshot</th></tr></thead><tbody id="provRows"></tbody></table></div>
+</section>
+<section class="section panel" style="padding:16px">
+<h2>93-site public enrichment bridge</h2>
+<p id="enrichmentMeta" class="soft small">Loading independent public project enrichment…</p>
+<div class="tools" style="margin-top:10px">
+<a class="btn" href="data/external/intel_accelerator_enrichment.json">Open enrichment JSON</a>
+<a class="btn" href="data/external/intel_accelerator_enrichment.csv" download>Download enrichment CSV</a>
+<a class="btn" target="_blank" rel="noopener" href="https://intelaccelerator.com/projects">Open source registry</a>
+</div>
+<div id="enrichmentCards" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-top:12px"></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Field</th><th>Captured on sites</th><th>Meaning when blank</th></tr></thead><tbody id="enrichmentRows"></tbody></table></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Fresh public-web enrichment capture</h2>
+<p id="webEnrichmentMeta" class="soft small">Loading newly captured site-level public facts…</p>
+<div class="tools" style="margin-top:10px">
+<a class="btn" href="data/track3/public_web_enrichment_2026-09-27.json" target="_blank" rel="noopener">Open public-web ledger</a><a class="btn" href="data/track3/publisher_completeness_matrix_2026-09-27.json" target="_blank" rel="noopener">Publisher completeness matrix</a><a class="btn" href="data/track3/domain_completeness_matrix_2026-09-27.json" target="_blank" rel="noopener">Track 3 domain matrix</a>
+</div>
+<div id="webEnrichmentCards" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-top:12px"></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Site</th><th>Field</th><th>Captured public value</th><th>Relationship / scope</th><th>Source</th><th>Date</th></tr></thead><tbody id="webEnrichmentRows"></tbody></table></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Automated pipeline</h2>
+<p id="autoMeta" class="soft small">Loading…</p>
+<div class="tools" style="margin-top:10px"><a class="btn" href="data/automation/data_quality_report.json">Data-quality report</a><a class="btn" href="data/automation/source_health.json">Source health</a><a class="btn" href="data/automation/adapter_run_report.json">Adapter runs</a><a class="btn" href="data/automation/queue_release_diff.json">Queue release diff</a><a class="btn" href="data/automation/duplicate_report.json">Duplicate report</a><a class="btn" href="data/automation/geographic_match_report.json">Geographic report</a><a class="btn" href="TRACK3_AUTOMATION.md">Automation procedure</a></div>
+<div id="autoCards" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-top:12px"></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Control</th><th>Status</th><th>Count / state</th></tr></thead><tbody id="autoRows"></tbody></table></div>
+</section>
+<section class="section panel" style="padding:16px">
+<h2>Track 3 detection &amp; verification</h2>
+<p id="detMeta" class="soft small">Loading…</p>
+<div class="tools" style="margin-top:10px">
+<a class="btn" href="data/track3/detection_universe.json">Detection JSON</a>
+<a class="btn" href="data/track3/verification_results.json">Verification results</a>
+<a class="btn" href="data/track3/verification_protocol.json">Verification protocol</a>
+<a class="btn" href="data/track3/absence_testing.json">Absence-testing ledger</a><a class="btn" href="data/track3/attestation_status.json">Attestation status</a>
+<a class="btn" href="TRACK3_VERIFICATION.md">Verification procedure</a>
+</div>
+<div id="detCards" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-top:12px"></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Verification status</th><th>Count</th><th>Meaning</th></tr></thead><tbody id="verStatusRows"></tbody></table></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Facility / candidate</th><th>Detection class</th><th>Entry / candidate reason</th><th>Epoch</th><th>Queue / evidence</th></tr></thead><tbody id="detRows"></tbody></table></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Facility</th><th>Search record</th><th>Source</th><th>Date</th><th>Result</th><th>Follow-up</th></tr></thead><tbody id="absenceRows"></tbody></table></div>
+<div class="warnbox" style="padding:11px;margin-top:12px"><strong>Verification boundary:</strong> PASS is claim-specific. The presence of an Epoch record, queue record, company disclosure, permit, or satellite-source availability does not automatically certify current physical AI compute. Missing evidence remains UNKNOWN or NOT TESTED.</div>
+</section>
+<section class="section panel" style="padding:16px">
+<h2>Entity resolution</h2>
+<p id="entityMeta" class="soft small">Loading…</p>
+<div class="tools" style="margin-top:10px">
+<a class="btn" href="data/track3/entity_resolution.json">Entity graph JSON</a>
+<a class="btn" href="data/track3/entity_resolution_entities.csv">Entities CSV</a>
+<a class="btn" href="data/track3/entity_resolution_relationships.csv">Relationships CSV</a>
+<a class="btn" href="data/track3/entity_resolution_research_queue.csv">Legal-entity queue</a>
+</div>
+<div id="entityCards" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-top:12px"></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Resolution item</th><th>Status</th><th>Coverage</th></tr></thead><tbody id="entityChecklist"></tbody></table></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Relationship</th><th>From</th><th>To</th><th>Confidence</th><th>Temporal</th><th>Evidence</th></tr></thead><tbody id="entityRels"></tbody></table></div>
+</section>
+<section class="section panel" style="padding:16px">
+<h2>Complete Epoch site record layer</h2>
+<p id="epochMeta" class="soft small">Loading…</p>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Site</th><th>Address</th><th>Owner</th><th>Users</th><th>Current IT MW</th><th>H100 eq</th><th>Capital cost</th><th>Latest construction / power</th><th>Latest chips</th><th>Grid crosswalk</th></tr></thead><tbody id="epochRows"></tbody></table></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Public research completeness dossier</h2>
+<p id="dossierMeta" class="soft small">Loading…</p>
+<div class="tools" style="margin-top:10px">
+<a class="btn" href="data/track3/public_site_dossier.json" target="_blank" rel="noopener">Open complete 93-site dossier</a><a class="btn" href="data/track3/public_site_dossier.csv" download>Download complete dossier CSV</a>
+</div>
+<div id="dossierCards" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-top:12px"></div>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Site</th><th>Publisher gaps</th><th>Grid / utility evidence</th><th>Queue ID</th><th>Research sources</th><th>Next action</th></tr></thead><tbody id="dossierRows"></tbody></table></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Evidence state dictionary</h2>
+<div id="states" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-top:12px"></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Track 3 data dictionary</h2>
+<p class="soft small">Required and optional fields from the canonical evidence schema are listed below. Fields absent from a source remain absent rather than being inferred.</p>
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:12px">
+<div class="panel card"><h3 style="font-size:13px;margin:0">Required fields</h3><div id="requiredFields" class="code" style="margin-top:8px"></div></div>
+<div class="panel card"><h3 style="font-size:13px;margin:0">Optional fields</h3><div id="optionalFields" class="code" style="margin-top:8px"></div></div>
+<div class="panel card"><h3 style="font-size:13px;margin:0">Domains</h3><div id="schemaDomains" class="code" style="margin-top:8px"></div></div>
+</div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Public queue / connection source universe</h2>
+<p id="sourceMeta" class="soft small">Loading…</p>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Source</th><th>Type</th><th>Geography</th><th>Authority</th><th>Use</th><th>Limit</th><th>Open</th></tr></thead><tbody id="sourceRows"></tbody></table></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>External compute-source ingestion state</h2>
+<p class="soft small">These are cataloged external datasets. A source being listed here does not mean its aggregate values have been attributed to individual sites.</p>
+<div class="scroll" style="margin-top:10px"><table><thead><tr><th>Domain</th><th>File</th><th>Status</th><th>Rows</th><th>Columns</th></tr></thead><tbody id="externalRows"></tbody></table></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Source capture &amp; provenance</h2>
+<div id="provenance" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:12px"></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Entity-resolution rules</h2>
+<div id="entityRules" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:12px"></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Geospatial interface rules</h2>
+<div id="geoRules" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:12px"></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Governance &amp; legal-reference layer</h2>
+<p class="soft small">Governance references are displayed with their status semantics. Proposed research mechanisms are not presented as enacted authority.</p>
+<div id="govRefs" class="scroll" style="margin-top:12px"></div>
+</section>
+
+<section class="section panel" style="padding:16px">
+<h2>Current Track 3 boundary</h2>
+<div class="warnbox" style="padding:12px">
+<div class="small soft">The current repository has a complete 93-site site/grid evidence disposition: 88 sites have site-level grid evidence, 2 have verified site-specific queue IDs, and 3 have explicit researched-no-public-record outcomes. Remote-sensing acquisition targets cover all 93 sites, and the canonical build currently contains 631 processed satellite observations across 92 of 93 sites. Three source-backed transformer events are retained; the remaining 92 site-level transformer cells are explicitly assessed as having no qualifying retained public record in the current evidence layer. These are explicit evidence states, not findings about any facility.</div>
+</div>
+</section>
+
+<footer class="footer"><div class="tools">
+<a class="btn" href="data/track3/summary.json">Summary JSON</a>
+<a class="btn" href="data/track3/site_status.json">Site status JSON</a>
+<a class="btn" href="data/track3/research_queue.json">Research queue JSON</a><a class="btn" href="data/track3/research_complete_no_public_record.json">Completed no-public-record ledger</a>
+<a class="btn" href="data/track3/observation_queue.json">Observation queue JSON</a>
+<a class="btn" href="data/track3/observation_queue.csv">Observation queue CSV</a>
+<a class="btn" href="data/track3/power_observations.json">Power observations</a>
+<a class="btn" href="data/track3/cooling_observations.json">Cooling observations</a>
+<a class="btn" href="data/track3/external_source_snapshots.json">External source audit</a>
+</div><p class="small faint" style="margin-top:10px">All displayed data are loaded from repository-hosted artifacts. Rev. 2026-09-27.</p></footer>
+</main>
+
+<div class="detail" id="detail"><div class="dialog">
+<div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><div><div class="mono faint" style="font-size:10px">TRACK 3 SITE RECORD</div><h2 id="dtitle" style="margin:4px 0"></h2><div id="dsub" class="mono faint" style="font-size:10px"></div></div><button class="btn" id="close">Close</button></div>
+<div id="dbody" style="margin-top:14px"></div>
+</div></div>
+
+<script>
+const U={
+ summary:'data/track3/summary.json',
+ enrichment:'data/external/intel_accelerator_enrichment.json',
+ sites:'data/track3/site_status.json',
+ evidence:'data/track3/evidence_records.json',
+ obs:'data/track3/observation_queue.json',
+ power:'data/track3/power_observations.json',
+ time_series:'data/track3/time_series_verification.json',
+ sweep:'data/track3/site_missing_information_sweep_2026-09-27.json',
+ physical:'data/physical_verification_layer.json',
+ cooling:'data/track3/cooling_observations.json',
+ sources:'data/track3_source_stack.json',
+ universe:'data/external/epoch_ai/queue_source_universe.json',
+ external:'data/track3/external_source_snapshots.json',
+ entity:'data/track3/entity_resolution.json',
+ schema:'data/track3_evidence_schema.json',
+ module1:'data/module1_radar_spec.json',
+ audit:'data/module1_radar_summary.json',
+ epoch:'data/external/epoch_ai/registry.json',
+ dossier:'data/track3/public_site_dossier.json',
+ web_enrichment:'data/track3/public_web_enrichment_2026-09-27.json'
+};
+let D={},filteredSites=[];
+const domains=['site_identity','grid_connection','service_or_contract','regulatory','construction','power_telemetry','remote_sensing','cooling','transformer_supply_chain','chip_inventory','chip_ownership','chip_users','chip_shipments','independent_corroboration','compute_tenancy'];
+const matrixDomains=[
+ {key:'site_identity',label:'Site identity',source:'canonical'},
+ {key:'construction',label:'Construction history',source:'canonical'},
+ {key:'chip_inventory',label:'Site chip inventory',source:'canonical'},
+ {key:'grid_connection',label:'Grid / connection',source:'canonical'},
+ {key:'power_telemetry',label:'Actual power telemetry',source:'canonical'},
+ {key:'service_or_contract',label:'Service / contract',source:'canonical'},
+ {key:'compute_tenancy',label:'Compute tenancy',source:'canonical'},
+ {key:'tir_thermal',label:'TIR thermal',source:'alias',alias:'remote_sensing'},
+ {key:'sar_optical',label:'SAR / optical change detection',source:'alias',alias:'remote_sensing'},
+ {key:'cooling',label:'Cooling equipment',source:'canonical'},
+ {key:'transformer_supply_chain',label:'HV transformer supply',source:'canonical'},
+ {key:'chip_ownership',label:'Global chip ownership',source:'canonical'},
+ {key:'chip_users',label:'Global chip usage',source:'canonical'},
+ {key:'chip_shipments',label:'Global chip shipments',source:'canonical'},
+ {key:'gpu_clusters',label:'Global GPU clusters',source:'aggregate',fixed:'INGESTED_SNAPSHOT'},
+ {key:'chip_components',label:'AI chip components',source:'aggregate',fixed:'INGESTED_SNAPSHOT'},
+ {key:'ownership_accounting',label:'Ownership accounting',source:'display',fixed:'NOT_ASSESSED'},
+ {key:'independent_corroboration',label:'Independent corroboration',source:'canonical'}
+];
+const domainMeanings={
+ site_identity:'Epoch AI site record is present in the 93-site reference universe.',
+ construction:'Dated Epoch construction/history records are retained.',
+ chip_inventory:'Epoch AI site-level chip-quantity records are retained when published.',
+ grid_connection:'Site-level records are attached; a queue ID is only asserted when defensible.',
+ power_telemetry:'No site-level interval-demand telemetry dataset is currently ingested.',
+ service_or_contract:'Site-level utility/service/energy-contract evidence is tracked separately from queue-ID verification.',
+ compute_tenancy:'Site-specific compute-tenancy or capacity-contract evidence is kept separate from electricity connection and measured load.',
+ tir_thermal:'No numeric site-specific TIR thermal-anomaly dataset is currently ingested.',
+ sar_optical:'No numeric site-specific SAR/optical construction-change dataset is currently ingested.',
+ cooling:'Cooling-equipment source families are cataloged separately; structured site-level equipment events are not yet ingested.',
+ transformer_supply_chain:'Procurement, delivery and installation event records are not yet fully ingested.',
+ chip_ownership:'Aggregate external ownership source; it is not automatically attributed to this site.',
+ chip_users:'Aggregate external usage source; it is not automatically attributed to this site.',
+ chip_shipments:'Aggregate external shipment source; it is not automatically attributed to this site.',
+ gpu_clusters:'Aggregate external compute-location source; it is not automatically mapped to this site.',
+ chip_components:'Aggregate semiconductor-supply source; it is not automatically mapped to this site.',
+ ownership_accounting:'Owner/user fields are evidence inputs, not a complete legal or beneficial-ownership graph.',
+ independent_corroboration:'No independence score is inferred from the number of records or sources.'
+};
+const getDomainSpec=k=>matrixDomains.find(x=>x.key===k);
+const getDomainState=(r,k)=>{
+ const s=getDomainSpec(k);
+ if(!s)return 'UNKNOWN';
+ if(s.fixed)return s.fixed;
+ return (r.domains?.[s.alias||k]?.status)||'UNKNOWN';
+};
+const domainDescriptions={
+site_identity:'Canonical facility identity, address and reference-set membership.',
+grid_connection:'Queue, interconnection, utility, transmission and connection-system evidence.',
+service_or_contract:'Utility service, energy contract, supply agreement and related evidence.',
+regulatory:'PUC/PSC, FERC, government and other regulatory filing evidence.',
+construction:'Dated construction, completion, expansion and physical-development evidence.',
+power_telemetry:'Measured or reported electricity demand/consumption observations.',
+remote_sensing:'TIR, SAR, optical and change-detection observations.',
+cooling:'Cooling equipment and physical thermal infrastructure observations.',
+transformer_supply_chain:'HV transformer procurement, delivery, installation and energization events.',
+chip_inventory:'Site-level chip quantities and chip-type observations.',
+chip_ownership:'Who owns the relevant accelerators/compute stock.',
+chip_users:'Who uses the relevant accelerators/compute stock.',
+chip_shipments:'Chip sales, shipment and movement records relevant to compute accounting.',
+independent_corroboration:'Independence/corroboration relationship across sources.',
+compute_tenancy:'Cloud, colocation, customer, lease or compute-use relationships.'
+};
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>Number.isFinite(Number(n))?Number(n).toLocaleString(undefined,{maximumFractionDigits:2}):'—';
+const stClass=s=>s==='VERIFIED_SITE_SPECIFIC'||s==='SITE_LEVEL_EVIDENCE'||s==='INGESTED'||s==='INGESTED_SNAPSHOT'?'good':(s==='PENDING_RESEARCH'||s==='SOURCE_AVAILABLE_NOT_INGESTED'||s==='NOT_INGESTED'?'warn':'neutral');
+const short=s=>{s=String(s==null?'':s);return s.length>150?s.slice(0,147)+'…':s};
+function siteGrid(r){return r.domains?.grid_connection?.status||'UNKNOWN'}
+function siteEvidence(r){return Number(r.combined_site_level_evidence_count||r.site_level_evidence_count||0)}
+function renderProgressCharts(){
+ const rows=D.sites||[], s=D.summary||{}, ts=D.time_series?.summary||{}, obs=D.obs||[];
+ const total=rows.length||93, counts={};
+ rows.forEach(r=>{const x=siteGrid(r);counts[x]=(counts[x]||0)+1});
+ const verified=counts.VERIFIED_SITE_SPECIFIC||0, evidence=counts.SITE_LEVEL_EVIDENCE||0, noRecord=counts.RESEARCHED_NO_PUBLIC_RECORD||0, pending=counts.PENDING_RESEARCH||0;
+ const byYear={};
+ (D.time_series?.site_timelines||[]).forEach(site=>(site.observed_events||[]).forEach(ev=>{const y=String(ev.date||'').slice(0,4);if(y)byYear[y]=(byYear[y]||0)+1;}));
+ const years=Object.keys(byYear).sort(), maxYear=Math.max(1,...years.map(y=>byYear[y]));
+ const obsDoneByDomain={power_telemetry:0,remote_sensing:0,cooling:0};
+ const snapshotCounts={power_telemetry:(D.power||[]).length,remote_sensing:(D.physical?.summary?.raw_tir_numeric_observations||0)+(D.physical?.summary?.raw_sar_numeric_observations||0),cooling:(D.cooling||[]).length};
+ const makeBar=(label,count,denom)=>'<div style="margin:9px 0"><div style="display:flex;justify-content:space-between;font-size:10px"><span>'+esc(label)+'</span><span class="mono">'+esc(count)+' / '+esc(denom)+'</span></div><div class="bar" style="margin-top:4px"><span style="width:'+Math.min(100,(count/Math.max(1,denom))*100)+'%"></span></div></div>';
+ const stateW=Math.max(1,Math.min(100,(verified/total)*100)),evW=Math.max(1,Math.min(100,(evidence/total)*100)),nrW=Math.max(1,Math.min(100,(noRecord/total)*100)),pW=Math.max(1,Math.min(100,(pending/total)*100));
+ let x=16, y=44, w=348, h=26;
+ const segs=[['Verified',verified,'var(--teal)'],['Site-level',evidence,'var(--teal)'],['No public record',noRecord,'var(--amber)'],['Pending',pending,'var(--line-strong)']];
+ let bars='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="8" fill="var(--line)"/>';
+ let cur=x;segs.forEach(z=>{const ww=w*(z[1]/total);bars+='<rect x="'+cur+'" y="'+y+'" width="'+ww+'" height="'+h+'" fill="'+z[2]+'"/>';cur+=ww;});
+ let legend='';cur=12;segs.forEach(z=>{legend+='<circle cx="'+cur+'" cy="91" r="4" fill="'+z[2]+'"/><text class="chart-text" x="'+(cur+7)+'" y="94">'+esc(z[0]+' '+z[1])+'</text>';cur+=82;});
+ const svg1='<svg class="chart" viewBox="0 0 380 125" role="img" aria-label="Track 3 grid state distribution"><text class="chart-big" x="16" y="24">'+total+'</text><text class="chart-text" x="55" y="23">canonical sites</text>'+bars+legend+'<text class="chart-text" x="16" y="116">Current grid-state classification from site_status.json</text></svg>';
+ const taskSvg=['power_telemetry','remote_sensing','cooling'].map((d,i)=>{const yy=34+i*40;return '<text class="chart-text" x="10" y="'+(yy+6)+'">'+esc(d.replace(/_/g,' '))+'</text><rect x="118" y="'+yy+'" width="190" height="12" rx="6" fill="var(--line)"/><rect x="118" y="'+yy+'" width="0" height="12" rx="6" fill="var(--teal)"/><text class="chart-text" x="316" y="'+(yy+9)+'">0 / 93</text>';}).join('');
+ const svg2='<svg class="chart" viewBox="0 0 380 150" role="img" aria-label="Open Track 3 acquisition task progress"><text class="chart-big" x="10" y="19">'+esc(obs.length)+'</text><text class="chart-text" x="50" y="18">open acquisition tasks</text>'+taskSvg+'<text class="chart-text" x="10" y="145">Tasks remain open until a qualifying observation with provenance is attached.</text></svg>';
+ let line='',pts='';
+ if(years.length){years.forEach((yr,i)=>{const px=30+(i/Math.max(1,years.length-1))*320;const py=125-(byYear[yr]/maxYear)*92;line+=(i?'L':'M')+px+' '+py;pts+='<circle class="chart-point" cx="'+px+'" cy="'+py+'" r="4"/><text class="chart-text" x="'+px+'" y="144" text-anchor="middle">'+yr+'</text><text class="chart-text" x="'+px+'" y="'+(py-8)+'" text-anchor="middle">'+byYear[yr]+'</text>';});}
+ const svg3='<svg class="chart" viewBox="0 0 380 160" role="img" aria-label="Observed Track 3 timeline events by year"><line class="chart-axis" x1="28" y1="126" x2="354" y2="126"/><line class="chart-gridline" x1="28" y1="34" x2="354" y2="34"/><path class="chart-stroke" d="'+line+'"/>'+pts+'<text class="chart-text" x="28" y="18">449 observed timeline events retained</text><text class="chart-text" x="28" y="157">Year labels count observed/reported events, not predictions.</text></svg>';
+ document.getElementById('progressCharts').innerHTML=
+ '<div class="chart-card"><div class="chart-title">Grid-state distribution</div><div class="chart-note">'+esc(verified)+' verified · '+esc(evidence)+' site-level evidence · '+esc(noRecord)+' searched with no retained public record.</div>'+svg1+'</div>'+
+ '<div class="chart-card"><div class="chart-title">Acquisition completion</div><div class="chart-note">0/93 interval-power telemetry targets have qualifying interval measurements; 92/93 sites have retained remote-sensing observations; 18/93 sites have retained cooling snapshots.</div>'+svg2+
+ '<div style="margin-top:8px">'+makeBar('Power snapshots retained (not task completion)',snapshotCounts.power_telemetry,93)+makeBar('Cooling observations retained (not task completion)',snapshotCounts.cooling,93)+'</div></div>'+
+ '<div class="chart-card"><div class="chart-title">Observed time progress</div><div class="chart-note">Construction / operational observations retained by year across the 93-site universe.</div>'+svg3+'</div>';
+ document.getElementById('progressMeta').textContent='93 canonical sites · '+esc(ts.observed_timeline_event_count||0)+' observed timeline events · '+esc(ts.future_or_predicted_timeline_event_count||0)+' future/predicted rows kept separate · '+esc(obs.length)+' observation-acquisition tasks.';
+}
+function renderSweep(){
+ const d=D.sweep||{}, rows=d.records||[];
+ const q=(document.getElementById('sweepSearch')?.value||'').trim().toLowerCase();
+ const v=document.getElementById('sweepView')?.value||'all';
+ const filtered=rows.filter(r=>{
+   if(v==='leads'&&!r.public_research_leads.length)return false;
+   if(v==='open'&&!r.open_track3_domains.length)return false;
+   if(!q)return true;
+   const hay=[r.site_name,r.epoch_id,r.country,r.state_province,(r.missing_publisher_fields||[]).join(' '),(r.remaining_unresolved_publisher_fields||[]).join(' '),(r.open_track3_domains||[]).join(' '),(r.next_research_action||''),JSON.stringify(r.public_research_leads||[])].join(' ').toLowerCase();
+   return hay.includes(q);
+ });
+ document.getElementById('sweepMeta').textContent=filtered.length+' of '+rows.length+' sites shown · '+(d.summary?.total_missing_publisher_fields||0)+' dossier gaps · '+(d.summary?.total_public_enrichment_resolved_fields||0)+' public-enrichment field values · '+(d.summary?.total_public_research_leads||0)+' targeted public leads across '+(d.summary?.sites_with_public_research_leads||0)+' sites · '+(d.summary?.effective_unresolved_publisher_fields||0)+' publisher fields remain unresolved after reconciliation.';
+ document.getElementById('sweepRows').innerHTML=filtered.map(r=>{
+   const leads=(r.public_research_leads||[]).map(x=>'<div style="margin-bottom:5px"><span class="status '+(x.status==='PUBLIC_SOURCE'?'good':'neutral')+'">'+esc(x.status)+'</span> <strong>'+esc(x.field)+'</strong><div class="small soft">'+esc(x.finding)+'</div>'+(x.source_url?'<a class="small" target="_blank" rel="noopener" href="'+esc(x.source_url)+'">source</a>':'<span class="small faint">'+esc(x.source)+'</span>')+'</div>').join('')||'<span class="faint">No new lead captured in targeted sweep.</span>';
+   return '<tr><td><strong>'+esc(r.site_name)+'</strong><div class="mono faint" style="font-size:9px">'+esc(r.epoch_id)+'</div><div class="small faint">'+esc([r.state_province,r.country].filter(Boolean).join(' · '))+'</div></td><td class="small">'+esc((r.effective_unresolved_publisher_fields||[]).join(', ')||'No unresolved publisher-field gap in this field set')+'</td><td class="small">'+esc((r.open_track3_domains||[]).join(', ')||'None')+'</td><td class="small">'+leads+'</td><td class="small">'+esc(r.next_research_action||'No next action recorded.')+'</td><td><a class="btn" href="facility.html?facility='+encodeURIComponent(r.epoch_id)+'">Open</a></td></tr>';
+ }).join('')||'<tr><td colspan="6" class="faint">No sites match this sweep filter.</td></tr>';
+}
+function renderCards(){
+ const s=D.summary||{}, a=D.audit||{};
+ const cards=[
+  ['93','Epoch sites','frontier-AI reference universe'],
+  [s.combined_site_level_evidence_site_count||0,'Sites with any combined evidence','site-level + crosswalk layers'],
+  [s.site_specific_queue_id_count||0,'Verified site-specific queue IDs','out of 93 Epoch sites'],
+  [s.pending_grid_connection_research_count||0,'Pending grid research','open site-specific connection gaps'],
+  [s.research_completed_no_public_record_count||0,'Research-complete no public record','documented site searches with no retained public match'],
+  [D.evidence.length,'Evidence records','canonical evidence ledger'],
+  [D.obs.length,'Observation tasks','acquisition backlog']
+ ];
+ document.getElementById('cards').innerHTML=cards.map(x=>'<div class="panel card"><div class="num mono">'+esc(x[0])+'</div><div class="label">'+esc(x[1])+'</div><div class="faint" style="font-size:10px;margin-top:4px">'+esc(x[2])+'</div></div>').join('');
+}
+function renderArchitecture(){
+ const items=[
+  ['Site','Canonical site identity + aliases + location + Epoch reference data.'],
+  ['Electricity','Queue + utility + transmission + service + regulatory connection chain.'],
+  ['Physical','Construction + cooling + electrical equipment + remote sensing.'],
+  ['Compute','Chip inventory + ownership + users + shipments + tenancy.'],
+  ['Observations','Measured/reported power and independent physical observations.'],
+  ['Provenance','Source, capture date, confidence, scope, review and independence.']
+ ];
+ document.getElementById('architecture').innerHTML=items.map(x=>'<div class="domain-card"><h3>'+esc(x[0])+'</h3><p>'+esc(x[1])+'</p></div>').join('');
+}
+function renderDomains(){
+ const rows=D.sites||[];
+ document.getElementById('domainCards').innerHTML=matrixDomains.map(spec=>{
+  const c={};rows.forEach(r=>{const s=getDomainState(r,spec.key);c[s]=(c[s]||0)+1});
+  const top=Object.entries(c).sort((a,b)=>b[1]-a[1])[0]||['UNSET',0];
+  return '<div class="domain-card"><h3>'+esc(spec.label)+'</h3><p>'+esc(domainMeanings[spec.key]||'Track 3 evidence state.')+'</p><div class="bar"><span style="width:'+Math.round(top[1]/93*100)+'%"></span></div><div style="margin-top:6px">'+Object.entries(c).map(x=>'<span class="tag">'+esc(x[0])+' · '+x[1]+'</span>').join('')+'</div></div>';
+ }).join('');
+}
+function renderPhysics(){
+ const m=D.module1||{};
+ const p=m.domain_1_physics||{}, floor=p.criterion_1_1_electrical_capacity_floor||{}, flop=p.criterion_1_2_flop_bounding_box||{}, heat=p.criterion_1_3_thermodynamic_heat_signature||{};
+ const scenarios=(flop.scenarios||[]).map(x=>'<tr><td>'+esc(x.name)+'</td><td class="right">'+esc(x.pue)+'</td><td class="right">'+esc(x.rack_density_kw)+'</td><td class="right">'+esc((x.mfu*100).toFixed(0))+'%</td><td class="right mono">'+esc(Number(x.computed_100mw_90d_flops).toExponential(4))+'</td></tr>').join('');
+ document.getElementById('physics').innerHTML=
+ '<div class="domain-card"><h3>1.1 Electrical capacity floor</h3><p>Minimum capacity: <strong>'+esc(floor.minimum_capacity_mw)+' MW</strong>; minimum interconnection voltage: <strong>'+esc(floor.minimum_interconnection_voltage_kv)+' kV</strong>; classification: '+esc(floor.voltage_class)+'.</p></div>'+
+ '<div class="domain-card"><h3>1.2 90-day FLOP bounding box</h3><p>Threshold: '+esc(flop.threshold_flops?.toExponential?.(0)||'1e+26')+' FLOPs; baseline: '+esc(flop.baseline_chip)+' at '+esc(flop.baseline_chip_tflops)+' TFLOPS; '+esc(flop.run_days)+' days.</p><div class="scroll"><table><thead><tr><th>Scenario</th><th class="right">PUE</th><th class="right">Rack kW</th><th class="right">MFU</th><th class="right">90-day FLOPs @ 100 MW</th></tr></thead><tbody>'+scenarios+'</tbody></table></div><div class="code" style="margin-top:8px">'+esc(JSON.stringify(flop.formula,null,2))+'</div></div>'+
+ '<div class="domain-card"><h3>1.3 Thermodynamic heat signature</h3><p>'+esc(heat.continuous_heat_rejection_w)+' · water-consumption range '+esc((heat.water_consumption_l_per_kwh_range||[]).join('–'))+' L/kWh · ΔT uses Q/(ṁ·Cp), Cp='+esc(heat.cp_j_per_kg_k)+' J/kg/K.</p></div>';
+}
+function renderSchema(){
+ const s=D.schema||{};
+ document.getElementById('requiredFields').textContent=(s.required_fields||[]).join('\n');
+ document.getElementById('optionalFields').textContent=(s.optional_fields||[]).join('\n');
+ document.getElementById('schemaDomains').textContent=(s.domains||[]).join('\n');
+}
+function renderStates(){
+ const meaning={
+ VERIFIED_SITE_SPECIFIC:'Defensible site-specific queue/connection record attached.',
+ SITE_LEVEL_EVIDENCE:'Site-specific utility, service, planning, regulatory or facility record exists, without asserting a queue ID.',
+ JURISDICTION_ONLY:'Applicable grid/connection family is known, but the physical site is not tied to a site-specific public record.',
+ PENDING_RESEARCH:'Site-specific search has not yet produced a retained connection/service record.',
+ SOURCE_AVAILABLE_NOT_INGESTED:'Relevant public external dataset exists and is cataloged, but is not yet joined to the site evidence graph.',
+ NOT_INGESTED:'Evidence stream is specified by the verification design but observations are not yet ingested.',
+ UNKNOWN:'Evidence needed to classify the field is not currently available.',
+ RESEARCHED_NO_PUBLIC_RECORD:'A site-specific public-record search was completed and no public queue/service record was retained; this is not evidence that service is absent.',
+ CONTRADICTED:'Retained evidence conflicts with another retained evidence record.',
+ SUPERSEDED:'Record was replaced by a newer evidence record.'
+ };
+ const states=[...new Set([...(D.schema?.statuses||[]),...Object.keys(meaning)])];
+ document.getElementById('states').innerHTML=states.map(s=>'<div class="domain-card"><h3><span class="status '+stClass(s)+'">'+esc(s)+'</span></h3><p>'+esc(meaning[s]||'Explicit Track 3 state.')+'</p></div>').join('');
+}
+function renderMatrix(){
+ const head='<tr><th>Site</th>'+matrixDomains.map(d=>'<th>'+esc(d.label)+'</th>').join('')+'</tr>';document.getElementById('matrixHead').innerHTML=head;
+ document.getElementById('matrixMeta').textContent=(D.sites||[]).length+' sites × '+matrixDomains.length+' displayed domains. Aggregate domains are explicitly marked as snapshots and are not automatically attributed to individual sites.';
+ document.getElementById('matrixBody').innerHTML=(D.sites||[]).map(r=>'<tr><td><strong>'+esc(r.site_name)+'</strong></td>'+matrixDomains.map(d=>{const s=getDomainState(r,d.key);return '<td><span class="cell '+stClass(s)+'">'+esc(s.replace(/_/g,' '))+'</span></td>'}).join('')+'</tr>').join('');
+}
+function populateSiteFilters(){
+ const rows=D.sites||[];
+ const fill=(id,vals,label)=>{const el=document.getElementById(id),cur=el.value;el.innerHTML='<option value="">'+label+'</option>'+[...new Set(vals.filter(Boolean).map(String))].sort((a,b)=>a.localeCompare(b)).map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');el.value=cur;};
+ fill('siteCountry',rows.map(r=>r.country),'All countries');
+ fill('siteProvince',rows.map(r=>r.state_province),'All states / provinces');
+ fill('siteUtility',rows.flatMap(r=>{const g=r.grid||{},n=r.normalized||{},e=(D.enrichment?.records||[]).find(x=>x.epoch_id===r.epoch_id)||{};return [g.jurisdiction,n.energy_companies,e.public_grid_operator,...(e.energy_partners||[])];}),'All utilities / grid systems');
+ fill('siteOwner',rows.flatMap(r=>{const n=r.normalized||{},e=(D.enrichment?.records||[]).find(x=>x.epoch_id===r.epoch_id)||{};return [n.owner,n.users,e.public_owner,e.public_users];}),'All developers / owners');
+}
+function renderStateBar(){
+ const rows=D.sites||[], counts={ALL:rows.length};
+ rows.forEach(r=>{const s=siteGrid(r);counts[s]=(counts[s]||0)+1});
+ const items=[
+  ['ALL','All Track 3 grid states','All 93 canonical sites'],
+  ['VERIFIED_SITE_SPECIFIC','Verified site-specific','Queue/connection ID retained'],
+  ['SITE_LEVEL_EVIDENCE','Site-level evidence','Evidence exists; no queue ID asserted'],
+  ['PENDING_RESEARCH','Pending site-specific','Search not yet closed'],
+  ['RESEARCHED_NO_PUBLIC_RECORD','Researched — no public record','Search completed; no retained public match']
+ ];
+ document.getElementById('track3StateBar').innerHTML=items.map(x=>{
+  const active=(document.getElementById('siteState')?.value||'')===(x[0]==='ALL'?'':x[0]);
+  return '<button type="button" class="track3-statebtn '+(active?'active':'')+'" data-track3-state="'+esc(x[0])+'"><span class="track3-state-count">'+esc(counts[x[0]]||0)+'</span><span class="track3-state-label">'+esc(x[1])+' · '+esc(x[2])+'</span></button>';
+ }).join('');
+ document.querySelectorAll('[data-track3-state]').forEach(b=>b.addEventListener('click',()=>{
+  const v=b.getAttribute('data-track3-state')||'';
+  document.getElementById('siteState').value=v==='ALL'?'':v;
+  renderStateBar();renderSites();
+ }));
+}
+function renderSites(){
+ const q=document.getElementById('search').value.trim().toLowerCase(), f=document.getElementById('siteState').value;
+ const country=document.getElementById('siteCountry').value, province=document.getElementById('siteProvince').value, utility=document.getElementById('siteUtility').value, owner=document.getElementById('siteOwner').value;
+ const sort=document.getElementById('siteSort').value;
+ filteredSites=(D.sites||[]).filter(r=>{
+  const g=r.grid||{}, n=r.normalized||{};
+  if(f&&siteGrid(r)!==f)return false;
+  if(country&&r.country!==country)return false;
+  if(province&&r.state_province!==province)return false;
+  const er=(D.enrichment?.records||[]).find(x=>x.epoch_id===r.epoch_id)||{};
+  if(utility&&![g.jurisdiction,n.energy_companies,er.public_grid_operator,...(er.energy_partners||[])].join(' ').toLowerCase().includes(utility.toLowerCase()))return false;
+  if(owner&&![n.owner,n.users,er.public_owner,er.public_users].join(' ').toLowerCase().includes(owner.toLowerCase()))return false;
+  if(!q)return true;
+  const hay=[r.site_name,r.epoch_id,r.country,r.state_province,r.next_action,g.jurisdiction,g.site_specific_queue_id,g.site_specific_queue_name,g.poi_substation,n.name,n.owner,n.users,n.address,n.project,n.energy_companies,n.construction_companies,er.public_program,er.public_owner,er.public_users,er.public_address,er.public_grid_operator,...(er.energy_partners||[]),...(er.construction_epc||[])].join(' ').toLowerCase();
+  return hay.includes(q);
+ }).slice().sort((a,b)=>{
+  if(sort==='name')return String(a.site_name).localeCompare(String(b.site_name));
+  if(sort==='evidence')return siteEvidence(b)-siteEvidence(a);
+  return Number(b.current_it_power_mw||0)-Number(a.current_it_power_mw||0);
+ });
+ document.getElementById('siteMeta').textContent=filteredSites.length+' of '+(D.sites||[]).length+' sites · canonical Track 3 site-status data';
+ document.getElementById('siteRows').innerHTML=filteredSites.map(r=>{
+  const g=r.grid||{}, st=siteGrid(r);
+  return '<tr><td class="site-col"><strong>'+esc(r.site_name)+'</strong></td><td><span class="mono faint" style="font-size:9px">'+esc(r.epoch_id)+'</span></td><td class="location-col">'+esc(r.state_province||'Not published / not retained')+'</td><td class="location-col">'+esc(g.jurisdiction||'Not mapped / not retained')+'</td><td class="state-col"><span class="status '+stClass(st)+'">'+esc(st)+'</span></td><td class="right mono">'+esc(fmt(r.current_it_power_mw))+'</td><td class="right mono">'+siteEvidence(r)+'</td><td class="action-col small">'+esc(r.next_action||'No next research action recorded.')+'</td><td><a class="btn" href="facility.html?facility='+encodeURIComponent(r.epoch_id)+'">Open</a></td></tr>';
+ }).join('')||'<tr><td colspan="9" class="faint">No matching sites.</td></tr>';
+}
+
+function renderEvidence(){
+ const rows=D.evidence||[];
+ document.getElementById('evidenceMeta').textContent=rows.length+' retained evidence records. No artificial limit is applied.';
+ document.getElementById('evidenceRows').innerHTML=rows.map(e=>'<tr><td><strong>'+esc(e.target_name)+'</strong><div class="mono faint" style="font-size:9px">'+esc(e.target_id)+'</div></td><td>'+esc(e.domain)+'</td><td>'+esc(e.evidence_type)+'</td><td>'+esc(e.claim_scope)+'</td><td><strong>'+esc(e.source_name)+'</strong><div class="small faint">'+esc(e.source_kind)+'</div></td><td><span class="status '+stClass(e.status)+'">'+esc(e.status)+'</span></td><td>'+esc(e.confidence)+'</td><td>'+esc(e.observed_on||'—')+'</td><td>'+esc(e.captured_on||'—')+'</td><td class="small">'+esc(e.basis)+'</td></tr>').join('');
+}
+function renderObs(){
+ const c={};(D.obs||[]).forEach(o=>c[o.domain]=(c[o.domain]||0)+1);
+ document.getElementById('obsMeta').textContent=(D.obs||[]).length+' acquisition tasks across '+Object.keys(c).length+' domains. These are missing-work tasks, not findings.';
+ document.getElementById('obsCards').innerHTML=Object.entries(c).map(x=>'<div class="card" style="border:1px solid var(--line);border-radius:9px"><div class="num mono" style="font-size:20px">'+x[1]+'</div><div class="label">'+esc(x[0].replace(/_/g,' '))+'</div></div>').join('');
+ document.getElementById('obsRows').innerHTML=(D.obs||[]).map(o=>'<tr><td><strong>'+esc(o.site_name)+'</strong></td><td>'+esc(o.domain)+'</td><td><span class="status '+(o.priority==='P0'?'warn':'neutral')+'">'+esc(o.priority)+'</span></td><td>'+esc(o.current_state)+'</td><td class="small">'+esc((o.required_fields||[]).join(', '))+'</td><td class="small">'+esc(o.action||'—')+'</td><td><a target="_blank" rel="noopener" href="'+esc(o.grid_primary_source_url||'#')+'">'+esc(o.grid_source_type||'—')+'</a></td><td class="small">'+esc(o.next_research_sources||'—')+'</td></tr>').join('');
+}
+function renderTimeSeries(){
+ const t=D.time_series||{},s=t.summary||{};
+ document.getElementById('tsMeta').textContent=(s.observed_timeline_event_count||0)+' observed facility timeline events across '+(s.sites_with_observed_timeline||0)+' / 93 sites; future/predicted rows are separated.';
+ document.getElementById('tsCards').innerHTML=[[''+(s.observed_timeline_event_count||0),'Observed timeline events','Epoch dated site observations'],[''+(s.site_level_annual_power_snapshot_count||0),'Annual power snapshots','site-specific electricity consumption'],[''+(s.caiso_historical_series_record_count||0),'CAISO history rows','historical queue series'],[''+(s.pjm_historical_material_record_count||0),'PJM history rows','dated LAS material']].map(x=>'<div class="domain-card"><h3>'+esc(x[0])+'</h3><p>'+esc(x[1])+'<br><span class="small soft">'+esc(x[2])+'</span></p></div>').join('');
+ document.getElementById('tsChecklist').innerHTML=(t.checklist||[]).map(x=>'<tr><td><strong>'+esc(x.item)+'</strong></td><td><span class="status '+stClass(x.status)+'">'+esc(x.status)+'</span></td><td class="small">'+esc(x.coverage)+'</td></tr>').join('');
+ const rows=[];(t.site_timelines||[]).forEach(site=>(site.observed_events||[]).forEach(ev=>rows.push({site_name:site.site_name,...ev})));rows.sort((a,b)=>b.date.localeCompare(a.date));
+ document.getElementById('tsRows').innerHTML=rows.map(x=>'<tr><td>'+esc(x.site_name)+'</td><td class="mono">'+esc(x.date)+'</td><td class="right mono">'+esc(fmt(x.buildings_operational))+'</td><td class="right mono">'+esc(fmt(x.it_power_mw))+'</td><td class="right mono">'+esc(fmt(x.total_power_mw))+'</td><td class="right mono">'+esc(fmt(x.change_from_previous_observed_event?.delta_it_power_mw))+'</td><td class="right mono">'+esc(fmt(x.change_from_previous_observed_event?.delta_total_power_mw))+'</td><td>'+esc(x.temporal_status)+'</td></tr>').join('');
+}
+function renderPhysical(){
+ const rows=[];
+ (D.power||[]).forEach(o=>rows.push({site:o.site_name,type:'Power',date:o.observed_period||o.observed_on,value:fmt(o.normalized_value)+' '+(o.units||''),detail:o.measurement_type,source:o.source?.source_name,link:o.source?.source_url}));
+ (D.cooling||[]).forEach(o=>rows.push({site:o.site_name,type:'Cooling',date:o.observed_on,value:fmt(o.capacity)+' '+(o.capacity_units||''),detail:(o.equipment_type||'')+' · '+(o.manufacturer||'')+' · '+(o.model||'')+' · '+fmt(o.units)+' units',source:o.source?.source_name,link:o.source?.source_url}));
+ const ps=D.physical?.summary||{};document.getElementById('observationsSummary').innerHTML='<div class="domain-card"><h3>'+esc((D.power||[]).length)+'</h3><p>site-level annual power observations</p></div><div class="domain-card"><h3>'+esc((D.cooling||[]).length)+'</h3><p>site-level cooling observations</p></div><div class="domain-card"><h3>'+esc(ps.raw_tir_numeric_observations||0)+'</h3><p>Landsat TIR numeric observations</p></div><div class="domain-card"><h3>'+esc(ps.raw_sar_numeric_observations||0)+'</h3><p>Sentinel-1 SAR observations</p></div><div class="domain-card"><h3>'+esc(ps.raw_optical_scenes_ingested||0)+'</h3><p>Sentinel-2 optical scene windows</p></div><div class="domain-card"><h3>'+esc(ps.transformer_event_records||0)+'</h3><p>source-backed transformer events</p></div>';
+ document.getElementById('physicalRows').innerHTML=rows.map(x=>'<tr><td>'+esc(x.site)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.date||'—')+'</td><td class="mono">'+esc(x.value)+'</td><td>'+esc(x.detail||'—')+'</td><td>'+(x.link?'<a target="_blank" rel="noopener" href="'+esc(x.link)+'">'+esc(x.source||'source')+'</a>':'—')+'</td></tr>').join('');
+}function renderWebEnrichment(){
+ const q=D.web_enrichment||{}, rows=q.records||[], acc=q.accounting||{};
+ const sites=new Set(rows.map(x=>x.epoch_id).filter(Boolean)).size;
+ document.getElementById('webEnrichmentMeta').textContent=(acc.record_count||rows.length)+' newly captured public facts across '+sites+' canonical sites; raw Epoch values are not overwritten.';
+ const fieldCounts=Object.entries(acc.field_counts||{}).sort((a,b)=>b[1]-a[1]);
+ document.getElementById('webEnrichmentCards').innerHTML=[
+   [rows.length,'captured facts','additive public-web ledger'],
+   [sites,'canonical sites touched','93-site universe'],
+   [fieldCounts.length,'fields enriched','publisher + operational fields'],
+   [(acc.disposition_counts||{}).PUBLIC_SOURCE_CAPTURED||0,'source-captured records','site-level public evidence']
+ ].map(x=>'<div class="domain-card"><h3>'+esc(fmt(x[0]))+'</h3><p>'+esc(x[1])+'<br><span class="small soft">'+esc(x[2])+'</span></p></div>').join('');
+ document.getElementById('webEnrichmentRows').innerHTML=rows.map(x=>{
+   const val=Array.isArray(x.value)?x.value.join('; '):String(x.value??'');
+   return '<tr><td><strong>'+esc(x.site_name||'—')+'</strong><div class="mono faint">'+esc(x.epoch_id||'aggregate')+'</div></td><td>'+esc(x.field||'—')+'</td><td class="small">'+esc(val)+'</td><td class="small">'+esc(x.relationship||'—')+'<br><span class="faint">'+esc(x.scope_note||'')+'</span></td><td><strong>'+esc(x.source||'—')+'</strong><div class="small mono">'+esc((x.source_urls||[]).join(' · '))+'</div></td><td class="mono">'+esc(x.publication_date||x.capture_date||'—')+'</td></tr>';
+ }).join('') || '<tr><td colspan="6" class="faint">No additive public-web records loaded.</td></tr>';
+}
+function renderAutomation(){
+ const q=D.automation||{},s=q.summary||{};
+ document.getElementById('autoMeta').textContent=(s.source_count||0)+' cataloged sources · '+(s.automated_adapter_sources||0)+' automated adapters · '+(s.healthcheck_or_snapshot_only_sources||0)+' healthcheck/snapshot-only sources · '+(s.remote_source_failures||0)+' remote failures.';
+ document.getElementById('autoCards').innerHTML=[[(s.source_count||0),'cataloged sources','unified source control plane'],[(s.automated_adapter_sources||0),'automated adapters','live parser/sync workflows'],[(s.healthcheck_or_snapshot_only_sources||0),'non-ingest sources','explicitly not called ingested'],[(s.queue_added||0),'queue additions','last release diff'],[(s.queue_removed||0),'queue removals','last release diff'],[(s.duplicate_id_groups||0),'duplicate ID groups','data-quality findings'],[(s.remote_source_failures||0),'source failures','automated alert threshold']].map(x=>'<div class="domain-card"><h3>'+esc(fmt(x[0]))+'</h3><p>'+esc(x[1])+'<br><span class="small soft">'+esc(x[2])+'</span></p></div>').join('');
+ const rows=[['Source change detection','ENABLED','ETag / Last-Modified / bounded sample fingerprint'],['Queue release diff','ENABLED',(s.queue_changed||0)+' changed records'],['Duplicate detection',((s.duplicate_id_groups||0)||(s.exact_duplicate_groups||0))?'ATTENTION':'CLEAN',(s.duplicate_id_groups||0)+' ID groups · '+(s.exact_duplicate_groups||0)+' exact groups'],['Geographic matching','ENABLED',(s.queue_current_records||0)+' current queue records'],['Evidence extraction','ENABLED_EXISTING_BUILDERS',(s.evidence_records||0)+' evidence records'],['Entity resolution','ENABLED_EXISTING_PIPELINE',(s.entity_count||0)+' entities · '+(s.relationship_edges||0)+' edges'],['Failed-source alerts','ENABLED',(s.remote_source_failures||0)+' remote failures']];
+ document.getElementById('autoRows').innerHTML=rows.map(x=>'<tr><td><strong>'+esc(x[0])+'</strong></td><td>'+esc(x[1])+'</td><td class="small">'+esc(x[2])+'</td></tr>').join('');
+}
+function renderDetectionVerification(){
+ const d=D.detection||{},v=D.verification_results||{},a=D.absence||{},s=d.summary||{},sc=v.summary?.status_counts||{};
+ document.getElementById('detMeta').textContent=s.tracked_facilities+' tracked facilities · '+s.ai_compute_candidates+' AI/compute surveillance candidates outside Epoch · '+s.non_ai_industrial_control_group+' non-AI industrial controls · '+s.unknown_large_compute+' unknown large-compute/load candidates · '+s.documented_absence_search_facilities+' facilities with explicit documented absence-search records.';
+ document.getElementById('detCards').innerHTML=[
+  [s.tracked_facilities,'tracked facilities','Epoch reference universe'],
+  [s.known_ai_compute,'known AI compute','publisher/derived compute-positive records'],
+  [s.probable_ai_compute,'probable AI compute','Epoch records without positive current compute field'],
+  [s.ai_compute_candidates,'outside-Epoch AI candidates','queue rows with compute/AI signal'],
+  [s.non_ai_industrial_control_group,'industrial controls','non-AI keyword control population'],
+  [s.unknown_large_compute,'unknown large loads','no strong classifier signal']
+ ].map(x=>'<div class="domain-card"><h3>'+esc(fmt(x[0]))+'</h3><p>'+esc(x[1])+'<br><span class="small soft">'+esc(x[2])+'</span></p></div>').join('');
+ const meanings=(D.verification_protocol||{}).statuses||{};
+ document.getElementById('verStatusRows').innerHTML=Object.entries(meanings).map(([k,x])=>'<tr><td><span class="status '+stClass(k)+'">'+esc(k)+'</span></td><td class="mono">'+esc(sc[k]||0)+'</td><td class="small">'+esc(x.meaning||'')+'</td></tr>').join('');
+ const rows=[];
+ (d.tracked_facilities||[]).forEach(x=>rows.push('<tr><td><strong>'+esc(x.facility_name)+'</strong><div class="mono faint">'+esc(x.facility_id)+'</div></td><td>'+esc(x.classification)+'</td><td class="small">'+esc(x.entry_reason)+'</td><td>YES</td><td class="small">'+esc((x.source_crosscheck?.retained_site_evidence?.count||0)+' evidence records · '+(x.source_crosscheck?.queue_registry?.status||'—'))+'</td></tr>'));
+ (d.queue_candidates_not_in_epoch||[]).slice(0,300).forEach(x=>rows.push('<tr><td><strong>'+esc(x.project_name||x.candidate_id)+'</strong><div class="mono faint">'+esc(x.candidate_id)+'</div></td><td>'+esc(x.classification)+'</td><td class="small">Queue/request row retained as a surveillance candidate because it has no conservative direct Epoch match.</td><td>NO</td><td class="small">'+esc(x.rto||'—')+' · '+esc(fmt(x.mw))+' MW</td></tr>'));
+ document.getElementById('detRows').innerHTML=rows.join('');
+ document.getElementById('absenceRows').innerHTML=(a.records||[]).flatMap(x=>(x.search_records||[]).map(r=>'<tr><td>'+esc(x.facility_name)+'</td><td class="mono">'+esc(r.evidence_id||'—')+'</td><td><strong>'+esc(r.source_name||'—')+'</strong><div class="small faint">'+esc(r.authority||'')+'</div></td><td class="mono">'+esc(r.captured_on||'—')+'</td><td class="small">'+esc(r.claim||'—')+'</td><td class="small">'+esc((x.follow_up||[]).join('; '))+'</td></tr>')).join('')||'<tr><td colspan="6" class="faint">No explicit absence-search records.</td></tr>';
+}
+
+function renderEntityResolution(){
+ const e=D.entity||{},s=e.stats||{};
+ document.getElementById('entityMeta').textContent=(s.entity_count||0)+' entities · '+(s.relationship_edge_count||0)+' relationship edges · '+(s.variant_groups||0)+' name-variant groups · '+(s.legal_entity_research_targets||0)+' legal-entity research targets.';
+ document.getElementById('entityCards').innerHTML=[
+  [s.distinct_developer_strings||0,'developer strings','core queue'],
+  [s.distinct_core_project_names||0,'project-name strings','core queue'],
+  [s.parent_subsidiary_edges||0,'parent/subsidiary edges','SEC Exhibit 21 seeds'],
+  [s.building_geometry_sites||0,'sites with building geometry','Overture Maps'],
+  [s.building_polygons||0,'building polygons','published geometry'],
+  [s.legal_entity_research_targets||0,'legal-entity targets','GLEIF/OpenCorporates/SEC']
+ ].map(x=>'<div class="domain-card"><h3>'+esc(fmt(x[0]))+'</h3><p>'+esc(x[1])+'<br><span class="small soft">'+esc(x[2])+'</span></p></div>').join('');
+ document.getElementById('entityChecklist').innerHTML=(e.checklist||[]).map(x=>'<tr><td><strong>'+esc(x.item)+'</strong></td><td><span class="status '+stClass(x.status)+'">'+esc(x.status)+'</span></td><td class="small">'+esc(x.coverage)+'</td></tr>').join('');
+ const rels=(e.relationships||[]).slice(0,300);
+ const names=new Map((e.entities||[]).map(x=>[x.entity_id,x.canonical_name]));
+ document.getElementById('entityRels').innerHTML=rels.map(x=>'<tr><td>'+esc(x.relationship_type)+'</td><td>'+esc(names.get(x.from_entity_id)||x.from_entity_id)+'</td><td>'+esc(names.get(x.to_entity_id)||x.to_entity_id)+'</td><td class="mono">'+esc(Number(x.confidence_score).toFixed(2))+'</td><td>'+esc(x.temporal_status)+'</td><td class="small mono">'+esc(x.evidence_id)+'</td></tr>').join('')||'<tr><td colspan="6" class="faint">No relationships.</td></tr>';
+}function renderFacilityMap(){
+ const rows=D.epochMap?.records||[]; if(!rows.length){document.getElementById('facilityMapMeta').textContent='No facility coordinates available.';return;}
+ const coordMap=new Map((D.coords?.records||[]).filter(x=>x.lat!=null&&x.lon!=null).map(x=>[x.epoch_id,x]));
+ const map=L.map('facilityMap',{preferCanvas:true,worldCopyJump:false,zoomControl:true,minZoom:2,maxZoom:12}).setView([45,-95],3);
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap contributors &copy; CARTO',subdomains:'abcd',maxZoom:19}).addTo(map);
+ const line=getComputedStyle(document.documentElement).getPropertyValue('--line-strong').trim()||'#667085';
+ const boundaries=[
+  ['https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json',0.8,0.45],
+  ['https://raw.githubusercontent.com/mapbox/mapboxgl-jupyter/master/examples/data/us-states.geojson',1.3,0.9],
+  ['https://raw.githubusercontent.com/wisdomtheif/Canadian_GeoJSON/master/canada_provinces.geojson',1.3,0.9],
+  ['https://raw.githubusercontent.com/open-mexico/mexico-geojson/main/mexicoHigh.json',1.3,0.9]
+ ];
+ boundaries.forEach(x=>fetch(x[0],{cache:'force-cache'}).then(r=>r.ok?r.json():null).then(g=>g&&L.geoJSON(g,{style:{color:line,weight:x[1],opacity:x[2],fill:false},interactive:false}).addTo(map)).catch(()=>{}));
+ rows.forEach(r=>{
+  const st=(D.sites||[]).find(x=>x.epoch_id===r.id), coord=coordMap.get(r.id), lat=coord?.lat!=null?coord.lat:r.lat, lon=coord?.lon!=null?coord.lon:r.lon, precision=coord?.precision||r.precision, marker=L.circleMarker([Number(lat),Number(lon)],{radius:7,weight:1.5,fillOpacity:.75});
+  marker.bindPopup('<div style="min-width:220px"><strong>'+esc(r.site_name)+'</strong><div class="mono faint">'+esc(r.id)+'</div><p class="small soft" style="margin:6px 0">'+esc(r.address||'—')+'</p><p class="small">IT power: <span class="mono">'+esc(fmt(r.current_power_mw))+' MW</span><br>Grid: '+esc(r.grid_jurisdiction||'—')+'<br>Status: '+esc(r.grid_status||'—')+'</p><a class="btn" href="facility.html?facility='+encodeURIComponent(r.id)+'">Open facility page</a></div>');
+  marker.addTo(map);
+ });
+ document.getElementById('facilityMapMeta').textContent=rows.length+' facility coordinates; coordinate precision is source-derived and displayed with the site\'s recorded precision.';
+}
+
+function renderEpoch(){
+ const rows=D.epoch?.records||[];
+ document.getElementById('epochMeta').textContent=rows.length+' Epoch site records with normalized values, retained raw publisher fields, latest timeline, latest chip quantities and grid crosswalk.';
+ document.getElementById('epochRows').innerHTML=rows.map(r=>{
+  const n=r.normalized||{}, t=n.latest_timeline||{}, chips=n.latest_chip_quantities||[], g=r.grid_crosswalk||{};
+  const chipText=chips.map(c=>c.chip_type+': '+fmt(c.number_units)).join(' · ')||'—';
+  return '<tr><td><strong>'+esc(n.name||r.epoch_id)+'</strong><div class="mono faint" style="font-size:9px">'+esc(r.epoch_id)+'</div></td><td class="small">'+esc(n.address||'—')+'</td><td>'+esc(n.owner||'—')+'</td><td class="small">'+esc(n.users||'—')+'</td><td class="right mono">'+esc(fmt(n.current_power_mw))+'</td><td class="right mono">'+esc(fmt(n.current_h100_equivalents))+'</td><td class="right mono">'+esc(fmt(n.current_total_capital_cost_b_2025))+'</td><td class="small">'+esc((t.date||'—')+' · IT '+fmt(t.it_power_mw)+' MW · total '+fmt(t.power_mw)+' MW · '+(t.construction_status||''))+'</td><td class="small">'+esc(chipText)+'</td><td class="small">'+esc(g.queue_or_connection_system||'—')+' · '+esc(g.site_specific_queue_id||'no site-specific ID')+'</td></tr>';
+ }).join('');
+}
+function renderSources(){
+ const u=D.universe||{}, all=(u.direct_queue_and_connection_sources||[]).concat(u.cross_cutting_public_sources||[]);
+ document.getElementById('sourceMeta').textContent=all.length+' machine-readable queue/connection + cross-cutting sources are cataloged.';
+ document.getElementById('sourceRows').innerHTML=all.map(s=>'<tr><td><strong>'+esc(s.name)+'</strong><div class="mono faint" style="font-size:9px">'+esc(s.id)+'</div></td><td>'+esc(s.type)+'</td><td>'+esc(s.geography)+'</td><td>'+esc(s.authority||'—')+'</td><td class="small">'+esc(s.use||'—')+'</td><td class="small">'+esc(s.limitation||'—')+'</td><td><a class="btn" target="_blank" rel="noopener" href="'+esc(s.url||'#')+'">Open</a></td></tr>').join('');
+ const ext=D.external?.records||[];
+ document.getElementById('externalRows').innerHTML=ext.map(x=>'<tr><td>'+esc(x.domain)+'</td><td>'+esc(x.file)+'</td><td><span class="status '+stClass(x.status)+'">'+esc(x.status)+'</span></td><td class="mono">'+esc(x.row_count==null?'not captured':x.row_count)+'</td><td class="small">'+esc((x.columns||[]).join(', ')||'—')+'</td></tr>').join('');
+}
+function renderProvenance(){
+ const p=D.provenance||{},s=D.epoch?.source||{},sm=p.summary||{},fs=p.facilities||[];
+ document.getElementById('provMeta').textContent=(sm.facility_count||fs.length||0)+' facilities · '+(sm.field_provenance_items||0)+' raw→normalized mappings · '+(sm.evidence_record_count||0)+' linked evidence records · '+(sm.facilities_with_corrob||0)+' retained multi-source corroborations.';
+ document.getElementById('provCards').innerHTML=[[''+(sm.facility_count||fs.length||0),'facilities','facility-level provenance'],[''+(sm.field_provenance_items||0),'field mappings','raw → normalized → transformation'],[''+(sm.evidence_record_count||0),'evidence records','linked to facilities'],[''+(sm.facilities_with_corrob||0),'corroborated','metadata-derived'],[''+(sm.facilities_with_structured_conflicts||0),'structured conflicts','automated flags']].map(x=>'<div class="domain-card"><h3>'+esc(x[0])+'</h3><p>'+esc(x[1])+'<br><span class="small soft">'+esc(x[2])+'</span></p></div>').join('');
+ document.getElementById('provRows').innerHTML=fs.map(f=>{
+  const cp=f.canonical_source||{},co=f.independent_corroboration||{},cf=f.conflicting_evidence||{},v=f.verification||{};
+  const conflictCount=Array.isArray(cf.conflicts)?cf.conflicts.length:0;
+  return `<tr><td><strong>${esc(f.facility_name)}</strong><div class="mono faint" style="font-size:9px">${esc(f.facility_id)}</div></td><td class="small"><a target="_blank" rel="noopener" href="${esc(cp.dataset_url||'#')}">Epoch dataset</a><div class="faint">raw fields retained</div></td><td class="small">${esc(cp.publication_date||'NOT CAPTURED')}</td><td class="mono">${esc(cp.capture_date||'—')}</td><td class="mono">${esc((f.field_provenance||[]).length)} fields</td><td><span class="status ${stClass(co.status)}">${esc(co.status||'—')}</span><div class="small faint">${esc(co.distinct_source_url_count||0)} URLs / ${esc(co.distinct_source_name_count||0)} names</div></td><td><span class="status ${conflictCount?'warn':'neutral'}">${esc(cf.status||'—')}</span></td><td class="mono">${esc(v.last_verification_date||'—')}</td><td class="small">${esc(v.manual_review_status||'—')}</td><td class="mono small">${esc(f.immutable_snapshot&&f.immutable_snapshot.snapshot_commit||'—')}</td></tr>`;
+ }).join('');
+}
+function renderDossier(){
+ const d=D.dossier||{}, rows=d.records||[], s=d.summary||{};
+ document.getElementById('dossierMeta').textContent=(rows.length||0)+' complete site dossiers · '+(s.sites_with_any_public_connection_evidence||0)+' with public connection evidence · '+(s.sites_with_open_grid_research||0)+' with an open site-specific grid search.';
+ document.getElementById('dossierCards').innerHTML=[
+  [rows.length,'site dossiers','93-site canonical universe'],
+  [s.sites_with_any_public_connection_evidence||0,'connection evidence','public utility/grid records'],
+  [s.sites_with_verified_queue_id||0,'verified queue IDs','site-specific IDs only'],
+  [s.total_missing_publisher_fields||0,'publisher-field gaps','empty source fields identified explicitly'],
+  [d.summary?.total_enrichment_source_links||0,'research source links','additional public sources attached']
+ ].map(x=>'<div class="domain-card"><h3>'+esc(fmt(x[0]))+'</h3><p>'+esc(x[1])+'<br><span class="small soft">'+esc(x[2])+'</span></p></div>').join('');
+ const shown=rows.slice().sort((a,b)=>b.completeness.missing_field_count-a.completeness.missing_field_count || a.site_name.localeCompare(b.site_name));
+ document.getElementById('dossierRows').innerHTML=shown.map(x=>{
+   const ev=(x.public_connection_evidence||[]).length, pub=x.grid?.public_site_evidence?1:0;
+   return '<tr><td><strong>'+esc(x.site_name)+'</strong><div class="mono faint">'+esc(x.epoch_id)+'</div></td><td class="small">'+esc(x.completeness.missing_field_count)+' · '+esc(x.completeness.missing_fields.join(', ')||'none')+'</td><td>'+esc(ev+pub)+' public records</td><td class="mono">'+esc(x.grid?.queue_id||'—')+'</td><td class="mono">'+esc(x.public_research_enrichment?.source_count||0)+'</td><td class="small">'+esc(x.next_research_action||'No open action recorded.')+'</td></tr>';
+ }).join('');
+}
+function renderEntity(){
+ const e=D.module1?.domain_3_entity_resolution||{};
+ document.getElementById('entityRules').innerHTML=[
+  ['Matching','Algorithm: '+e.fuzzy_algorithm+' · auto-confirm ≥ '+e.auto_confirm_threshold+' · gray zone '+(e.human_audit_gray_zone||[]).join('–')+' · unmatched below '+e.unmatched_below+'.'],
+  ['High-confidence tokens',(e.high_confidence_whole_word_tokens||[]).join(', ')||'—'],
+  ['Low-confidence tokens',(e.low_confidence_whole_word_tokens||[]).join(', ')||'—'],
+  ['Storage tokens',(e.storage_tokens||[]).join(', ')||'—'],
+  ['Public labels',(e.public_labels||[]).join(' · ')||'—'],
+  ['Anti-defamation rule',e.anti_defamation_rule||'—']
+ ].map(x=>'<div class="domain-card"><h3>'+esc(x[0])+'</h3><p>'+esc(x[1])+'</p></div>').join('');
+}
+function renderGeo(){
+ const g=D.module1?.domain_4_geospatial_interface||{};
+ document.getElementById('geoRules').innerHTML=[
+  ['Map engine',g.map_engine+' · '+(g.base_tiles||[]).join(' + ')+' · API keys required: '+g.api_keys_required],
+  ['Coordinate policy',g.coordinate_policy],
+  ['Visual rule', 'Ambiguous radius: '+g.ambiguous_radius_px+' · BESS radius: '+g.bess_radius_px+' · opacity: '+g.bess_opacity],
+  ['RTO sync',g.rto_filter_behavior],
+  ['Inspector fields',(g.inspector_fields||[]).join(', ')]
+ ].map(x=>'<div class="domain-card"><h3>'+esc(x[0])+'</h3><p>'+esc(x[1])+'</p></div>').join('');
+}
+function renderGovernance(){
+ const g=D.module1?.domain_5_governance||{};
+ const refs=g.current_primary_references||{}, proposed=g.proposed_policy_components||{};
+ const rows=Object.entries(refs).map(([k,v])=>'<tr><td><strong>'+esc(k)+'</strong></td><td>'+esc(v.citation)+'</td><td>'+esc(v.status_semantics||'Reference')+'</td><td><a target="_blank" rel="noopener" href="'+esc(v.url||'#')+'">Open</a></td></tr>').join('');
+ document.getElementById('govRefs').innerHTML='<table><thead><tr><th>Reference</th><th>Citation</th><th>Status / semantics</th><th>Link</th></tr></thead><tbody>'+rows+'</tbody></table><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-top:12px">'+Object.entries(proposed).map(x=>'<div class="domain-card"><h3>'+esc(x[0])+'</h3><p>'+esc(x[1])+'</p></div>').join('')+'</div>';
+ document.getElementById('governance').innerHTML='<div class="warnbox" style="padding:11px"><strong>Governance boundary:</strong> '+esc(proposed.important_limit||'Proposed mechanisms are not displayed as enacted authority.')+'</div>';
+}
+function openSite(id){
+ const r=(D.sites||[]).find(x=>x.epoch_id===id); if(!r)return;
+ const ev=(D.evidence||[]).filter(x=>x.target_id===id), obs=(D.obs||[]).filter(x=>x.epoch_id===id), p=(D.power||[]).filter(x=>x.epoch_id===id), c=(D.cooling||[]).filter(x=>x.epoch_id===id), er=(D.epoch?.records||[]).find(x=>x.epoch_id===id);
+ const g=r.grid||{}, n=er?.normalized||{}, raw=er?.raw||{}, t=n.latest_timeline||{}, chips=n.latest_chip_quantities||[];
+ let h='<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));"><div class="panel card"><h3 style="font-size:14px;margin:0 0 8px">Canonical site status</h3><div class="kvs"><div>Epoch ID</div><div class="mono">'+esc(r.epoch_id)+'</div><div>Grid state</div><div><span class="status '+stClass(siteGrid(r))+'">'+esc(siteGrid(r))+'</span></div><div>Grid / utility</div><div>'+esc(g.jurisdiction||'—')+'</div><div>Queue ID</div><div class="mono">'+esc(g.site_specific_queue_id||'—')+'</div><div>IT MW</div><div class="mono">'+esc(fmt(r.current_it_power_mw))+'</div><div>H100 equivalents</div><div class="mono">'+esc(fmt(r.current_h100_equivalents))+'</div><div>Evidence count</div><div class="mono">'+siteEvidence(r)+'</div><div>Next action</div><div>'+esc(r.next_action||'—')+'</div></div></div>';
+ h+='<div class="panel card"><h3 style="font-size:14px;margin:0 0 8px">Epoch normalized record</h3><div class="kvs"><div>Name</div><div>'+esc(n.name||'—')+'</div><div>Address</div><div>'+esc(n.address||'—')+'</div><div>Owner</div><div>'+esc(n.owner||'—')+'</div><div>Users</div><div>'+esc(n.users||'—')+'</div><div>Project</div><div>'+esc(n.project||'—')+'</div><div>Capital cost</div><div>'+esc(fmt(n.current_total_capital_cost_b_2025))+' B (2025 USD)</div><div>Investors</div><div>'+esc(n.investors||'Not published / not retained')+'</div><div>Construction companies</div><div>'+esc(n.construction_companies||'Not published / not retained')+'</div><div>Energy companies</div><div>'+esc(n.energy_companies||'Not published / not retained')+'</div></div></div></div>';
+ h+='<h3 style="font-size:14px;margin:16px 0 5px">Public publisher fields</h3>'+
+'<div class="site-evidence-fields">'+
+'<dl class="site-evidence-field"><dt>Investors</dt><dd>'+esc(n.investors||'Not published / not retained')+'</dd></dl>'+
+'<dl class="site-evidence-field"><dt>Construction companies</dt><dd>'+esc(n.construction_companies||'Not published / not retained')+'</dd></dl>'+
+'<dl class="site-evidence-field"><dt>Energy companies</dt><dd>'+esc(n.energy_companies||'Not published / not retained')+'</dd></dl>'+
+'</div>'+
+'<div class="track3-matrix-note" style="margin-top:10px">Blank publisher fields are rendered explicitly as <strong>Not published / not retained</strong>; no company is inferred from geography, queue jurisdiction, or generic project context.</div>'+
+'<h3 style="font-size:14px;margin:16px 0 5px">All Track 3 domain states</h3><div class="scroll"><table><thead><tr><th>Domain</th><th>State</th><th>Basis</th></tr></thead><tbody>'+matrixDomains.map(d=>{const st=getDomainState(r,d.key);const basis=r.domains?.[d.alias||d.key]?.basis||domainMeanings[d.key]||'Aggregate/display field; not site-attributed.';return '<tr><td>'+esc(d.label)+'</td><td><span class="status '+stClass(st)+'">'+esc(st)+'</span></td><td>'+esc(basis)+'</td></tr>'}).join('')+'</tbody></table></div>';
+ h+='<h3 style="font-size:14px;margin:16px 0 5px">Retained raw Epoch publisher fields</h3><div class="code">'+esc(JSON.stringify(raw,null,2))+'</div>';
+ h+='<h3 style="font-size:14px;margin:16px 0 5px">Latest Epoch timeline</h3><div class="code">'+esc(JSON.stringify(t,null,2))+'</div>';
+ h+='<h3 style="font-size:14px;margin:16px 0 5px">Latest Epoch chip quantities</h3><div class="code">'+esc(JSON.stringify(chips,null,2))+'</div>';
+ h+='<h3 style="font-size:14px;margin:16px 0 5px">Evidence records</h3><div class="track3-matrix-note">Attached site-level evidence count: <strong>'+siteEvidence(r)+'</strong>. This is not an independence or truth score; provenance and source records must be reviewed individually.</div>'+ (ev.length?ev.map(e=>'<div class="evidence"><h4>'+esc(e.domain)+' · '+esc(e.evidence_type)+'</h4><div class="small soft">'+esc(e.basis)+'</div><div class="small faint" style="margin-top:4px">'+esc(e.source_name)+' · '+esc(e.status)+' · '+esc(e.confidence)+' · <a target="_blank" rel="noopener" href="'+esc(e.source_url||'#')+'">source</a></div></div>').join(''):'<div class="faint small">No retained evidence records.</div>');
+ h+='<h3 style="font-size:14px;margin:16px 0 5px">Track 3 acquisition tasks for this site</h3>'+ (obs.length?obs.map(o=>'<div class="evidence"><h4>'+esc(o.domain)+' · '+esc(o.priority)+' · '+esc(o.current_state)+'</h4><div class="small soft"><strong>Primary source:</strong> '+(o.grid_primary_source_url?'<a target="_blank" rel="noopener" href="'+esc(o.grid_primary_source_url)+'">'+esc(o.grid_source_type||'primary source')+'</a>':'Not published / not retained')+'</div><div class="small soft" style="margin-top:4px"><strong>Research sources:</strong> '+esc(o.next_research_sources||'Not published / not retained')+'</div><div class="small soft" style="margin-top:4px"><strong>Action:</strong> '+esc(o.action||'No acquisition action recorded.')+'</div><div class="small faint" style="margin-top:4px"><strong>Required fields:</strong> '+esc((o.required_fields||[]).join(', ')||'Not published / not retained')+'</div></div>').join(''):'<div class="faint small">No observation tasks.</div>');
+ h+='<h3 style="font-size:14px;margin:16px 0 5px">Power / cooling snapshots</h3>'+p.map(o=>'<div class="evidence"><strong>Power</strong> · '+esc(o.observed_period)+' · '+esc(fmt(o.normalized_value))+' '+esc(o.units)+' · '+esc(o.confidence)+'</div>').join('')+c.map(o=>'<div class="evidence"><strong>Cooling</strong> · '+esc(o.equipment_type)+' · '+esc(o.manufacturer)+' · '+esc(o.model)+' · '+esc(fmt(o.units))+' units · '+esc(fmt(o.capacity))+' '+esc(o.capacity_units)+'</div>').join('');
+ const pv=(D.provenance?.facilities||[]).find(x=>x.facility_id===id);
+ if(pv){
+  h+='<h3 style="font-size:14px;margin:16px 0 5px">Facility-level provenance</h3><div class="domain-card"><p><strong>Raw source:</strong> '+esc(pv.canonical_source?.repository_raw_path||'—')+' · blob '+esc(pv.canonical_source?.repository_blob_sha||'—')+'</p><p><strong>Publication date:</strong> '+esc(pv.canonical_source?.publication_date||'NOT CAPTURED')+' · capture: '+esc(pv.canonical_source?.capture_date||'—')+' · last verified: '+esc(pv.verification?.last_verification_date||'—')+'</p><p><strong>Corroboration:</strong> '+esc(pv.independent_corroboration?.status||'—')+' · conflict: '+esc(pv.conflicting_evidence?.status||'—')+' · manual review: '+esc(pv.verification?.manual_review_status||'—')+'</p></div>';
+  h+='<h4 style="margin:14px 0 5px">Raw → normalized fields</h4><div class="scroll"><table><thead><tr><th>Source field</th><th>Raw</th><th>Normalized</th><th>Transformation</th><th>Evidence type</th><th>Confidence</th></tr></thead><tbody>'+(pv.field_provenance||[]).map(x=>'<tr><td>'+esc(x.raw_source?.field_name||x.field_id)+'</td><td class="code">'+esc(JSON.stringify(x.raw_value))+'</td><td class="code">'+esc(JSON.stringify(x.normalized_value))+'</td><td class="small">'+esc(x.transformation)+'</td><td>'+esc(x.evidence_type)+'</td><td>'+esc(x.confidence)+'</td></tr>').join('')+'</tbody></table></div>';
+  h+='<h4 style="margin:14px 0 5px">Evidence provenance</h4>'+((pv.evidence_records||[]).map(x=>'<div class="evidence"><h4>'+esc(x.domain)+' · '+esc(x.evidence_type)+' · '+esc(x.evidence_origin)+'</h4><div class="small soft">'+esc(x.retained_basis||'—')+'</div><div class="small faint">publication: '+esc(x.source?.publication_date||'NOT CAPTURED')+' · captured: '+esc(x.capture_date||'—')+' · confidence: '+esc(x.confidence||'—')+' · review: '+esc(x.review_state||'—')+'</div><div class="small faint"><a target="_blank" rel="noopener" href="'+esc(x.source?.urls?.[0]||'#')+'">original source</a> · exact field: '+esc(x.exact_source_field||'NOT ARCHIVED')+'</div></div>').join('')||'<div class="faint small">No linked provenance evidence.</div>');
+  h+='<h4 style="margin:14px 0 5px">Snapshot &amp; audit</h4><div class="code">'+esc(JSON.stringify({snapshot:pv.immutable_snapshot,audit:pv.verification?.reviewer_audit_trail},null,2))+'</div>';
+ }
+ h+='<div class="tools" style="margin-top:16px"><a class="btn" target="_blank" rel="noopener" href="facility.html?facility='+encodeURIComponent(id)+'">Dedicated facility page</a><button class="btn" type="button" data-download-facility="'+esc(id)+'">Download facility record</button><a class="btn" target="_blank" rel="noopener" href="'+esc(er?.source?.data_centers_url||'https://epoch.ai/data/ai-data-centers')+'">Epoch source</a><a class="btn" href="data/track3/facility_provenance.json">Facility provenance JSON</a><a class="btn" href="data/track3/facility_provenance_records.csv">Facility provenance CSV</a></div>';
+ document.getElementById('dtitle').textContent=r.site_name;document.getElementById('dsub').textContent=r.epoch_id+' · '+[r.state_province,r.country].filter(Boolean).join(' · ');document.getElementById('dbody').innerHTML=h;document.getElementById('detail').classList.add('open');document.body.style.overflow='hidden';
+}
+async function load(){
+ const names=Object.keys(U), vals=await Promise.all(names.map(k=>fetch(U[k],{cache:'no-store'}).then(res=>{if(!res.ok)throw Error(k+' '+res.status);return res.json()})));
+ names.forEach((k,i)=>D[k]=vals[i]);
+ try { D.coords=await fetch('data/track3/remote_sensing_observation_targets.json',{cache:'no-store'}).then(res=>res.ok?res.json():{records:[]}); } catch(_err) { D.coords={records:[]}; }
+ try { D.web_enrichment=await fetch(U.web_enrichment,{cache:'no-store'}).then(res=>res.ok?res.json():{records:[]}); } catch(_err) { D.web_enrichment={records:[]}; }
+ D.sites=D.sites.records||[];D.evidence=D.evidence.records||[];D.obs=D.obs.tasks||[];D.power=D.power.records||[];D.cooling=D.cooling.records||[];D.sources=D.sources.sources||[];try{D.automation=await fetch('data/automation/data_quality_report.json',{cache:'no-store'}).then(res=>res.ok?res.json():{summary:{}});}catch(_err){D.automation={summary:{}};}
+ renderProgressCharts();renderCards();renderSweep();renderWebEnrichment();renderArchitecture();renderDomains();renderPhysics();renderGovernance();renderSchema();renderStates();renderMatrix();populateSiteFilters();renderStateBar();renderSites();renderFacilityMap();renderEvidence();renderObs();renderTimeSeries();renderPhysical();renderEpoch();renderSources();renderProvenance();renderAutomation();renderDetectionVerification();renderEntity();renderEntityResolution();renderGeo();renderDossier();
+}
+document.getElementById('sweepSearch').addEventListener('input',renderSweep);document.getElementById('sweepView').addEventListener('change',renderSweep);document.getElementById('search').addEventListener('input',renderSites);['siteSort','siteCountry','siteProvince','siteUtility','siteOwner'].forEach(id=>document.getElementById(id).addEventListener('change',renderSites));document.getElementById('siteState').addEventListener('change',()=>{renderStateBar();renderSites();});
+document.querySelectorAll('[data-download-facility]').forEach(b=>b.addEventListener('click',async()=>{const fid=b.getAttribute('data-download-facility');const rec={facility_id:fid,site:(D.sites||[]).find(x=>x.epoch_id===fid),epoch:(D.epoch?.records||[]).find(x=>x.epoch_id===fid),evidence:(D.evidence||[]).filter(x=>x.target_id===fid),provenance:(D.provenance?.facilities||[]).find(x=>x.facility_id===fid),verification:(D.verification_results?.results||[]).filter(x=>x.facility_id===fid)};const url=URL.createObjectURL(new Blob([JSON.stringify(rec,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=fid+'.track3.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}));document.getElementById('close').addEventListener('click',()=>{document.getElementById('detail').classList.remove('open');document.body.style.overflow=''});document.getElementById('detail').addEventListener('click',e=>{if(e.target.id==='detail')document.getElementById('close').click()});
+document.getElementById('theme').addEventListener('click',()=>{const r=document.documentElement;r.setAttribute('data-theme',r.getAttribute('data-theme')==='dark'?'light':'dark')});
+load().catch(e=>{document.getElementById('cards').innerHTML='<div class="panel card"><strong>Track 3 data could not be loaded.</strong><div class="small soft" style="margin-top:6px">'+esc(e.message)+'</div></div>'});
+</script>
+<script>
+(function(){
+  function set(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+  fetch('data/external/intel_accelerator_enrichment.json?v=1',{cache:'no-store'}).then(function(res){
+    if(!res.ok)throw new Error('enrichment bridge unavailable');
+    return res.json();
+  }).then(function(p){
+    var s=p.summary||{}, fc=s.field_source_capture_counts||{};
+    set('enrichmentMeta',(s.site_count||0)+' sites · '+(s.enriched_site_count||0)+' with public enrichment records · source layer refreshed '+(p.generated_on||'—')+'.');
+    var cards=[[(s.enriched_site_count||0),'enriched sites','independent/public fields attached'],[fc.public_program||0,'programs','source-captured program labels'],[fc.public_address||0,'public addresses','source-captured addresses'],[fc.energy_partners||0,'energy-partner records','source-captured partner relationships'],[fc.construction_epc||0,'EPC records','source-captured construction/EPC relationships'],[fc.grid_operator||0,'grid operators','site-level operator evidence']];
+    var cardEl=document.getElementById('enrichmentCards');
+    if(cardEl)cardEl.innerHTML=cards.map(function(x){return '<div class="domain-card"><h3>'+esc(x[0])+'</h3><p>'+esc(x[1])+'<br><span class="small soft">'+esc(x[2])+'</span></p></div>';}).join('');
+    var fieldMeaning='No defensible value was exposed by the retained public source set; this is not evidence of absence.';
+    var rows=[['public_program',fc.public_program||0],['public_owner',fc.public_owner||0],['public_users',fc.public_users||0],['public_address',fc.public_address||0],['energy_partners',fc.energy_partners||0],['construction_epc',fc.construction_epc||0],['grid_operator',fc.grid_operator||0],['epoch_project',null]];
+    var re=document.getElementById('enrichmentRows');
+    if(re)re.innerHTML=rows.map(function(x){return '<tr><td class="mono">'+esc(x[0])+'</td><td class="mono">'+esc(x[1]===null?'See individual Epoch record':String(x[1])+' / 93')+'</td><td class="small">'+esc(fieldMeaning)+'</td></tr>';}).join('');
+  }).catch(function(err){set('enrichmentMeta','Enrichment bridge unavailable: '+err.message);});
+})();
+</script>
+
+<script>
+(async()=>{
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const cls=s=>String(s||'').toLowerCase().includes('implemented')||String(s||'').startsWith('ingested')?'good':String(s||'').includes('partial')?'warn':'neutral';
+  try{
+    const d=await fetch('data/track3/track3_completeness_matrix.json?cb=20260927',{cache:'no-store'}).then(r=>r.json());
+    const rows=d.rows||[];
+    const counts={};
+    rows.forEach(x=>counts[x.status]=(counts[x.status]||0)+1);
+    document.getElementById('t3CompletenessMeta').textContent=rows.length+' tracked elements · '+Object.entries(counts).map(([k,v])=>v+' '+k.replaceAll('_',' ').toLowerCase()).join(' · ');
+    document.getElementById('t3CoverageStats').innerHTML=Object.entries(counts).map(([k,v])=>'<div class="card"><div class="num">'+v+'</div><div class="label">'+esc(k.replaceAll('_',' '))+'</div></div>').join('');
+    document.getElementById('t3CoverageBody').innerHTML=rows.map(x=>'<tr><td><strong>'+esc(x.requirement)+'</strong><div class="faint tiny">'+esc(x.id)+'</div></td><td><span class="status '+cls(x.status)+'">'+esc(x.status)+'</span></td><td class="details">'+esc(x.evidence)+'</td><td class="details">'+esc(x.blocking_gap)+'</td></tr>').join('');
+  }catch(e){document.getElementById('t3CompletenessMeta').textContent='Coverage matrix failed to load: '+e.message}
+  try{
+    const d=await fetch('data/track3/global_compute_supply_chain.json?cb=20260927',{cache:'no-store'}).then(r=>r.json());
+    const x=d.current||{};
+    document.getElementById('globalAccountingMeta').textContent='Retained public publisher snapshots · transaction-level global closure remains UNKNOWN';
+    const stats=[
+      ['215','owner cumulative rows'],[String(x.sales_timeline_rows||0),'sales timeline rows'],[String(x.component_by_chip_rows||0),'component rows'],[String(x.user_year_end_rows||0),'user snapshots'],[String(x.distinct_chip_types||25),'chip types in sales timeline']
+    ];
+    document.getElementById('globalAccountingStats').innerHTML=stats.map(z=>'<div class="card"><div class="num">'+esc(z[0])+'</div><div class="label">'+esc(z[1])+'</div></div>').join('');
+  }catch(e){document.getElementById('globalAccountingMeta').textContent='Global accounting layer failed to load: '+e.message}
+})();
+</script>
+<script src="observatory-nav.js" defer></script>
+
+<script>
+/* TRACK3-UI-V3 controller */
+(()=> {
+  const tabs=[...document.querySelectorAll('.t3-tab')];
+  const secs=[...document.querySelectorAll('main > section')];
+  const view=(h,i)=>{
+    const s=(h||'').toLowerCase();
+    if(/progress & time-series|definition & architecture/.test(s)) return 'summary';
+    if(/all track 3 evidence domains|site × domain coverage|facility map|complete epoch site record layer|93-site public enrichment bridge/.test(s)) return 'sites';
+    if(/observation acquisition program|time-series verification|observed power, cooling|physical records|public enrichment capture/.test(s)) return 'physical';
+    if(/full evidence ledger|evidence & provenance|facility-level evidence|detection & verification/.test(s)) return 'evidence';
+    if(/research console|missing-information research sweep|automated pipeline|entity resolution/.test(s)) return 'operations';
+    return 'reference';
+  };
+  secs.forEach((s,i)=>{
+    const h=s.querySelector('h1,h2,h3')?.textContent||'';
+    const forced = i < 3 ? 'summary' : view(h,i);
+    s.dataset.t3View=forced; s.classList.add('t3-section-shell');
+  });
+  function set(v){
+    secs.forEach(s=>s.classList.toggle('t3-view-hidden',s.dataset.t3View!==v));
+    tabs.forEach(b=>{const on=b.dataset.t3View===v;b.classList.toggle('active',on);b.setAttribute('aria-selected',String(on));});
+    localStorage.setItem('t3-active-view',v);
+    window.scrollTo({top:0,behavior:'smooth'});
+    setTimeout(()=>window.dispatchEvent(new Event('resize')),70);
+  }
+  tabs.forEach(b=>b.addEventListener('click',()=>set(b.dataset.t3View)));
+  const stored=localStorage.getItem('t3-active-view');
+  set(tabs.some(b=>b.dataset.t3View===stored)?stored:'summary');
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+:root{--obs-nav-h:54px;--obs-nav-bg:color-mix(in srgb,var(--panel) 88%,transparent);--obs-nav-shadow:0 10px 35px rgba(18,35,58,.07)}
+.obs-nav-wrap{position:sticky;top:0;z-index:900;padding:8px 0;background:linear-gradient(180deg,var(--paper) 0%,color-mix(in srgb,var(--paper) 86%,transparent) 100%);backdrop-filter:blur(18px) saturate(120%);-webkit-backdrop-filter:blur(18px) saturate(120%)}
+.obs-nav{max-width:72rem;margin:0 auto;padding:4px;border:1px solid var(--line);border-radius:14px;background:var(--obs-nav-bg);box-shadow:var(--obs-nav-shadow);display:flex;gap:3px;align-items:center;overflow:auto;scrollbar-width:none}
+.obs-nav::-webkit-scrollbar{display:none}
+.obs-tab{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 13px;border-radius:10px;border:1px solid transparent;color:var(--ink-soft);text-decoration:none;white-space:nowrap;font:500 11px/1 'IBM Plex Sans',system-ui,sans-serif;transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease}
+.obs-tab:hover{background:var(--amber-soft);color:var(--ink);transform:translateY(-1px)}
+.obs-tab[aria-current="page"],.obs-tab[aria-current="location"]{background:var(--paper);color:var(--ink);border-color:var(--line-strong);box-shadow:0 2px 12px rgba(18,35,58,.06)}
+.obs-tab[aria-current="page"]::after,.obs-tab[aria-current="location"]::after{content:"";position:absolute;left:13px;right:13px;bottom:4px;height:2px;border-radius:999px;background:var(--amber)}
+.obs-nav-spacer{flex:1;min-width:5px}
+.obs-nav-rev{font:500 9px/1 'IBM Plex Mono',monospace;color:var(--ink-faint);padding:0 10px;white-space:nowrap}
+.obs-progress{position:fixed;left:0;right:0;top:0;height:2px;z-index:1000;pointer-events:none}
+.obs-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--amber));box-shadow:0 0 14px color-mix(in srgb,var(--amber) 60%,transparent);transition:width .08s linear}
+.obs-nav .obs-tab:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--obs-nav-h) + 18px)}
+[id]{scroll-margin-top:calc(var(--obs-nav-h) + 18px)}
+@media(max-width:700px){.obs-nav-wrap{padding:6px 0}.obs-nav{border-radius:12px}.obs-tab{min-height:40px;padding:0 11px;font-size:10px}.obs-nav-rev{display:none}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.obs-tab{transition:none}.obs-progress i{transition:none}}

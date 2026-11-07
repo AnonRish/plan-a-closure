@@ -1,0 +1,17 @@
+2026-09-27 canonical Track 3 ledger refresh trigger
+clean refresh trigger 2026-09-27T23:47Z
+canonical refresh trigger 2026-09-28T00:00Z
+canonical refresh trigger 2026-09-28T00:55Z
+canonical refresh trigger 2026-09-28T01:25Z
+
+Track 3 terminal assessment refresh 2026-09-27T23:30-04:00
+
+Final validation refresh 2026-09-28T03:20Z
+
+Validator/enrichment reconciliation refresh 2026-09-28T03:22Z
+
+Control-flow and terminal-state validation refresh 2026-09-28T03:26Z
+
+Final synchronized rebuild for 448 public-web captures 2026-09-28T03:28Z
+
+Matrix rebuild + final Track 3 validation 2026-09-28T03:30Z

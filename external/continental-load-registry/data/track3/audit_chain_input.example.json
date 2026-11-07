@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "note": "Synthetic example only. These owners, sales and chips are invented to exercise track3_audit_chain.py.",
+  "population_closed": true,
+  "threshold_T": {"value": 30000, "unit": "H100e"},
+  "delta": 0.05,
+  "seed": "track3-audit-chain-example",
+  "sample_size": 300,
+  "sales": [
+    {"vendor": "VendorA", "buyer": "CloudCo", "units": 120000},
+    {"vendor": "VendorA", "buyer": "ResellerCo", "units": 40000},
+    {"vendor": "VendorB", "buyer": "LabOne", "units": 6000},
+    {"vendor": "VendorB", "buyer": "LabTwo", "units": 4000}
+  ],
+  "accounts": {
+    "CloudCo": {
+      "held": 100000,
+      "inspected": 100000,
+      "transfers": [
+        {"buyer": "LabOne", "units": 15000},
+        {"buyer": "StartupX", "units": 5000}
+      ]
+    },
+    "ResellerCo": {
+      "held": 0,
+      "inspected": 0,
+      "transfers": [
+        {"buyer": "LabTwo", "units": 25000},
+        {"buyer": "StartupX", "units": 15000}
+      ]
+    },
+    "LabOne": {
+      "held": 20000,
+      "inspected": 20000,
+      "decommissions": [{"units": 1000, "verified": true}]
+    },
+    "LabTwo": {
+      "held": 20000,
+      "inspected": 20000,
+      "transfers": [{"buyer": "StartupX", "units": 9000}]
+    },
+    "StartupX": {
+      "held": 29000,
+      "inspected": 29000
+    }
+  }
+}

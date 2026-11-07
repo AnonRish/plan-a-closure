@@ -1,0 +1,104 @@
+{
+  "total_MiB": 3072,
+  "chunks": [
+    {
+      "written_MiB": 128,
+      "chunk_MiB_per_s": 325.5
+    },
+    {
+      "written_MiB": 256,
+      "chunk_MiB_per_s": 378.7
+    },
+    {
+      "written_MiB": 384,
+      "chunk_MiB_per_s": 362.9
+    },
+    {
+      "written_MiB": 512,
+      "chunk_MiB_per_s": 380.7
+    },
+    {
+      "written_MiB": 640,
+      "chunk_MiB_per_s": 384.1
+    },
+    {
+      "written_MiB": 768,
+      "chunk_MiB_per_s": 292.9
+    },
+    {
+      "written_MiB": 896,
+      "chunk_MiB_per_s": 359.5
+    },
+    {
+      "written_MiB": 1024,
+      "chunk_MiB_per_s": 380.0
+    },
+    {
+      "written_MiB": 1152,
+      "chunk_MiB_per_s": 341.0
+    },
+    {
+      "written_MiB": 1280,
+      "chunk_MiB_per_s": 350.0
+    },
+    {
+      "written_MiB": 1408,
+      "chunk_MiB_per_s": 393.3
+    },
+    {
+      "written_MiB": 1536,
+      "chunk_MiB_per_s": 355.2
+    },
+    {
+      "written_MiB": 1664,
+      "chunk_MiB_per_s": 345.2
+    },
+    {
+      "written_MiB": 1792,
+      "chunk_MiB_per_s": 376.2
+    },
+    {
+      "written_MiB": 1920,
+      "chunk_MiB_per_s": 277.8
+    },
+    {
+      "written_MiB": 2048,
+      "chunk_MiB_per_s": 142.2
+    },
+    {
+      "written_MiB": 2176,
+      "chunk_MiB_per_s": 134.6
+    },
+    {
+      "written_MiB": 2304,
+      "chunk_MiB_per_s": 129.5
+    },
+    {
+      "written_MiB": 2432,
+      "chunk_MiB_per_s": 138.4
+    },
+    {
+      "written_MiB": 2560,
+      "chunk_MiB_per_s": 115.0
+    },
+    {
+      "written_MiB": 2688,
+      "chunk_MiB_per_s": 123.7
+    },
+    {
+      "written_MiB": 2816,
+      "chunk_MiB_per_s": 128.6
+    },
+    {
+      "written_MiB": 2944,
+      "chunk_MiB_per_s": 118.1
+    },
+    {
+      "written_MiB": 3072,
+      "chunk_MiB_per_s": 119.0
+    }
+  ],
+  "first_chunk_MiBps": 325.5,
+  "steady_state_mean_MiBps": 261.3,
+  "collapse_ratio": 1.25
+}

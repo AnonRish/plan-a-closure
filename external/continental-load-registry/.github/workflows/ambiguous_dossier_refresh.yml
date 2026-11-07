@@ -1,0 +1,49 @@
+name: Refresh ambiguous-load dossier after ground-truth overrides
+
+on:
+  push:
+    paths:
+      - "ground_truth_overrides.json"
+      - "investigate_ambiguous_loads.py"
+      - ".github/workflows/ambiguous_dossier_refresh.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ambiguous-dossier-refresh-main
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Rebuild dossier
+        run: python investigate_ambiguous_loads.py
+      - name: Commit dossier
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ambiguous_facilities_dossier.md
+          if git diff --cached --quiet; then
+            echo "No dossier changes."
+            exit 0
+          fi
+          git commit -m "Refresh ambiguous-load dossier from verified overrides"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase origin/main; then
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+            else
+              git rebase --abort || true
+            fi
+            sleep 3
+          done
+          echo "Unable to publish dossier after retries."
+          exit 1

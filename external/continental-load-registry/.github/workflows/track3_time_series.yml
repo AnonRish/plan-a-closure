@@ -1,0 +1,52 @@
+name: Track 3 Time-Series Verification
+
+on:
+  # The push and schedule triggers were removed: build_time_series_verification.py now runs inside
+  # track3_automated_pipeline.yml, so this workflow only duplicated that job.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: track3-canonical-writers-main
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Build time-series artifact
+        run: python build_time_series_verification.py
+      - name: Validate artifact
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("data/track3/time_series_verification.json")
+          j = json.loads(p.read_text(encoding="utf-8"))
+          assert j["summary"]["epoch_site_count"] == 93
+          assert len(j["site_timelines"]) == 93
+          assert j["summary"]["site_level_annual_power_snapshot_count"] >= 0
+          assert j["checklist"]
+          print("PASS: Track 3 time-series artifact")
+          print(j["summary"])
+          PY
+      - name: Commit artifact
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/track3/time_series_verification.json data/track3/time_series_verification.csv
+          if git diff --cached --quiet; then
+            echo "No time-series artifact changes."
+            exit 0
+          fi
+          git commit -m "Publish Track 3 time-series verification artifact"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main

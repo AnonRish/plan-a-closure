@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anonrish.github.io/plan-a-protocol/workload-manifest.schema.json",
+  "title": "AI 2040 Workload Manifest",
+  "type": "object",
+  "required": ["workload_id", "code_digest", "model_digest", "dataset_digest", "runtime_digest", "allowed_operations", "required_operations", "prohibited_operations", "resource_limits", "proof_mode"],
+  "properties": {
+    "workload_id": {"type": "string", "minLength": 1},
+    "code_digest": {"type": "string", "minLength": 1},
+    "model_digest": {"type": "string", "minLength": 1},
+    "dataset_digest": {"type": "string", "minLength": 1},
+    "runtime_digest": {"type": "string", "minLength": 1},
+    "compiler_digest": {"type": ["string", "null"]},
+    "allowed_operations": {"type": "array", "items": {"type": "string"}},
+    "required_operations": {"type": "array", "items": {"type": "string"}},
+    "prohibited_operations": {"type": "array", "items": {"type": "string"}},
+    "resource_limits": {"type": "object"},
+    "network_policy": {"type": "object"},
+    "memory_policy": {"type": "object"},
+    "proof_mode": {"enum": ["DECLARATION", "ARTIFACT_IDENTITY", "REPRODUCIBLE_EXECUTION", "SAMPLED_RECOMPUTATION", "HARDWARE_ATTESTED", "CRYPTOGRAPHIC_PROOF"]}
+  }
+}

@@ -1,0 +1,33 @@
+name: Evidence correction / dispute
+description: Submit a correction or dispute for a Track 3 facility or evidence record.
+title: "[Track 3 correction] "
+body:
+  - type: input
+    id: facility_id
+    attributes:
+      label: Facility ID
+      description: Exact Epoch facility ID or queue/request ID.
+    validations: {required: true}
+  - type: input
+    id: evidence_id
+    attributes:
+      label: Evidence ID
+      description: Existing evidence or verification ID, if applicable.
+  - type: input
+    id: source_url
+    attributes:
+      label: Supporting source URL
+      description: Public source supporting the proposed correction.
+    validations: {required: true}
+  - type: textarea
+    id: proposed_change
+    attributes:
+      label: Proposed correction
+      description: State the exact field/status/claim that should change.
+    validations: {required: true}
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Explain why the retained record is incorrect or incomplete.
+    validations: {required: true}

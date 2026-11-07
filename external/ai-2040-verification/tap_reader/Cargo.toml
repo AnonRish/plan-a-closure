@@ -1,0 +1,48 @@
+[package]
+name = "tap_reader"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+blake3 = "1.5"
+siphasher = "1.0"
+aes-gcm = "0.10"
+crossbeam-queue = "0.3"
+rand = "0.8"
+
+[[bin]]
+name = "bench_hash"
+path = "src/bin/bench_hash.rs"
+
+[[bin]]
+name = "bench_pipeline"
+path = "src/bin/bench_pipeline.rs"
+
+[[bin]]
+name = "bench_ring"
+path = "src/bin/bench_ring.rs"
+
+[[bin]]
+name = "test_reassembly"
+path = "src/bin/test_reassembly.rs"
+
+[[bin]]
+name = "sim_gateway_sampling"
+path = "src/bin/sim_gateway_sampling.rs"
+
+[[bin]]
+name = "bench_commitment"
+path = "src/bin/bench_commitment.rs"
+
+[[bin]]
+name = "test_reorder_pipeline"
+path = "src/bin/test_reorder_pipeline.rs"
+
+[[bin]]
+name = "attack_batching"
+path = "src/bin/attack_batching.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

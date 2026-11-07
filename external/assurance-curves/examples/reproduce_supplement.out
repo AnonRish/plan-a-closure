@@ -1,0 +1,16 @@
+quantity                                                               stated     computed  check
+C * N_fake needed for 99 % ("about 4.6")                                  4.6       4.6052  ok
+H100e-hours of unapproved work to 99 % ("~46,000")                      46000        46052  ok
+hours to catch a 10K H100e rogue deployment ("~4.6 hours")                4.6       4.6052  ok
+hours to catch a 1K H100e rogue deployment ("~46 hours")                   46       46.052  ok
+
+What the supplement does not state (exact form vs its Poisson form, same inputs):
+  exact  : 45,821.1 H100e-hours (4.5821 h at 10K H100e)   poisson: 46,051.7 (4.6052 h)
+  a 63.4 % chance of catching a 10K H100e deployment within ONE hour: 0.6340
+  trusted recompute capacity implied by 1 % of a 33 B H100e pool: 330,000,000 H100e
+  ... versus the whole 2029 world stock the same page declares:    289,000,000 H100e
+
+Detection time by tap granularity, 99 %, 1 % budget (Poisson form, hours):
+  per-server (2030)    packet=  4000 H100e-h   1K:   1842.1   10K:   184.2   100K:  18.42
+  per-shelf (2032)     packet=   400 H100e-h   1K:    184.2   10K:    18.4   100K:   1.84
+  per-GPU (2034)       packet=   100 H100e-h   1K:     46.1   10K:     4.6   100K:   0.46

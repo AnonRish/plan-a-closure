@@ -1,0 +1,134 @@
+name: Validate Track 3 Evidence Layer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "validate_physical_provenance.py"
+      - "data/track3/physical_source_manifest.json"
+      - "data/track3/remote_sensing_observations.json"
+      - "data/track3/remote_sensing_observations.csv"
+      - "data/track3/building_footprints_index.json"
+      - "data/physical_verification_layer.json"
+      - "data/track3/building_footprints/**"
+      - "track3.html"
+      - "TRACK3.md"
+      - "PHYSICAL_SOURCES.md"
+      - ".github/workflows/track3_validation.yml"
+      - "TRACK3_ONE_PAGE_SUMMARY.md"
+      - "TRACK3_REVIEW_CHECKLIST_2026-09-27.md"
+      - "TRACK3_COMPLETION_GATE.md"
+      - "TRACK3_COMPLETE_COVERAGE.md"
+      - "STRICT_DISCOVERY_RESEARCH.md"
+      - "TRACK3_RELEASE_2026-09-28.md"
+      - "validate_track3_release.py"
+      - "build_track3_engineering_closure.py"
+      - "build_physical_provenance_manifest.py"
+      - "data/track3/engineering_closure_2026-09-28.json"
+      - "track3_certificate.py"
+      - "data/track3/completion_gate.json"
+      - "data/track3/external_capability_handoff_2026-09-28.json"
+      - "data/track3/interval_power_telemetry_protocol.json"
+      - "data/track3/physical_target_leads.json"
+  pull_request:
+    paths:
+      - "index.html"
+      - "build_track3_evidence.py"
+      - "validate_track3_ledger.py"
+      - "validate_physical_provenance.py"
+      - "data/track3/physical_source_manifest.json"
+      - "sync_track3_external_sources.py"
+      - "data/track3/**"
+      - "data/track3_evidence_schema.json"
+      - "data/track3_source_stack.json"
+      - "data/external/epoch_ai/site_level_connection_evidence.json"
+      - "data/external/epoch_ai/registry.json"
+      - ".github/workflows/track3_validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Final manual trigger point for validating bot-attested generated artifacts on current main.
+# The physical provenance manifest builder is part of the release gate.
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Compile Python
+        run: |
+          python -m py_compile build_track3_evidence.py module1_physical_radar.py validate_track3_ledger.py sync_track3_external_sources.py track3_certificate.py validate_track3_complete_coverage.py validate_track3_release.py build_track3_engineering_closure.py build_physical_provenance_manifest.py
+
+      - name: Self-test Track 3 external source map
+        run: python sync_track3_external_sources.py --selftest
+
+      - name: Validate canonical Track 3 joins
+        run: |
+          python validate_track3_ledger.py
+
+      - name: Check physical provenance manifest reproducibility
+        run: python build_physical_provenance_manifest.py --check
+
+      - name: Validate physical-source provenance
+        run: |
+          python validate_physical_provenance.py
+
+      - name: Validate Track 3 release consistency
+        run: python validate_track3_release.py
+
+      - name: Smoke-test certificate calculator
+        run: python track3_certificate.py --tail-units 1000 --sample-size 50 --failures 0 --delta 0.05 >/tmp/track3-certificate.json
+
+      - name: Validate Track 3 JSON
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("data")
+          for p in [
+              root / "track3_evidence_schema.json",
+              root / "track3_source_stack.json",
+              root / "track3" / "site_status.json",
+              root / "track3" / "evidence_records.json",
+              root / "track3" / "research_queue.json",
+              root / "track3" / "summary.json",
+          ]:
+              json.loads(p.read_text(encoding="utf-8"))
+          summary = json.loads((root/"track3"/"summary.json").read_text(encoding="utf-8"))
+          status = json.loads((root/"track3"/"site_status.json").read_text(encoding="utf-8"))
+          evidence = json.loads((root/"track3"/"evidence_records.json").read_text(encoding="utf-8"))
+          queue = json.loads((root/"track3"/"research_queue.json").read_text(encoding="utf-8"))
+          epoch = json.loads((root/"external"/"epoch_ai"/"site_level_connection_evidence.json").read_text(encoding="utf-8"))
+          assert summary["epoch_site_count"] == 93
+          assert len(status["records"]) == 93
+          assert evidence["record_count"] == len(evidence["records"])
+          assert queue["count"] == len(queue["records"])
+          assert summary["pending_grid_connection_research_count"] == queue["count"]
+          assert epoch["record_count"] == 93
+          assert epoch["summary"]["total"] == 93
+          assert epoch["summary"]["evidence_found"] == summary["site_level_evidence_site_count"]
+          print("Track 3 JSON/artifact validation passed.")
+          PY
+
+      - name: Validate inline JavaScript
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", html, flags=re.S | re.I)
+          for i, script in enumerate(scripts, 1):
+              Path(f"/tmp/index-script-{i}.js").write_text(script, encoding="utf-8")
+          print(f"extracted {len(scripts)} inline script blocks")
+          PY
+          for f in /tmp/index-script-*.js; do node --check "$f"; done

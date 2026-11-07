@@ -1,0 +1,220 @@
+name: Daily Registry Update
+
+# Refreshes the public registry from the live RTO/ISO feeds at 06:00 UTC every day, or on demand (Actions tab -> Run workflow).
+#
+# Validation note:
+#   * A production live-feed run completed successfully on 2026-09-26, including
+#     all offline self-tests, the live ingest, the per-RTO refresh gate, and the
+#     registry commit. Keep using "dry_run" for manual validation before changing refresh policy.
+#   * A feed that is blocked or unreachable from GitHub-hosted runners is not an
+#     error: that RTO keeps its previous rows and a warning is raised.
+#   * A feed that returns data outside 50%-200% of the current row count or
+#     capacity is rejected by guard_registry_refresh.py; the other RTOs are still
+#     committed and the run then fails so a human looks at the rejected one.
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 06:00 UTC daily
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: execute every step but do not commit or push"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-registry-update
+  cancel-in-progress: false
+
+jobs:
+  update-registry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash # bash -eo pipefail: a failing command in a pipe fails the step
+    env:
+      PYTHONUNBUFFERED: "1"
+    steps:
+      # ---- a) check out ----------------------------------------------------
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      # ---- b) Python 3.12 with pip cache ------------------------------------
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      # ---- c) dependencies ---------------------------------------------------
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ---- d, e) self-tests (offline). Nothing live runs unless all pass. ----
+      - name: Self-test ingest_grid_queues.py
+        run: python ingest_grid_queues.py --selftest
+
+      - name: Self-test compute_anomaly_detector.py
+        run: python compute_anomaly_detector.py --selftest
+
+      - name: Self-test Module 1 physical radar
+        run: |
+          python module1_physical_radar.py --selftest
+
+      - name: Self-test investigate_ambiguous_loads.py and guard_registry_refresh.py
+        run: |
+          python investigate_ambiguous_loads.py --selftest
+          python guard_registry_refresh.py --selftest
+
+      # ---- f) live pipeline for the feeds that are available ------------------
+      - name: Prepare work directory
+        run: |
+          mkdir -p "$RUNNER_TEMP/registry_work" data
+          echo "WORK=$RUNNER_TEMP/registry_work" >> "$GITHUB_ENV"
+          echo "SYNC_DATE=$(date -u +%Y-%m-%d)" >> "$GITHUB_ENV"
+
+      - name: Pipeline 1/5 - fetch live feeds
+        # Every source without a --*-file flag is fetched from its live endpoint.
+        # Each source is wrapped separately, so one failing feed does not stop the
+        # others; the script exits non-zero only if every source failed.
+        run: |
+          python ingest_grid_queues.py --include-raw-fields \
+            --source-health-output "$WORK/source_health.json" \
+            --output "$WORK/registry_raw.csv" 2>&1 | tee "$WORK/ingest.log"
+
+      - name: Pipeline 2/5 - require at least one row
+        # compute_anomaly_detector.py raises a bare KeyError on a header-only CSV;
+        # stop here with a readable message instead.
+        run: |
+          rows=$(( $(wc -l < "$WORK/registry_raw.csv") - 1 ))
+          echo "Rows written by ingest: $rows"
+          if [ "$rows" -lt 1 ]; then
+            echo "::error title=No registry rows::Every feed failed or every row was filtered out. See the ingest.log in the run artifacts."
+            exit 1
+          fi
+
+      - name: Pipeline 3/5 - estimate compute load
+        run: |
+          python compute_anomaly_detector.py \
+            --input "$WORK/registry_raw.csv" \
+            --output "$WORK/computational_load_estimates.csv" \
+            --review-table-output "$WORK/review_candidates.md" 2>&1 | tee "$WORK/detector.log"
+
+      - name: Pipeline 4/5 - gate each RTO against the published registry
+        id: guard
+        run: |
+          python guard_registry_refresh.py \
+            --html index.html \
+            --raw "$WORK/registry_raw.csv" \
+            --enriched "$WORK/computational_load_estimates.csv" \
+            --out-raw data/registry_raw.csv \
+            --out-enriched data/computational_load_estimates.csv \
+            --source-health "$WORK/source_health.json" \
+            --summary-md "$GITHUB_STEP_SUMMARY" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Pipeline 5/5 - embed accepted RTOs into index.html
+        run: |
+          python embed_registry_data.py \
+            --raw data/registry_raw.csv \
+            --enriched data/computational_load_estimates.csv | tee "$WORK/embed.out"
+          {
+            echo '### Registry embedded in index.html (before / after)'
+            echo '```'
+            cat "$WORK/embed.out"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Validate and summarize Module 1 radar
+        run: python module1_physical_radar.py --selftest --audit
+
+      - name: Build facility research records
+        run: |
+          python build_facility_records.py \
+            --html index.html \
+            --raw data/registry_raw.csv \
+            --raw data/registry_raw_new5.csv \
+            --enriched data/computational_load_estimates.csv \
+            --source-manifest data/source_manifest.json \
+            --output-dir data/facility_records \
+            --capture-date "$SYNC_DATE" \
+            --check
+
+      - name: Verify the regulatory PDF links are intact
+        # index.html links both PDFs by bare filename, i.e. to the repository root.
+        # The links must still be marked available; the files themselves are not
+        # produced by this workflow, so a missing file is a warning, not a failure.
+        run: |
+          status=0
+          for f in FERC_Docket_RM26-4-000_Comments_Computational_Load_Telemetry.pdf \
+                   BIS_Rulemaking_Petition_5USC553e_Computational_Load_CEII_Protocol.pdf; do
+            if ! grep -Eq "file: *\"$f\", *available: *true" index.html; then
+              echo "::error title=Filing link broken::index.html no longer lists $f as available"
+              status=1
+            fi
+            if [ ! -f "$f" ]; then
+              echo "::warning title=PDF missing from repository root::$f is linked from index.html but is not in the repository root, so its Download button will 404."
+            fi
+          done
+          exit "$status"
+
+      - name: Show what changed
+        run: |
+          git status --short
+          git diff --stat -- index.html data
+
+      - name: Upload logs and fresh outputs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: registry-sync-${{ github.run_id }}
+          path: ${{ runner.temp }}/registry_work
+          retention-days: 30
+          if-no-files-found: ignore
+
+      # ---- g) commit and push -------------------------------------------------
+      - name: Commit and push refreshed registry
+        if: ${{ !inputs.dry_run && github.ref == 'refs/heads/main' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html data/registry_raw.csv data/computational_load_estimates.csv data/source_manifest.json data/facility_records data/module1_radar_summary.json module1_physical_radar.py
+          if git diff --cached --quiet; then
+            echo "Registry unchanged; nothing to commit."
+          else
+            git commit -m "Automated Daily Registry Sync: [${SYNC_DATE}]"
+            # The public research surface can receive independent commits while this
+            # refresh is running. Rebase onto the latest main before pushing, then
+            # retry the push if another writer wins the race.
+            for attempt in 1 2 3 4 5; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then
+                break
+              fi
+              if [ "$attempt" -eq 5 ]; then
+                echo "::error title=Registry push race::Could not push after 5 fetch/rebase/push attempts."
+                exit 1
+              fi
+              sleep 2
+            done
+          fi
+
+      - name: Skipped commit (dry run or not on main)
+        if: ${{ inputs.dry_run || github.ref != 'refs/heads/main' }}
+        run: echo "Not committing (dry_run=${{ inputs.dry_run }}, ref=${{ github.ref }}). The changes above stay in this runner only."
+
+      - name: Fail the run if any RTO refresh was rejected
+        if: ${{ always() && steps.guard.outputs.rejected != '' }}
+        env:
+          REJECTED: ${{ steps.guard.outputs.rejected }}
+        run: |
+          echo "::error title=Registry refresh partly rejected::Rejected: $REJECTED. Accepted RTOs were committed (unless dry run); the rejected ones kept their previous rows. See the 'Registry refresh gate' table in the run summary."
+          exit 1

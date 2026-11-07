@@ -1,0 +1,82 @@
+{
+  "meta": {
+    "unit": "H100e",
+    "as_of": "2029-01-01",
+    "accessed": "2026-10-04",
+    "note": "Numbers are facts transcribed from the AI 2040: Plan A supplements; no text is reproduced. Each block says where it came from and how well it was checked."
+  },
+  "sources": {
+    "compute_supplement": {
+      "url": "https://ai-2040.com/supplements/compute-supplement",
+      "status": "fetched and read in full on 2026-10-04 (sections 1.1 to 1.4 and the footnotes)"
+    },
+    "covert_projects_quote": {
+      "url": "https://www.greaterwrong.com/posts/B4qMZnB4a5YgKiLNo/plan-a-suggestions-for-further-work/comment/wPsARHDCwWXtePtGL",
+      "status": "secondary: a public comment quoting the covert-projects supplement (a 0.1% to 1.4% 80% interval and a 1.5M H100e median); the supplement itself was not opened in the final session"
+    },
+    "verification_plan": {
+      "url": "https://ai-2040.com/supplements/verification-plan",
+      "status": "read earlier in the same working session; not re-fetched when this file was written. Re-check before citing"
+    }
+  },
+  "tpp": {
+    "source": "compute_supplement, Compute Definitions",
+    "h100": 15800, "ai_floor": 4000, "v100": 2000, "a100": 4992, "rtx4090": 5285, "b200": 36000
+  },
+  "ai_relevance_floors": {
+    "source": "compute_supplement, Compute Definitions (cutoffs set just below an A100)",
+    "floors": {"tpp": 4000, "memory_bandwidth_tbps": 1.0, "memory_capacity_gb": 32, "nic_gbps": 100},
+    "chips": {
+      "A100": {"tpp": 4992, "memory_bandwidth_tbps": 2.0, "memory_capacity_gb": 80, "nic_gbps": 200},
+      "H100": {"tpp": 15800, "memory_bandwidth_tbps": 3.35, "memory_capacity_gb": 80, "nic_gbps": 400},
+      "RTX 4090": {"tpp": 5285, "memory_bandwidth_tbps": 1.01, "memory_capacity_gb": 24, "nic_gbps": 64}
+    }
+  },
+  "world_stock_series": {
+    "source": "compute_supplement 1.2.2 sources box; footnote 14 (15-year survival half-life)",
+    "jan1": {"2025": 8.6e6, "2026": 22.4e6, "2027": 57.1e6, "2028": 135.2e6, "2029": 289.0e6},
+    "production": {"2025": 14.2e6, "2026": 35.7e6, "2027": 80.6e6, "2028": 159.7e6},
+    "survival_half_life_years": 15,
+    "rounding_halfwidth": 0.05e6
+  },
+  "china": {
+    "source": "compute_supplement 1.3.1 (four-channel table)",
+    "stock_end_of_year": {"2024": 1.3e6, "2025": 2.9e6, "2026": 6.3e6, "2027": 13.2e6, "2028": 25.9e6},
+    "added_per_year": {"2024": 0.9e6, "2025": 1.7e6, "2026": 3.4e6, "2027": 6.8e6, "2028": 12.7e6},
+    "channels_2028": {"domestic": 5.0e6, "legal_western": 1.6e6, "loopholes": 3.15e6, "smuggled": 2.99e6},
+    "rounding_halfwidth": 0.05e6
+  },
+  "owners": {
+    "source": "compute_supplement 1.3.2 / 1.4: world total from 1.1, China from 1.3.1, remainder split 85/15 US/RoW",
+    "published": {"US": 224e6, "China": 26e6, "RoW": 39e6},
+    "published_share_pct": {"US": 77, "China": 9, "RoW": 14},
+    "published_world_total": 289e6,
+    "us_share_of_non_china": 0.85,
+    "rounding_halfwidth": 0.5e6
+  },
+  "locations": {
+    "source": "compute_supplement 1.4 (compute locations by datacenter size, Jan 1 2029)",
+    "datacenter_bins": [
+      {"label": "10M+",    "sites": 1,    "h100e": 10e6,  "share_pct": 3.5,  "halfwidth": 0.5e6},
+      {"label": "1M-10M",  "sites": 74,   "h100e": 149e6, "share_pct": 51.4, "halfwidth": 0.5e6},
+      {"label": "100K-1M", "sites": 257,  "h100e": 76e6,  "share_pct": 26.4, "halfwidth": 0.5e6},
+      {"label": "10K-100K","sites": 497,  "h100e": 15e6,  "share_pct": 5.3,  "halfwidth": 0.5e6},
+      {"label": "1K-10K",  "sites": 823,  "h100e": 2.6e6, "share_pct": 0.9,  "halfwidth": 0.05e6},
+      {"label": "<1K",     "sites": 1200, "h100e": 397e3, "share_pct": 0.1,  "halfwidth": 0.5e3}
+    ],
+    "in_transit": {"h100e": 35e6, "share_pct": 12.0, "halfwidth": 0.5e6},
+    "ai_consumer": {"units": 255000, "h100e": 938e3, "share_pct": 0.32, "halfwidth": 0.5e3},
+    "share_denominator": 289e6
+  },
+  "hidden_compute": {
+    "source": "covert_projects_quote",
+    "median_h100e": 1.5e6,
+    "ci80_fraction_of_ai_relevant": [0.001, 0.014],
+    "published_world_fraction_pct": 0.5
+  },
+  "uncertainty_2028": {
+    "source": "verification_plan",
+    "us_total_as_seen_by_china": {"lo": 222e6, "hi": 226e6, "level": 0.8, "declared": 224e6},
+    "china_total_as_seen_by_us": {"lo": 25e6, "hi": 27e6, "level": 0.8, "declared": 26e6}
+  }
+}

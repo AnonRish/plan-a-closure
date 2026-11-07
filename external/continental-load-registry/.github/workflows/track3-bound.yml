@@ -1,0 +1,20 @@
+
+name: Track 3 bound and tail audit
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  track3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install pytest
+      - run: python -m pytest tests -q
+      - run: python track3_bound.py --input data/track3/residual_bound_input.example.json
+      - run: python track3_tail_audit.py --input data/track3/tail_audit_input.example.json --sample-size 3 --seed track3-example
+      - run: python track3_audit_chain.py --input data/track3/audit_chain_input.example.json
+      - run: python track3_units.py --h100e 30000 --year 2028.6

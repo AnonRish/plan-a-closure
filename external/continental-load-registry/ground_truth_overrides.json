@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "_help": [
+    "Human-confirmed public-record labels only. Overrides affect the ambiguous-load dossier, not raw queue data."
+  ],
+  "overrides": []
+}

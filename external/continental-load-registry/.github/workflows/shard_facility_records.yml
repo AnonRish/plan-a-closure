@@ -1,0 +1,98 @@
+name: Shard Facility Record Storage
+
+# The normal monthly registry workflow continues to regenerate the records.
+# This focused workflow runs when the storage tooling changes, performs the
+# one-time migration of existing monolithic RTO JSON files, validates the
+# patched dashboard syntax, and commits only the migrated static artifacts.
+on:
+  push:
+    paths:
+      - "build_facility_records.py"
+      - "migrate_facility_records.py"
+      - ".github/workflows/shard_facility_records.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shard-facility-records
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Migrate monolithic records to shards
+        run: python migrate_facility_records.py
+
+      - name: Validate record builder
+        run: |
+          python -m py_compile build_facility_records.py migrate_facility_records.py
+          python build_facility_records.py --check
+
+      - name: Validate inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", html, flags=re.S | re.I)
+          for i, script in enumerate(scripts, 1):
+              Path(f"/tmp/index-script-{i}.js").write_text(script, encoding="utf-8")
+          print(f"extracted {len(scripts)} inline script blocks")
+          PY
+          for f in /tmp/index-script-*.js; do
+            node --check "$f"
+          done
+
+      - name: Verify sharded record set
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("data/facility_records")
+          top = json.loads((root / "index.json").read_text(encoding="utf-8"))
+          scope = json.loads(Path("data/large_load_scope.json").read_text(encoding="utf-8"))
+          expected = scope["definitions"]["current_row_level"]["records"]
+          assert top["schema_version"] == 2
+          total = 0
+          largest = (0, "")
+          for rto, path in top["files"].items():
+              idx = json.loads(Path(path).read_text(encoding="utf-8"))
+              assert idx["schema_version"] == 2
+              assert idx["record_count"] == top["rto_counts"][rto]
+              total += idx["record_count"]
+              for shard in idx["shards"]:
+                  size = Path(shard["file"]).stat().st_size
+                  if size > largest[0]:
+                      largest = (size, shard["file"])
+                  assert size < 1_000_000, f"oversized shard: {shard['file']} ({size} bytes)"
+          assert total == top["record_count"] == expected
+          print(f"verified {total} records; largest shard {largest[1]} = {largest[0]} bytes")
+          PY
+
+      - name: Commit migration
+        run: |
+          git status --short
+          git add index.html data/facility_records
+          if git diff --cached --quiet; then
+            echo "No migration changes required."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Shard facility research-record storage"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi

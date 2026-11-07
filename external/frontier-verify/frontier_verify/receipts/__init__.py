@@ -1,0 +1,1 @@
+"""Signed, independently-verifiable receipts."""

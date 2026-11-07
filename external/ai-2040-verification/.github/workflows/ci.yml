@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  rust:
+    name: Rust (tap_reader) — build & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo build --release
+        working-directory: tap_reader
+        run: cargo build --release
+      - name: cargo test --release
+        working-directory: tap_reader
+        run: cargo test --release
+
+  python-repro:
+    name: Python — reproduce experiments and assert headline findings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest
+      - name: Syntax check (all Python files)
+        run: python -m py_compile *.py
+      # Downloads the corpus, trains the toy models, builds the LoRA adapters, runs the
+      # experiment suite, then asserts the README's headline findings
+      # (tests/test_headline_invariants.py). About a minute on one CPU core; needs no GPU
+      # and no PostgreSQL.
+      - name: Reproduce and assert
+        run: make test

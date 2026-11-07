@@ -1,0 +1,24 @@
+name: Track 3 independent verifier
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - 'data/track3/detection_universe.json'
+      - 'data/track3/verification_protocol.json'
+      - 'data/track3/absence_testing.json'
+      - 'data/track3/verification_results.json'
+      - 'verify_track3.py'
+      - 'build_track3_verification.py'
+      - '.github/workflows/track3_independent_verifier.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python verify_track3.py

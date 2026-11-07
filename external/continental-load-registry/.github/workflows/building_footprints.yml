@@ -1,0 +1,99 @@
+name: Build Building Footprint Layer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - ".github/workflows/building_footprints.yml"
+      - "acquire_building_footprints.py"
+      - "acquire_physical_verification.py"
+      - "data/external/epoch_ai/registry.json"
+      - "data/track3/physical_site_coordinates.json"
+  workflow_dispatch:
+  schedule:
+    - cron: "45 4 * * 0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: physical-writers-main
+  cancel-in-progress: false
+
+jobs:
+  footprints:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install footprint dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests numpy rasterio shapely pyproj duckdb planetary-computer
+
+      - name: Acquire current building polygons
+        run: python acquire_building_footprints.py
+
+      - name: Validate footprint layer
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("data/track3")
+          idx = json.loads((root / "building_footprints_index.json").read_text(encoding="utf-8"))
+          assert idx["site_target_count"] == 93
+          assert len(idx["records"]) == 93
+          assert idx["sites_with_polygon_files"] > 0
+          assert idx["total_polygon_count"] > 0
+          files = [
+              Path(record["geometry_file"])
+              for record in idx["records"]
+              if record.get("geometry_file")
+          ]
+          assert files
+          assert all(path.exists() for path in files)
+          physical = json.loads((Path("data") / "physical_verification_layer.json").read_text(encoding="utf-8"))
+          assert physical["summary"]["building_footprint_polygon_site_count"] == idx["sites_with_polygon_files"]
+          assert physical["summary"]["building_footprint_polygon_count"] == idx["total_polygon_count"]
+          print("PASS: building footprint polygon contracts")
+          print("polygonized sites:", idx["sites_with_polygon_files"])
+          print("polygons:", idx["total_polygon_count"])
+          PY
+
+      - name: Validate Python syntax
+        run: python -m py_compile acquire_building_footprints.py
+
+      - name: Commit footprint artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A data/physical_verification_layer.json data/track3_evidence_schema.json \
+            data/track3/building_footprints_index.json data/track3/building_footprints/
+          if git diff --cached --quiet; then
+            echo "No building-footprint data changes."
+            exit 0
+          fi
+          git commit -m "Refresh building footprint polygons"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase -X theirs origin/main; then
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+            else
+              git rebase --abort || true
+            fi
+            sleep 3
+          done
+          echo "Unable to push building footprint refresh after retries."
+          exit 1

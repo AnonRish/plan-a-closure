@@ -1,0 +1,33 @@
+{
+  "properties": {
+    "policy_id": {
+      "title": "Policy Id",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    },
+    "allow_mock_hardware": {
+      "default": false,
+      "title": "Allow Mock Hardware",
+      "type": "boolean"
+    },
+    "max_evidence_age_seconds": {
+      "default": 3600,
+      "title": "Max Evidence Age Seconds",
+      "type": "integer"
+    },
+    "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+    }
+  },
+  "required": [
+    "policy_id",
+    "version"
+  ],
+  "title": "Policy",
+  "type": "object"
+}

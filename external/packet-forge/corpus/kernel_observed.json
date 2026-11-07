@@ -1,0 +1,1118 @@
+{
+ "cases": {
+  "anom-before-isn": {
+   "eof": false,
+   "expected_linux_hex": "30313233343536373839616263646566",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839616263646566",
+   "reset": false
+  },
+  "anom-conflicting-fin": {
+   "eof": true,
+   "expected_linux_hex": "30313233343536373839",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839",
+   "reset": false
+  },
+  "anom-data-after-fin": {
+   "eof": true,
+   "expected_linux_hex": "30313233343536373839",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839",
+   "reset": false
+  },
+  "anom-ip-fragment": {
+   "eof": false,
+   "expected_linux_hex": "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a30313233",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a30313233",
+   "reset": false
+  },
+  "anom-syn-data": {
+   "eof": false,
+   "expected_linux_hex": "5245414c444154412121",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "linux"
+   ],
+   "observed_hex": "5245414c444154412121",
+   "reset": false
+  },
+  "ins-bad-checksum-decoy": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383952525252525252525252",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383952525252525252525252",
+   "reset": false
+  },
+  "ins-bad-checksum-fills-hole": {
+   "eof": false,
+   "expected_linux_hex": "30313233343536373839",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839",
+   "reset": false
+  },
+  "ok-duplicate-retransmit": {
+   "eof": false,
+   "expected_linux_hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+   "reset": false
+  },
+  "ok-hole-then-fill": {
+   "eof": false,
+   "expected_linux_hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+   "reset": false
+  },
+  "ok-in-order": {
+   "eof": false,
+   "expected_linux_hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+   "reset": false
+  },
+  "ok-reordered": {
+   "eof": false,
+   "expected_linux_hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "303132333435363738396162636465666768696a6b6c6d6e6f7071727374",
+   "reset": false
+  },
+  "ok-resegmented-retransmit": {
+   "eof": false,
+   "expected_linux_hex": "303132333435363738396162636465666768696a6b6c6d6e6f70717273747576777879",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "303132333435363738396162636465666768696a6b6c6d6e6f70717273747576777879",
+   "reset": false
+  },
+  "ok-tiny-segments": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637",
+   "reset": false
+  },
+  "ok-wrap-in-order": {
+   "eof": false,
+   "expected_linux_hex": "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a",
+   "reset": false
+  },
+  "ok-wrap-out-of-order": {
+   "eof": false,
+   "expected_linux_hex": "30313233343536373839574f524c44",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839574f524c44",
+   "reset": false
+  },
+  "ov-aba-inorder": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383941414141414141414141",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383941414141414141414141",
+   "reset": false
+  },
+  "ov-aba-ooo": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383941414141414141414141",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383941414141414141414141",
+   "reset": false
+  },
+  "ov-before-ack": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-big-first-ooo": {
+   "eof": false,
+   "expected_linux_hex": "303132333435363747474747474747474747474747474747",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "303132333435363747474747474747474747474747474747",
+   "reset": false
+  },
+  "ov-chain-three-ooo": {
+   "eof": false,
+   "expected_linux_hex": "303132333435363738394141414141414141414142424242424343434343",
+   "handshake_ok": true,
+   "linux_model_matches": false,
+   "matches_policies": [],
+   "observed_hex": "303132333435363738394141414141414141414143434343434343434343",
+   "reset": false
+  },
+  "ov-conflicting-retransmit": {
+   "eof": false,
+   "expected_linux_hex": "41414141",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "41414141",
+   "reset": false
+  },
+  "ov-contained-inorder": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-contained-ooo-pq": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-contained-ooo-qp": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-covering-inorder": {
+   "eof": false,
+   "expected_linux_hex": "30313233343536373839505050505050505050505151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839505050505050505050505151515151",
+   "reset": false
+  },
+  "ov-covering-ooo-pq": {
+   "eof": false,
+   "expected_linux_hex": "30313233345151515151515151515151515151515151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233345151515151515151515151515151515151515151",
+   "reset": false
+  },
+  "ov-covering-ooo-qp": {
+   "eof": false,
+   "expected_linux_hex": "30313233345151515151515151515151515151515151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233345151515151515151515151515151515151515151",
+   "reset": false
+  },
+  "ov-head-inorder": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-head-ooo-pq": {
+   "eof": false,
+   "expected_linux_hex": "3031323334515151515151515151515050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334515151515151515151515050505050",
+   "reset": false
+  },
+  "ov-head-ooo-qp": {
+   "eof": false,
+   "expected_linux_hex": "3031323334515151515151515151515050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334515151515151515151515050505050",
+   "reset": false
+  },
+  "ov-keepalive-garbage-byte": {
+   "eof": false,
+   "expected_linux_hex": "30313233343536373839",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839",
+   "reset": false
+  },
+  "ov-one-byte-head-inorder": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-one-byte-head-ooo-pq": {
+   "eof": false,
+   "expected_linux_hex": "3051515151515151515151505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3051515151515151515151505050505050505050",
+   "reset": false
+  },
+  "ov-one-byte-head-ooo-qp": {
+   "eof": false,
+   "expected_linux_hex": "3051515151515151515151505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3051515151515151515151505050505050505050",
+   "reset": false
+  },
+  "ov-one-byte-tail-inorder": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050515151515151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050515151515151515151",
+   "reset": false
+  },
+  "ov-one-byte-tail-ooo-pq": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050515151515151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050515151515151515151",
+   "reset": false
+  },
+  "ov-one-byte-tail-ooo-qp": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050515151515151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050515151515151515151",
+   "reset": false
+  },
+  "ov-one-covers-three-ooo": {
+   "eof": false,
+   "expected_linux_hex": "303132333435363747474747474747474747474747474747",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "303132333435363747474747474747474747474747474747",
+   "reset": false
+  },
+  "ov-same-end-longer-inorder": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-same-end-longer-ooo-pq": {
+   "eof": false,
+   "expected_linux_hex": "3031323334515151515151515151515151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334515151515151515151515151515151",
+   "reset": false
+  },
+  "ov-same-end-longer-ooo-qp": {
+   "eof": false,
+   "expected_linux_hex": "3031323334515151515151515151515151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334515151515151515151515151515151",
+   "reset": false
+  },
+  "ov-same-end-shorter-inorder": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-same-end-shorter-ooo-pq": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-same-end-shorter-ooo-qp": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-same-range-inorder": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-same-range-ooo-pq": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-same-range-ooo-qp": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383951515151515151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383951515151515151515151",
+   "reset": false
+  },
+  "ov-same-start-longer-inorder": {
+   "eof": false,
+   "expected_linux_hex": "30313233343536373839505050505050505050505151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839505050505050505050505151515151",
+   "reset": false
+  },
+  "ov-same-start-longer-ooo-pq": {
+   "eof": false,
+   "expected_linux_hex": "30313233343536373839515151515151515151515151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839515151515151515151515151515151",
+   "reset": false
+  },
+  "ov-same-start-longer-ooo-qp": {
+   "eof": false,
+   "expected_linux_hex": "30313233343536373839515151515151515151515151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839515151515151515151515151515151",
+   "reset": false
+  },
+  "ov-same-start-shorter-inorder": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-same-start-shorter-ooo-pq": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-same-start-shorter-ooo-qp": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-tail-inorder": {
+   "eof": false,
+   "expected_linux_hex": "30313233343536373839505050505050505050505151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839505050505050505050505151515151",
+   "reset": false
+  },
+  "ov-tail-ooo-pq": {
+   "eof": false,
+   "expected_linux_hex": "30313233343536373839505050505050505050505151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839505050505050505050505151515151",
+   "reset": false
+  },
+  "ov-tail-ooo-qp": {
+   "eof": false,
+   "expected_linux_hex": "30313233343536373839505050505050505050505151515151",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "30313233343536373839505050505050505050505151515151",
+   "reset": false
+  },
+  "ov-wrap-conflict-inorder": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637383950505050505050505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "first",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637383950505050505050505050",
+   "reset": false
+  },
+  "ov-wrap-conflict-ooo": {
+   "eof": false,
+   "expected_linux_hex": "3031323334353637515151515151515150505050",
+   "handshake_ok": true,
+   "linux_model_matches": true,
+   "matches_policies": [
+    "last",
+    "lowseq",
+    "linux"
+   ],
+   "observed_hex": "3031323334353637515151515151515150505050",
+   "reset": false
+  }
+ },
+ "fuzz": {
+  "agree": {
+   "first": 996,
+   "last": 954,
+   "linux": 1490,
+   "lowseq": 1429
+  },
+  "kernel": "6.18.44-fc-v51",
+  "linux_misses": [
+   {
+    "events": [
+     [
+      28,
+      29,
+      "A"
+     ],
+     [
+      9,
+      18,
+      "B"
+     ],
+     [
+      18,
+      27,
+      "C"
+     ],
+     [
+      14,
+      23,
+      "D"
+     ],
+     [
+      0,
+      9,
+      "0"
+     ]
+    ],
+    "kernel": "012345678BBBBBBBBBCCCCCCCCC",
+    "model": "012345678BBBBBBBBBDDDDDCCCC"
+   },
+   {
+    "events": [
+     [
+      4,
+      5,
+      "A"
+     ],
+     [
+      25,
+      36,
+      "B"
+     ],
+     [
+      30,
+      33,
+      "C"
+     ],
+     [
+      5,
+      14,
+      "D"
+     ],
+     [
+      4,
+      14,
+      "E"
+     ],
+     [
+      0,
+      4,
+      "0"
+     ]
+    ],
+    "kernel": "0123ADDDDDDDDD",
+    "model": "0123EEEEEEEEEE"
+   },
+   {
+    "events": [
+     [
+      17,
+      23,
+      "A"
+     ],
+     [
+      21,
+      27,
+      "B"
+     ],
+     [
+      27,
+      38,
+      "C"
+     ],
+     [
+      26,
+      36,
+      "D"
+     ],
+     [
+      0,
+      17,
+      "0"
+     ]
+    ],
+    "kernel": "0123456789abcdefgAAAAAABBBBCCCCCCCCCCC",
+    "model": "0123456789abcdefgAAAAAABBBBDDDDDDDDDCC"
+   },
+   {
+    "events": [
+     [
+      5,
+      17,
+      "A"
+     ],
+     [
+      25,
+      27,
+      "B"
+     ],
+     [
+      17,
+      20,
+      "C"
+     ],
+     [
+      19,
+      30,
+      "D"
+     ],
+     [
+      17,
+      24,
+      "E"
+     ],
+     [
+      0,
+      5,
+      "0"
+     ]
+    ],
+    "kernel": "01234AAAAAAAAAAAACCCEEEEDDDDDD",
+    "model": "01234AAAAAAAAAAAAEEEEEEEDDDDDD"
+   },
+   {
+    "events": [
+     [
+      9,
+      21,
+      "A"
+     ],
+     [
+      21,
+      27,
+      "B"
+     ],
+     [
+      11,
+      15,
+      "C"
+     ],
+     [
+      17,
+      28,
+      "D"
+     ],
+     [
+      0,
+      9,
+      "0"
+     ]
+    ],
+    "kernel": "012345678AAAAAAAAAAAABBBBBBD",
+    "model": "012345678AAAAAAAAAAAADDDDDDD"
+   },
+   {
+    "events": [
+     [
+      20,
+      27,
+      "A"
+     ],
+     [
+      7,
+      17,
+      "B"
+     ],
+     [
+      10,
+      19,
+      "C"
+     ],
+     [
+      19,
+      23,
+      "D"
+     ],
+     [
+      14,
+      23,
+      "E"
+     ],
+     [
+      0,
+      7,
+      "0"
+     ]
+    ],
+    "kernel": "0123456BBBBBBBBBBCCDDDDAAAA",
+    "model": "0123456BBBBBBBBBBCCEEEEAAAA"
+   },
+   {
+    "events": [
+     [
+      4,
+      14,
+      "A"
+     ],
+     [
+      14,
+      21,
+      "B"
+     ],
+     [
+      25,
+      27,
+      "C"
+     ],
+     [
+      21,
+      27,
+      "D"
+     ],
+     [
+      16,
+      26,
+      "E"
+     ],
+     [
+      0,
+      4,
+      "0"
+     ]
+    ],
+    "kernel": "0123AAAAAAAAAABBBBBBBDDDDDD",
+    "model": "0123AAAAAAAAAABBBBBBBEEEEED"
+   },
+   {
+    "events": [
+     [
+      28,
+      39,
+      "A"
+     ],
+     [
+      4,
+      7,
+      "B"
+     ],
+     [
+      13,
+      20,
+      "C"
+     ],
+     [
+      7,
+      16,
+      "D"
+     ],
+     [
+      6,
+      10,
+      "E"
+     ],
+     [
+      0,
+      4,
+      "0"
+     ]
+    ],
+    "kernel": "0123BBBDDDDDDDDDCCCC",
+    "model": "0123BBBEEEDDDDDDCCCC"
+   },
+   {
+    "events": [
+     [
+      7,
+      19,
+      "A"
+     ],
+     [
+      19,
+      24,
+      "B"
+     ],
+     [
+      15,
+      26,
+      "C"
+     ],
+     [
+      26,
+      30,
+      "D"
+     ],
+     [
+      25,
+      32,
+      "E"
+     ],
+     [
+      0,
+      7,
+      "0"
+     ]
+    ],
+    "kernel": "0123456AAAAAAAAAAAABBBBBCCDDDDEE",
+    "model": "0123456AAAAAAAAAAAACCCCCCCEEEEEE"
+   },
+   {
+    "events": [
+     [
+      14,
+      20,
+      "A"
+     ],
+     [
+      20,
+      27,
+      "B"
+     ],
+     [
+      17,
+      24,
+      "C"
+     ],
+     [
+      0,
+      14,
+      "0"
+     ]
+    ],
+    "kernel": "0123456789abcdAAAAAABBBBBBB",
+    "model": "0123456789abcdAAAAAACCCCBBB"
+   }
+  ],
+  "scenarios": 1500,
+  "seed": 20261002
+ },
+ "kernel": "6.18.44-fc-v51",
+ "known_deviations": {
+  "ov-chain-three-ooo": "tcp_ooo_try_coalesce appends C to the buffered skb that ends where C starts, so C inherits that skb's start offset and beats B; the model ranks C by its own start."
+ },
+ "permutations": {
+  "model_matches": 600,
+  "replayed": 610
+ }
+}

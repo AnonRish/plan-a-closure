@@ -1,0 +1,19 @@
+== throughput, 4 MiB file, symbol 1024 B, k=32 r=8 ==
+encode (Reed-Solomon + hash every symbol + Merkle tree + sign):  19.59 MiB/s of file
+packetise (proofs, headers):                                    258.39 MiB/s of file
+receive (parse + verify proof + decode + final hash):            45.69 MiB/s of file
+
+== Reed-Solomon alone (k=200, r=55, symbol 1024 B, one block of 200 KiB) ==
+  encode:                        4.75 MiB/s of block
+  decode,  0 data symbols missing:   556.39 MiB/s of block
+  decode, 10 data symbols missing:    21.40 MiB/s of block
+  decode, 55 data symbols missing:     4.74 MiB/s of block
+
+== real UDP loopback transfer, 1 MiB, 20 % of datagrams dropped before sending, 3 passes ==
+  complete=True  datagrams sent after loss=3196  wall=0.1s
+  receiver events: {'complete': 1, 'manifest_accepted': 1, 'manifest_duplicate': 59, 'symbol_accepted': 1023, 'symbol_duplicate': 668}
+
+== overhead and loss tolerance for 1 TB of weights (closed form) ==
+  symbol  1024 B, k= 32, r= 8: blocks 30,517,579  wire/file 2.477x  proofs 48.5% of wire  P(file) at 5% loss: 0.000000
+  symbol  8192 B, k=200, r=55: blocks   610,352  wire/file 1.416x  proofs  9.7% of wire  P(file) at 5% loss: 1.000000
+  symbol  8192 B, k=100, r=28: blocks 1,220,704  wire/file 1.422x  proofs  9.7% of wire  P(file) at 5% loss: 0.999992

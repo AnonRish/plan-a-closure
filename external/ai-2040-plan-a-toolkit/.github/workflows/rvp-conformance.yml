@@ -1,0 +1,35 @@
+name: RVP-1 conformance
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements-rvp1-lock.txt
+      - run: python -m pip install -e .
+      - run: python -m repository_gate
+      - run: python -m pytest -q
+      - run: python -m benchmarks.benchmark
+      - run: python -m hostile_prover.run_benchmark
+      - run: python -m capture_benchmark.harness
+      - run: python -m verification_lab.run_report
+      - run: python -m release_attestation
+      - run: python -m replication.collect_manifest
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rvp-1-reproducibility-bundle
+          path: |
+            benchmark_result.json
+            adversarial_results.json
+            capture_benchmark_result.json
+            capture_fixture.pcap
+            retrofit_readiness_report.json
+            replication_manifest.json
+            release_attestation.json
+          if-no-files-found: error

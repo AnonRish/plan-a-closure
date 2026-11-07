@@ -1,0 +1,58 @@
+name: Sync broader compute universe
+
+on:
+  schedule:
+    - cron: "15 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-broader-compute-universe
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Refresh open-data snapshots
+        run: python scripts/sync_global_compute_sources.py
+
+      - name: Validate snapshots
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          checks = [
+              ("data/external/compute_atlas/facilities.json", "compute_atlas"),
+              ("data/external/data_center_index/campuses.json", "data_center_index"),
+          ]
+          for path, label in checks:
+              p = Path(path)
+              if not p.exists():
+                  raise SystemExit(f"{label}: missing {path}")
+              payload = json.loads(p.read_text(encoding="utf-8"))
+              records = payload.get("facilities") if isinstance(payload, dict) and "facilities" in payload else payload
+              if not isinstance(records, list) or not records:
+                  raise SystemExit(f"{label}: no records")
+              print(label, len(records), "records")
+
+      - name: Commit refreshed snapshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/external/compute_atlas/facilities.json data/external/data_center_index/campuses.json data/global_compute_universe_snapshot_status.json
+          if git diff --cached --quiet; then
+            echo "No snapshot changes."
+          else
+            git commit -m "Sync broader compute universe sources"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi

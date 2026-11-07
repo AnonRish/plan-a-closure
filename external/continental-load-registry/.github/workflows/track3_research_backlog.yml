@@ -1,0 +1,69 @@
+name: Track 3 research backlog refresh
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "45 11 * * *"
+  push:
+    branches: [main]
+    paths:
+      - "build_track3_research_backlog.py"
+      - "data/track3/research_workflows.json"
+      - "data/track3/site_missing_information_sweep_*.json"
+      - "data/track3/public_web_enrichment_2026-09-27.json"
+      - "reconcile_track3_public_enrichment.py"
+      - ".github/workflows/track3_research_backlog.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: track3-canonical-writers-main
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Reconcile public enrichment into closure register
+        run: python reconcile_track3_public_enrichment.py
+      - name: Build one-task research backlog
+        run: python build_track3_research_backlog.py
+      - name: Validate generated counts
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("data/track3/research_backlog_summary.json").read_text())
+          assert d["publisher_tasks"] == sum(d["publisher_by_field"].values())
+          assert d["domain_tasks"] == sum(d["domain_by_domain"].values())
+          assert d["total_tasks"] == d["publisher_tasks"] + d["domain_tasks"]
+          assert d["coverage_assertions"]["publisher_tasks_equal_effective_unresolved"]
+          assert d["coverage_assertions"]["domain_tasks_equal_open_cells"]
+          assert d["coverage_assertions"]["all_93_sites_represented"]
+          print("PASS: research backlog coverage assertions")
+          PY
+      - name: Commit refreshed research backlog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/track3/research_work_queue.json data/track3/research_work_queue.csv data/track3/research_backlog_summary.json
+          git diff --cached --quiet || git commit -m "Refresh Track 3 research backlog"
+          if git diff --quiet HEAD^ HEAD 2>/dev/null; then
+            echo "No research backlog commit created."
+            exit 0
+          fi
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git merge -X ours origin/main --no-edit
+            if git push origin HEAD:main; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+          done

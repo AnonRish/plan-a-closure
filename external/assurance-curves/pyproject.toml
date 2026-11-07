@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "assurance-curves"
+version = "0.1.0"
+description = "Exact and Poisson detection math for random-sampling (partial-recomputation) AI verification: assurance curves, rogue-deployment detection time, false-alarm budgets, anytime-valid monitoring."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "AnonRish" }]
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+test = ["pytest>=7", "hypothesis>=6", "scipy>=1.10", "mpmath>=1.3"]
+
+[project.scripts]
+assurance-curves = "assurance_curves.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

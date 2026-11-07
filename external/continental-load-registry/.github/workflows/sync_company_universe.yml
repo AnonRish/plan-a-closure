@@ -1,0 +1,60 @@
+name: Sync company facility universe
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "45 6 * * *"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sync_company_universe.py"
+      - ".github/workflows/sync_company_universe.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-company-universe
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build company/facility snapshot
+        run: python scripts/sync_company_universe.py
+
+      - name: Validate snapshot
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          p = Path("data/company_operator_universe_2026-09-27.json")
+          s = json.loads(p.read_text(encoding="utf-8"))
+          assert s["operator_count"] > 0
+          assert s["operator_loaded_count"] > 0
+          assert s["facility_reference_count"] > 0
+          assert s["unique_facility_key_count"] > 0
+          print("operators:", s["operator_count"])
+          print("loaded:", s["operator_loaded_count"])
+          print("facility references:", s["facility_reference_count"])
+          print("unique facility keys:", s["unique_facility_key_count"])
+
+      - name: Commit snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/company_operator_universe_2026-09-27.json data/company_operator_universe_status.json
+          if git diff --cached --quiet; then
+            echo "No company snapshot changes."
+          else
+            git commit -m "Sync company facility universe"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi

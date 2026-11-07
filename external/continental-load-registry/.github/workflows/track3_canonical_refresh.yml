@@ -1,0 +1,98 @@
+name: Track 3 canonical ledger refresh
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "force_track3_refresh.txt"
+      - "build_track3_evidence.py"
+      - "rebuild_track3_completeness_matrices.py"
+      - "data/track3/research_assessments_2026-09-27.json"
+      - ".github/workflows/track3_canonical_refresh.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: track3-canonical-writers-main
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests pandas openpyxl lxml html5lib beautifulsoup4 pydantic
+      - name: Compile builders
+        run: |
+          python -m py_compile build_track3_evidence.py build_entity_resolution.py build_facility_provenance.py build_time_series_verification.py build_track3_verification.py build_remote_sensing_target_status.py build_ambiguity_classification_summary.py validate_ambiguous_case_studies.py validate_strict_discovery_candidates.py validate_track3_complete_coverage.py
+      - name: Rebuild canonical Track 3 ledgers
+        run: |
+          python build_track3_evidence.py
+          python build_entity_resolution.py
+          python build_facility_provenance.py
+          python build_time_series_verification.py
+          python build_track3_verification.py
+          python build_remote_sensing_target_status.py
+          python build_ambiguity_classification_summary.py --write
+      - name: Reconcile public enrichment and build claim layer
+        run: |
+          python reconcile_track3_public_enrichment.py
+          python build_public_web_claims.py
+          python rebuild_track3_completeness_matrices.py
+      - name: Validate refreshed ledgers are populated
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          required = [
+              "data/track3/evidence_records.json",
+              "data/track3/entity_resolution.json",
+              "data/track3/facility_provenance.json",
+              "data/track3/research_work_queue.json",
+          ]
+          for name in required:
+              p=Path(name)
+              assert p.exists() and p.stat().st_size > 0, f"missing/empty: {name}"
+              json.loads(p.read_text(encoding="utf-8"))
+          evidence=json.loads(Path("data/track3/evidence_records.json").read_text(encoding="utf-8"))
+          assert evidence.get("record_count", len(evidence.get("records", []))) > 0
+          print("PASS: canonical Track 3 ledgers populated")
+          PY
+      - name: Validate public contracts
+        run: |
+          python validate_ambiguous_case_studies.py
+          python validate_strict_discovery_candidates.py
+          python validate_track3_complete_coverage.py
+      - name: Commit generated ledgers
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/track3
+          if git diff --cached --quiet; then
+            echo "No generated ledger changes."
+            exit 0
+          fi
+          git commit -m "Automated Track 3 pipeline refresh"
+          git fetch origin main
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase --autostash -X theirs origin/main; then
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+              git rebase --abort || true
+            else
+              git rebase --abort || true
+            fi
+            sleep 3
+          done
+          echo "Unable to publish generated Track 3 ledgers after retries."
+          exit 1

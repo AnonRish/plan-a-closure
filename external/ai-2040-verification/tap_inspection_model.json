@@ -1,0 +1,204 @@
+{
+  "lambda_facility_per_year": 0.4,
+  "K_manual": 100,
+  "K_automated": 1000,
+  "lambda_by_granularity": {
+    "facility": {
+      "manual": {
+        "t_sample": 1.0,
+        "lambda": 0.4
+      },
+      "automated": {
+        "t_sample": 1.0,
+        "lambda": 0.4
+      }
+    },
+    "rack": {
+      "manual": {
+        "t_sample": 0.8418098912662223,
+        "lambda": 0.33672395650648895
+      },
+      "automated": {
+        "t_sample": 1.0,
+        "lambda": 0.4
+      }
+    },
+    "server": {
+      "manual": {
+        "t_sample": 0.14030164854437038,
+        "lambda": 0.05612065941774816
+      },
+      "automated": {
+        "t_sample": 1.0,
+        "lambda": 0.4
+      }
+    }
+  },
+  "single_event_catch": {
+    "facility": {
+      "1 day": {
+        "formula": 0.0010952901423587624,
+        "monte_carlo": 0.00094,
+        "sim_valid": true
+      },
+      "1 week": {
+        "formula": 0.007641884064928717,
+        "monte_carlo": 0.00764,
+        "sim_valid": true
+      },
+      "1 month": {
+        "formula": 0.032342147481605577,
+        "monte_carlo": 0.03329,
+        "sim_valid": true
+      },
+      "1 quarter": {
+        "formula": 0.09491464733946853,
+        "monte_carlo": 0.09568,
+        "sim_valid": true
+      }
+    },
+    "rack": {
+      "1 day": {
+        "formula": 0.0009221059864337189,
+        "monte_carlo": 0.00109,
+        "sim_valid": true
+      },
+      "1 week": {
+        "formula": 0.006436913452963711,
+        "monte_carlo": 0.00672,
+        "sim_valid": true
+      },
+      "1 month": {
+        "formula": 0.027296471547625045,
+        "monte_carlo": 0.02746,
+        "sim_valid": true
+      },
+      "1 quarter": {
+        "formula": 0.08052309878377517,
+        "monte_carlo": 0.08019,
+        "sim_valid": true
+      }
+    },
+    "server": {
+      "1 day": {
+        "formula": 0.0001537434115517211,
+        "monte_carlo": 0.00019,
+        "sim_valid": true
+      },
+      "1 week": {
+        "formula": 0.0010757076302653212,
+        "monte_carlo": 0.00101,
+        "sim_valid": true
+      },
+      "1 month": {
+        "formula": 0.004602034974530156,
+        "monte_carlo": 0.00445,
+        "sim_valid": true
+      },
+      "1 quarter": {
+        "formula": 0.01389429677827203,
+        "monte_carlo": 0.01357,
+        "sim_valid": true
+      }
+    }
+  },
+  "campaign_catch": {
+    "1": {
+      "facility": {
+        "n_events": 1,
+        "formula": 0.032342147481605577,
+        "monte_carlo": "0.0348"
+      },
+      "rack": {
+        "n_events": 1,
+        "formula": 0.027296471547625045,
+        "monte_carlo": "0.0254"
+      },
+      "server": {
+        "n_events": 1,
+        "formula": 0.004602034974530156,
+        "monte_carlo": "0.0049"
+      }
+    },
+    "6": {
+      "facility": {
+        "n_events": 1,
+        "formula": 0.032342147481605577,
+        "monte_carlo": "0.0309"
+      },
+      "rack": {
+        "n_events": 1,
+        "formula": 0.027296471547625045,
+        "monte_carlo": "0.0296"
+      },
+      "server": {
+        "n_events": 6,
+        "formula": 0.027296471547624934,
+        "monte_carlo": "0.0272"
+      }
+    },
+    "60": {
+      "facility": {
+        "n_events": 1,
+        "formula": 0.032342147481605577,
+        "monte_carlo": "0.0329"
+      },
+      "rack": {
+        "n_events": 10,
+        "formula": 0.24176310539880563,
+        "monte_carlo": "0.2447"
+      },
+      "server": {
+        "n_events": 60,
+        "formula": 0.24176310539880463,
+        "monte_carlo": "-"
+      }
+    }
+  },
+  "whole_facility_campaign": {
+    "facility": {
+      "n_events": 1,
+      "formula": 0.032342147481605577
+    },
+    "rack": {
+      "n_events": 119,
+      "formula": 0.9628739743034035
+    },
+    "server": {
+      "n_events": 713,
+      "formula": 0.9627023291175333
+    }
+  },
+  "time_to_discovery": {
+    "facility": {
+      "manual(K=100)": {
+        "formula": 2.5,
+        "monte_carlo": 2.499506031063238
+      },
+      "automated(K=1000)": {
+        "formula": 2.5,
+        "monte_carlo": 2.5102441818020997
+      }
+    },
+    "rack": {
+      "manual(K=100)": {
+        "formula": 2.9697916666666666,
+        "monte_carlo": 2.974610309145494
+      },
+      "automated(K=1000)": {
+        "formula": 2.5,
+        "monte_carlo": 2.5055919041218377
+      }
+    },
+    "server": {
+      "manual(K=100)": {
+        "formula": 17.81875,
+        "monte_carlo": 17.77373925487315
+      },
+      "automated(K=1000)": {
+        "formula": 2.5,
+        "monte_carlo": 2.494510250642636
+      }
+    }
+  }
+}

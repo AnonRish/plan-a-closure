@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "covert-timing-warden"
+version = "0.1.0"
+description = "Timing covert-channel toolkit for tapped inference clusters: conformal detectors, Blahut-Arimoto capacity bounds, and shielding-plus-noise mitigation analysis with explicit channel models."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "AnonRish" }]
+dependencies = ["numpy>=1.24", "scipy>=1.10"]
+
+[project.optional-dependencies]
+test = ["pytest>=7", "hypothesis>=6", "mpmath>=1.3"]
+
+[project.scripts]
+covert-timing-warden = "covert_timing_warden.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

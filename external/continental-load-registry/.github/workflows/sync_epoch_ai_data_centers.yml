@@ -1,0 +1,179 @@
+name: Sync Epoch AI Data Centers
+
+# Keeps the secondary Epoch AI evidence layer current. Epoch publishes its
+# hosted CSVs daily; this workflow also runs whenever the main registry changes
+# because the crosswalk is computed against index.html's current REGISTRY_DATA.
+on:
+  schedule:
+    - cron: "30 7 * * *"
+  push:
+    paths:
+      - "index.html"
+      - "track3.html"
+      - "sync_epoch_ai_data_centers.py"
+      - "build_epoch_grid_crosswalk.py"
+      - "build_epoch_queue_gap_analysis.py"
+      - "data/external/epoch_ai/match_overrides.json"
+      - "data/external/epoch_ai/queue_source_universe.json"
+      - "data/track3_evidence_schema.json"
+      - "data/track3_source_stack.json"
+      - "data/external/epoch_ai/site_level_connection_evidence.json"
+      - "build_track3_evidence.py"
+      - "sync_track3_external_sources.py"
+      - "validate_track3_ledger.py"
+      - "module1_physical_radar.py"
+      - ".github/workflows/sync_epoch_ai_data_centers.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: track3-canonical-writers-main
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Self-test sync code
+        run: python sync_epoch_ai_data_centers.py --selftest
+
+      - name: Python syntax check for Track 3 pipeline
+        run: |
+          python -m py_compile build_track3_evidence.py validate_track3_ledger.py sync_track3_external_sources.py module1_physical_radar.py
+
+
+      - name: Download and normalize Epoch AI datasets
+        run: python sync_epoch_ai_data_centers.py --sync
+
+      - name: Build grid and queue crosswalk
+        run: python build_epoch_grid_crosswalk.py
+
+      - name: Build 93-site queue gap analysis
+        run: python build_epoch_queue_gap_analysis.py
+
+      - name: Sync global Track 3 compute sources
+        run: |
+          python sync_track3_external_sources.py --selftest
+          python sync_track3_external_sources.py
+
+      - name: Build Track 3 evidence artifacts
+        run: python build_track3_evidence.py
+
+      - name: Refresh Module 1 audit summary
+        run: python module1_physical_radar.py --audit
+
+      - name: Validate Track 3 evidence artifacts
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("data/track3")
+          summary = json.loads((root/"summary.json").read_text(encoding="utf-8"))
+          status = json.loads((root/"site_status.json").read_text(encoding="utf-8"))
+          evidence = json.loads((root/"evidence_records.json").read_text(encoding="utf-8"))
+          queue = json.loads((root/"research_queue.json").read_text(encoding="utf-8"))
+          external = json.loads((root/"external_source_snapshots.json").read_text(encoding="utf-8"))
+          assert len(external["records"]) == 14
+          assert summary["epoch_site_count"] == 93
+          assert len(status["records"]) == 93
+          assert evidence["record_count"] == len(evidence["records"])
+          assert queue["count"] == len(queue["records"])
+          assert summary["pending_grid_connection_research_count"] == queue["count"]
+          observation = json.loads((root/"observation_queue.json").read_text(encoding="utf-8"))
+          assert observation["task_count"] == len(observation["tasks"])
+          assert summary["observation_task_count"] == observation["task_count"]
+          assert summary["observation_task_counts_by_domain"] == observation["task_counts_by_domain"]
+          assert summary["observation_task_counts_by_priority"] == observation["task_counts_by_priority"]
+          print("verified: Track 3 artifacts")
+          print("site evidence:", summary["site_level_evidence_site_count"])
+          print("site queue IDs:", summary["site_specific_queue_id_count"])
+          print("pending grid research:", summary["pending_grid_connection_research_count"])
+          PY
+
+      - name: Run canonical Track 3 ledger validator
+        run: python validate_track3_ledger.py
+
+      - name: Validate inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          for html_name, stem in [("index.html","index"),("track3.html","track3")]:
+              html = Path(html_name).read_text(encoding="utf-8")
+              scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", html, flags=re.S | re.I)
+              for i, script in enumerate(scripts, 1):
+                  Path(f"/tmp/{stem}-script-{i}.js").write_text(script, encoding="utf-8")
+              print(f"{html_name}: extracted {len(scripts)} inline script blocks")
+          PY
+          for f in /tmp/index-script-*.js /tmp/track3-script-*.js; do
+            node --check "$f"
+          done
+
+
+      - name: Verify the complete Epoch dataset was imported
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+          root = Path("data/external/epoch_ai")
+          reg = json.loads((root/"registry.json").read_text(encoding="utf-8"))
+          assert reg["record_count"] == 93, reg["record_count"]
+          assert len(reg["records"]) == 93
+          with (root/"data_centers.csv").open("r", encoding="utf-8-sig", newline="") as f:
+              assert sum(1 for _ in csv.DictReader(f)) == 93
+          assert (root/"data_center_timelines.csv").stat().st_size > 0
+          assert (root/"data_centers_chip_quantities.csv").stat().st_size > 0
+          cw = list(csv.DictReader((root/"crosswalk.csv").open("r", encoding="utf-8", newline="")))
+          assert len(cw) == 93
+          grid = reg.get("grid_crosswalk_summary", {})
+          assert grid.get("all_sites_have_queue_or_connection_jurisdiction") is True
+          gap = list(csv.DictReader((root/"queue_gap_analysis.csv").open("r", encoding="utf-8", newline="")))
+          assert len(gap) == 93
+          assert all(row.get("epoch_id") for row in cw)
+          ev = json.loads((root/"site_level_connection_evidence.json").read_text(encoding="utf-8"))
+          assert ev["record_count"] == 93
+          assert len(ev["records"]) == 93
+          assert {r["epoch_id"] for r in ev["records"]} == {r["epoch_id"] for r in reg["records"]}
+          assert ev["summary"]["total"] == 93
+          sources = json.loads((root/"queue_source_universe.json").read_text(encoding="utf-8"))
+          assert len(sources["direct_queue_and_connection_sources"]) >= 20
+          assert len(sources["cross_cutting_public_sources"]) >= 10
+          print("verified: 93 Epoch AI data-center records + queue crosswalk + gap analysis")
+          print("matched:", reg["source"]["raw_sha256"]["data_centers.csv"])
+          PY
+
+      - name: Commit Epoch snapshot and crosswalk
+        run: |
+          git add data/external/epoch_ai data/track3 data/module1_radar_summary.json data/website_completeness_audit.json build_epoch_grid_crosswalk.py build_epoch_queue_gap_analysis.py sync_epoch_ai_data_centers.py build_track3_evidence.py validate_track3_ledger.py module1_physical_radar.py data/track3_evidence_schema.json data/track3_source_stack.json
+          if git diff --cached --quiet; then
+            echo "Epoch data unchanged; nothing to commit."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Sync Epoch AI data-center evidence"
+            # Generated artifacts are authoritative for this job. Merge any
+            # newer main commits while keeping this job's generated files on
+            # conflicts, then retry the push if another generator advances main.
+            for attempt in 1 2 3; do
+              git fetch origin main
+              git merge -X ours origin/main --no-edit
+              if git push origin HEAD:main; then
+                break
+              fi
+              if [ "$attempt" -eq 3 ]; then exit 1; fi
+            done
+          fi
+
+# CI invariant: changes to this workflow must execute the full Track 3 sync against main.

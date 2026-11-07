@@ -1,0 +1,81 @@
+# Final SPP parser trigger: use max published Capacity / Summer / Winter MW.
+# Triggered after parser verification on 2026-09-26.
+# Manual refresh trigger prepared 2026-09-26; scheduled and workflow_dispatch refreshes remain enabled.
+name: Sync SPP active public queue
+
+on:
+  schedule:
+    - cron: "40 8 * * *"
+  push:
+    paths:
+      - "sync_spp_public_queue.py"
+      - ".github/workflows/sync_spp_public_queue.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: track3-canonical-writers-main
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pandas openpyxl requests
+      - name: Self-test
+        run: python sync_spp_public_queue.py --selftest
+      - name: Download and normalize
+        run: python sync_spp_public_queue.py --output-dir data
+      - name: Validate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          q=Path("data/spp_public_queue.json")
+          o=json.loads(q.read_text(encoding="utf-8"))
+          assert o["record_count"] == len(o["records"]) > 0
+          s=json.loads(Path("data/spp_public_queue_summary.json").read_text(encoding="utf-8"))
+          assert s["record_count"] == o["record_count"]
+          assert Path("data/spp_public_queue.csv").stat().st_size > 0
+          print("PASS: SPP active public queue", o["record_count"])
+          PY
+      - name: Update queue layer status
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          summary=json.loads(Path("data/spp_public_queue_summary.json").read_text(encoding="utf-8"))
+          path=Path("data/queue_layer_status.json")
+          obj=json.loads(path.read_text(encoding="utf-8"))
+          feed=next(f for f in obj["feeds"] if f["id"]=="SPP")
+          feed["snapshot_present"]=True
+          feed["last_capture"]=summary["captured_at"]
+          feed["record_count"]=summary["record_count"]
+          feed["records_ge_100mw"]=summary["records_ge_100mw"]
+          obj["generated_on"]=summary["captured_at"][:10]
+          path.write_text(json.dumps(obj,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+          PY
+
+      - name: Refresh derived counts in public artifacts
+        run: python refresh_derived_counts.py
+      - name: Commit refreshed data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/spp_public_queue.json data/spp_public_queue.csv data/spp_public_queue_summary.json
+          git add data/queue_layer_status.json data/map_layer_manifest.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Automated SPP active public queue sync: $(date -u +%Y-%m-%d)"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
+# Capacity schema corrected on 2026-09-26.

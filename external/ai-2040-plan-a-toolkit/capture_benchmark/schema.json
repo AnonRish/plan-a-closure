@@ -1,0 +1,26 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "type":"object",
+  "required":["schema_version","benchmark","config","expected_frames","observed_frames","hardware_observation","line_rate_projections"],
+  "properties":{
+    "schema_version":{"type":"integer"},
+    "benchmark":{"const":"software_capture_replay"},
+    "config":{"type":"object"},
+    "expected_frames":{"type":"integer","minimum":1},
+    "observed_frames":{"type":"integer","minimum":0},
+    "observed_noncompliant":{"type":"integer","minimum":0},
+    "processing_seconds":{"type":"number","minimum":0},
+    "frames_per_second":{"type":"number","minimum":0},
+    "expected_dropped_frames":{"type":"integer","minimum":0},
+    "observed_drop_rate":{"type":"number","minimum":0,"maximum":1},
+    "hardware_observation":{"const":false},
+    "line_rate_projections":{
+      "type":"array","minItems":4,
+      "items":{"type":"object","required":["line_rate_gbps","measured","theoretical_frames_per_second"],
+               "properties":{"line_rate_gbps":{"type":"number","exclusiveMinimum":0},
+                            "measured":{"const":false},
+                            "theoretical_frames_per_second":{"type":"number","exclusiveMinimum":0}}}
+    }
+  },
+  "additionalProperties":true
+}

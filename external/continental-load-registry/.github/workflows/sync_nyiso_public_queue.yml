@@ -1,0 +1,68 @@
+# Manual retrigger: 2026-09-26T21:00 ET — rebuild complete public queue snapshot if source is available.
+# Trigger after NYISO retrieval hardening.
+# Triggered after parser verification on 2026-09-26.
+# Manual refresh trigger prepared 2026-09-26; scheduled and workflow_dispatch refreshes remain enabled.
+name: Sync NYISO complete public queue
+
+on:
+  schedule:
+    - cron: "40 8 * * *"
+  push:
+    paths:
+      - "sync_nyiso_public_queue.py"
+      - ".github/workflows/sync_nyiso_public_queue.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: track3-canonical-writers-main
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pandas openpyxl requests
+      - name: Self-test
+        run: python sync_nyiso_public_queue.py --selftest
+      - name: Download and normalize
+        run: python sync_nyiso_public_queue.py --output-dir data
+      - name: Validate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          status=Path("data/nyiso_public_queue_status.json")
+          q=Path("data/nyiso_public_queue.json")
+          if status.exists() and not q.exists():
+              o=json.loads(status.read_text(encoding="utf-8"))
+              assert o["status"] == "SOURCE_UNAVAILABLE_AT_CAPTURE"
+              assert o["existing_snapshot_present"] is False
+              print("PASS: NYISO source status recorded; no queue rows fabricated.")
+          else:
+              o=json.loads(q.read_text(encoding="utf-8"))
+              assert o["record_count"] == len(o["records"]) > 0
+              s=json.loads(Path("data/nyiso_public_queue_summary.json").read_text(encoding="utf-8"))
+              assert s["record_count"] == o["record_count"]
+              assert Path("data/nyiso_public_queue.csv").stat().st_size > 0
+              print("PASS: NYISO complete public queue", o["record_count"])
+          PY
+      - name: Commit refreshed data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Automated NYISO public queue/source-status sync: $(date -u +%Y-%m-%d)"
+          git fetch origin main
+          git rebase --autostash origin/main
+          git push origin HEAD:main

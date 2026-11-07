@@ -1,0 +1,24 @@
+[
+  {
+    "label": "Arbiter (as built -- self-audit)",
+    "n": 4,
+    "k": 4,
+    "min_attack_size": 1,
+    "min_attack_set": [
+      "client_js_integrity"
+    ],
+    "verdict": "violation",
+    "report": "\n=== Arbiter (as built -- self-audit) ===\n4 trust roots, claimed threshold k=4 (\"secure unless >= 4 of 4 are independently compromised\")\nResource fan-out (how many trust roots each resource touches):\n  client_js_integrity                  4  <-- reaches the claimed threshold alone\n  sha256_impl                          2\n  anthropic_api                        1\n  authority_private_key                1\n  browser_storage_backend              1\n  physical_audit_ground_truth          1\n  web_crypto_impl                      1\n\nVIOLATION: compromising 1 resource(s) -- ['client_js_integrity'] -- takes out >= 4 of 4 trust roots.\nThe real number of independent things an adversary must break is 1, not the claimed 4."
+  },
+  {
+    "label": "AI-2040-style architecture (reconstructed from public docs)",
+    "n": 5,
+    "k": 3,
+    "min_attack_size": 1,
+    "min_attack_set": [
+      "crypto_library"
+    ],
+    "verdict": "violation",
+    "report": "\n=== AI-2040-style architecture (reconstructed from public docs) ===\n5 trust roots, claimed threshold k=3 (\"secure unless >= 3 of 5 are independently compromised\")\nResource fan-out (how many trust roots each resource touches):\n  crypto_library                       3  <-- reaches the claimed threshold alone\n  network_protocol_standard            2\n  personnel_vetting_process            2\n  physical_installation_audit          2\n  tee_vendor_root_of_trust             2\n  tap_vendor_firmware                  1\n\nVIOLATION: compromising 1 resource(s) -- ['crypto_library'] -- takes out >= 3 of 5 trust roots.\nThe real number of independent things an adversary must break is 1, not the claimed 3."
+  }
+]

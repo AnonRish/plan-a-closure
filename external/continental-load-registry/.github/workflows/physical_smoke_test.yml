@@ -1,0 +1,73 @@
+name: Physical verification smoke test
+
+on:
+  push:
+    paths:
+      - "acquire_physical_verification.py"
+      - ".github/workflows/physical_smoke_test.yml"
+      - "data/external/epoch_ai/registry.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install acquisition dependencies
+        run: python -m pip install --upgrade pip && pip install numpy requests rasterio planetary-computer pystac-client
+      - name: Probe one real Epoch site
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import acquire_physical_verification as p
+
+          reg = json.loads(Path("data/external/epoch_ai/registry.json").read_text(encoding="utf-8"))
+          site = next(x for x in reg["records"] if x["normalized"].get("name") == "Google Lincoln")
+          address = site["normalized"].get("address")
+          region = site["normalized"].get("region_inferred_from_address")
+          country = site["normalized"].get("country")
+          print("site:", site["normalized"].get("name"))
+          print("address:", address)
+          coord = p.geocode(address, site["normalized"].get("name"), region, country)
+          print("coord:", json.dumps(coord, sort_keys=True))
+          if not coord:
+              raise SystemExit("geocoding failed")
+
+          bbox = p.bbox_for_site(coord["lat"], coord["lon"])
+          print("bbox:", bbox)
+          for modality, (kind, collection) in p.COLLECTIONS.items():
+              print("\nMODALITY", modality, "COLLECTION", collection)
+              try:
+                  items = p.search_stac(kind, collection, bbox, limit=5)
+                  print("items:", len(items))
+                  if not items:
+                      print("NO ITEMS")
+                      continue
+                  item = items[0]
+                  print("scene:", item.get("id"))
+                  print("datetime:", item.get("properties", {}).get("datetime"))
+                  print("asset keys:", sorted(item.get("assets", {}).keys()))
+                  if modality == "optical":
+                      metrics = p.scene_metrics_optical(item, coord["lat"], coord["lon"])
+                  elif modality == "tir":
+                      metrics = p.scene_metrics_tir(item, coord["lat"], coord["lon"])
+                  else:
+                      metrics = p.scene_metrics_sar(item, coord["lat"], coord["lon"])
+                  print("METRICS_OK:", json.dumps(metrics, sort_keys=True))
+              except Exception as exc:
+                  print("ERROR:", type(exc).__name__, str(exc))
+                  import traceback
+                  traceback.print_exc()
+                  raise
+          print("\nSMOKE TEST COMPLETE")
+          PY

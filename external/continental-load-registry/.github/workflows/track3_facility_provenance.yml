@@ -1,0 +1,52 @@
+name: Track 3 facility provenance
+on:
+  # The push and schedule triggers were removed: build_facility_provenance.py now runs inside
+  # track3_automated_pipeline.yml, so this workflow only duplicated that job.
+  workflow_dispatch:
+permissions: {contents: write}
+concurrency:
+  group: track3-canonical-writers-main
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python build_facility_provenance.py
+      - name: Validate
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('data/track3/facility_provenance.json'))
+          assert len(d['facilities']) == 93
+          assert len({x['facility_id'] for x in d['facilities']}) == 93
+          for x in d['facilities']:
+              assert x['field_provenance']
+              assert x['canonical_source']['dataset_url']
+              assert x['verification']
+              assert x['immutable_snapshot']
+              assert x['field_provenance']
+          assert d.get('source_artifacts')
+          assert len(d.get('checklist',[])) == 15
+          print('validated 93 facility records and 15 provenance controls')
+          PY
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/track3/facility_provenance.json data/track3/facility_provenance_records.csv data/track3/provenance_snapshots/
+          if git diff --cached --quiet; then
+            echo "No facility provenance changes."
+            exit 0
+          fi
+          git commit -m "Refresh Track 3 facility provenance"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git merge -X ours origin/main --no-edit
+            if git push origin HEAD:main; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+          done

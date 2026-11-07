@@ -1,0 +1,110 @@
+<svg viewBox="0 0 760 640" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-labelledby="title desc">
+  <title id="title">AI 2040 Verification — system topology</title>
+  <desc id="desc">Storage bank feeds inference units over a separate path. Inference units send frontend traffic through a passive optical splitter with no logic, firmware, or state. A mirrored copy crosses a trust boundary into a verifier-controlled recomputation server running Token-DiFR / Activation-DiFR against a verifier-issued seed, logged to a hash-chained record.</desc>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #1c2128;
+      --muted: #57606a;
+      --line: #8b949e;
+      --box-stroke: #1c2128;
+      --prover-fill: #fff2df;
+      --prover-zone: #fffaf2;
+      --verifier-fill: #dceefb;
+      --verifier-zone: #f2f9ff;
+      --accent: #9a6700;
+      --accent2: #0550ae;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --fg: #e6edf3;
+        --muted: #9198a1;
+        --line: #6e7681;
+        --box-stroke: #c9d1d9;
+        --prover-fill: #3a2c14;
+        --prover-zone: #1c1710;
+        --verifier-fill: #0f2c46;
+        --verifier-zone: #0b1a26;
+        --accent: #e3b341;
+        --accent2: #79c0ff;
+      }
+    }
+    rect.bg { fill: var(--bg); }
+    rect.zone-prover { fill: var(--prover-zone); }
+    rect.zone-verifier { fill: var(--verifier-zone); }
+    rect.box { fill: var(--bg); stroke: var(--box-stroke); stroke-width: 1.6; }
+    rect.box-prover { fill: var(--prover-fill); stroke: var(--box-stroke); stroke-width: 1.6; }
+    rect.box-verifier { fill: var(--verifier-fill); stroke: var(--box-stroke); stroke-width: 1.6; }
+    text { fill: var(--fg); }
+    text.title { font-weight: 700; font-size: 16px; }
+    text.sub { fill: var(--muted); font-size: 12.5px; }
+    text.label { fill: var(--muted); font-size: 12px; font-style: italic; }
+    text.zone { fill: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+    text.boundary { fill: var(--fg); font-size: 12px; font-weight: 700; }
+    line.flow { stroke: var(--line); stroke-width: 1.6; marker-end: url(#arrow); }
+    line.mirror { stroke: var(--accent2); stroke-width: 1.6; stroke-dasharray: 5 4; marker-end: url(#arrow2); }
+    line.boundary { stroke: var(--fg); stroke-width: 1.4; stroke-dasharray: 2 5; }
+    path.arrowhead { fill: var(--line); }
+    path.arrowhead2 { fill: var(--accent2); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="arrowhead" d="M0,0 L10,5 L0,10 z"/>
+    </marker>
+    <marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="arrowhead2" d="M0,0 L10,5 L0,10 z"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="760" height="640"/>
+
+  <!-- zone tints -->
+  <rect class="zone-prover" x="0" y="0" width="760" height="470"/>
+  <rect class="zone-verifier" x="0" y="470" width="760" height="170"/>
+
+  <!-- Storage Bank -->
+  <rect class="box-prover" x="280" y="24" width="200" height="54" rx="8"/>
+  <text class="title" x="380" y="47" text-anchor="middle">Storage Bank</text>
+  <text class="sub" x="380" y="66" text-anchor="middle">model weights</text>
+
+  <line class="flow" x1="380" y1="78" x2="380" y2="120"/>
+  <text class="label" x="392" y="102">§19 — separate path, out of scope here</text>
+
+  <!-- Inference Units -->
+  <rect class="box-prover" x="190" y="120" width="380" height="112" rx="8"/>
+  <text class="title" x="380" y="145" text-anchor="middle">Inference Units (§1)</text>
+  <text class="sub" x="380" y="166" text-anchor="middle">GPU / accelerator racks</text>
+  <text class="sub" x="380" y="184" text-anchor="middle">minimal east-west network</text>
+  <text class="sub" x="380" y="202" text-anchor="middle">periodic memory wipe — “forced memorization” (§15)</text>
+
+  <line class="flow" x1="380" y1="232" x2="380" y2="280"/>
+  <text class="label" x="392" y="260">frontend (“north-south”) traffic</text>
+  <text class="label" x="392" y="274">client requests ↔ model outputs</text>
+
+  <!-- Passive Optical Splitter -->
+  <rect class="box-prover" x="220" y="280" width="320" height="64" rx="8"/>
+  <text class="title" x="380" y="306" text-anchor="middle">Passive Optical Splitter (§2)</text>
+  <text class="sub" x="380" y="326" text-anchor="middle">no logic · no firmware · no state</text>
+
+  <!-- zone labels -->
+  <text class="zone" x="60" y="405">PROVER-CONTROLLED</text>
+  <text class="zone" x="700" y="405" text-anchor="end">VERIFIER-CONTROLLED</text>
+
+  <!-- trust boundary, drawn BEFORE the mirror arrow so the arrow renders on top at the crossing, not clipped by it -->
+  <line class="boundary" x1="20" y1="470" x2="740" y2="470"/>
+  <text class="label" x="600" y="464" text-anchor="middle">trust boundary</text>
+
+  <!-- mirrored copy, crossing the boundary -->
+  <line class="mirror" x1="380" y1="344" x2="380" y2="500"/>
+  <text class="label" x="392" y="428" fill="var(--accent2)">mirrored copy —</text>
+  <text class="label" x="392" y="442" fill="var(--accent2)">one direction only</text>
+
+  <!-- Recomputation Server -->
+  <rect class="box-verifier" x="190" y="500" width="380" height="118" rx="8"/>
+  <text class="title" x="380" y="526" text-anchor="middle">Recomputation Server (§5)</text>
+  <text class="sub" x="380" y="548" text-anchor="middle">verifier-issued decode seed</text>
+  <text class="sub" x="380" y="566" text-anchor="middle">Token-DiFR / Activation-DiFR</text>
+  <text class="sub" x="380" y="584" text-anchor="middle">per-model calibrated τ (§11)</text>
+  <text class="sub" x="380" y="602" text-anchor="middle">hash-chained result log (§21b)</text>
+</svg>

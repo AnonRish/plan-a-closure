@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 2040 Plan A · Track 3 Research Bridge</title>
+<meta name="description" content="Independent open-source research bridge documenting how the Continental Large-Load Interconnection & Telemetry Registry relates to public AI 2040 Plan A / Track 3 concepts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#16233A;--soft:#4E5D72;--faint:#8493A6;--paper:#EEF2ED;--panel:#FBFCFA;--line:#D7DEDA;--strong:#B7C2BC;--amber:#A85E0A;--amber-soft:#F3E3C9;--teal:#33604F;--teal-soft:#DBE9E2}
+@media(prefers-color-scheme:dark){:root{--ink:#E9EEF3;--soft:#AEBBCB;--faint:#7C8AA0;--paper:#0F1620;--panel:#161F2B;--line:#293445;--strong:#3A4759;--amber:#E3A458;--amber-soft:#3A2E1B;--teal:#7FB69E;--teal-soft:#17332A}}
+*{box-sizing:border-box}html,body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif}
+a{color:var(--ink)}.wrap{max-width:1180px;margin:auto;padding:0 18px}.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}.soft{color:var(--soft)}.faint{color:var(--faint)}
+.hero{padding:42px 0 26px;border-bottom:1px solid var(--line)}h1{font-size:36px;line-height:1.06;margin:12px 0}h2{font-size:21px;margin:0 0 6px}.lead{font-size:15px;line-height:1.6;max-width:920px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}.btn{display:inline-flex;padding:8px 11px;border:1px solid var(--strong);border-radius:8px;text-decoration:none;font-size:12px}.btn:hover{background:var(--amber-soft)}
+.section{margin:20px 0}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:17px}.notice{background:var(--amber-soft);border:1px solid var(--strong);border-radius:10px;padding:13px}.good{background:var(--teal-soft);border:1px solid var(--strong);border-radius:10px;padding:13px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.card{border:1px solid var(--line);border-radius:10px;padding:13px;background:var(--panel)}.num{font-size:24px}.label{font-size:11px;color:var(--faint);line-height:1.4;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:11px}th,td{padding:9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--soft);font-weight:500;border-bottom-color:var(--strong)}
+.badge{display:inline-block;padding:3px 7px;border:1px solid var(--line);border-radius:999px;font:10px 'IBM Plex Mono',monospace}.partial{background:var(--amber-soft);color:var(--amber)}.snap{background:var(--teal-soft);color:var(--teal)}
+pre{white-space:pre-wrap;background:var(--paper);border:1px solid var(--line);padding:12px;border-radius:9px;font-size:11px;overflow:auto}
+footer{border-top:1px solid var(--line);margin-top:28px;padding:22px 0 40px}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+<div class="tools">
+<a class="btn" href="index.html">← Main registry</a>
+<a class="btn" href="track3.html">Track 3 Observatory</a>
+<a class="btn" href="https://github.com/AnonRish/continental-load-registry/blob/main/PLAN_A.md">Plan A contribution notes</a>
+<a class="btn" href="https://github.com/AnonRish/continental-load-registry/blob/main/CONTRIBUTING.md">Contribution protocol</a>
+<a class="btn" href="https://github.com/AnonRish/continental-load-registry/blob/main/CITATION.cff">Citation</a>
+<a class="btn" href="data/track3/ai2040_plan_a_traceability.json">AI 2040 traceability JSON</a>
+<a class="btn" href="data/track3/plan_a_audit_schema.json">Audit-chain schema</a>
+<a class="btn" href="https://github.com/AnonRish/continental-load-registry/blob/main/CI_AUDIT_2026-09-26.md">CI audit</a>
+<a class="btn" href="https://github.com/AnonRish/continental-load-registry/blob/main/CITATION.md">Citation guide</a>
+</div>
+<div class="mono faint" style="font-size:10px;margin-top:18px;text-transform:uppercase;letter-spacing:.08em">Independent research bridge · revised 2026-09-27</div>
+<h1>AI 2040 Plan A · Track 3 Research Bridge</h1>
+<div class="notice" style="margin-top:12px"><strong>Reviewer reading:</strong> The North American registry is an independent public-evidence accounting/observability layer. It may contribute evidence to broader compute-accounting and undeclared-compute research; the broader Track 3 material is not a claim that this repository implements a completed bilateral verification regime. Current physical processing is real but partial: 631 derived remote-sensing observations cover 92 of the 93 Epoch reference sites; separately, a four-case ambiguous-load closure pilot provides a small empirical demonstration of end-to-end public-evidence adjudication. Facility-wide verification remains <b>INCONCLUSIVE</b> until the defined end-to-end gates are satisfied.</div>
+
+<p class="lead soft">A public index for using this repository as an independent, reproducible contribution to the AI 2040 Plan A discussion around Track 3: verifying the absence of secret compute.</p>
+</div></header>
+<main class="wrap">
+<section class="section panel" style="padding:16px"><div class="good"><strong>Highest-value empirical result:</strong> the project is now closing ambiguous public-load records rather than only widening the reference universe. <a href="ambiguous-case-studies.html">Three-case closure pilot →</a><span class="soft"> · 2 bounded classifications · 1 inconclusive after search · 1 bounded data-center closure · 18 derived physical observations</span></div></section>
+<section class="section notice">
+<strong>Scope and attribution</strong>
+<p class="soft" style="margin-bottom:0">This repository is not an AI Futures Project publication, does not speak for AI 2040, and does not certify a treaty or verification regime. It documents the relationship between public AI 2040 concepts and concrete open-source evidence, data-engineering, and research tasks so other researchers can reproduce, challenge, or extend the work.</p>
+</section><section class="panel" style="margin-top:14px">
+<h2>Contribute by role</h2>
+<table><tr><th>Role</th><th>Concrete entry point</th></tr>
+<tr><td>Grid / power systems</td><td>Add a connection region, reconcile utility/service records, or work the 83 unlocated MISO requests.</td></tr>
+<tr><td>Remote sensing / geospatial</td><td>Resolve the one remaining physical target, improve scene selection, or validate thermal/SAR/optical and footprint linkage.</td>
+<tr><td colspan="2"><strong>Current unresolved physical target:</strong> OpenAI Stargate UAE has an attributed September 11, 2026 Reuters area-level lead near Al Dhafra Air Base, but the retained evidence still lacks a canonical facility parcel or coordinate; the repository therefore keeps the site unresolved rather than fabricating a target.</td></tr></tr>
+<tr><td>Data engineering / provenance</td><td>Strengthen manifests, SHA-256/byte checks, schemas, generated-artifact validation, and refresh reproducibility.</td></tr>
+<tr><td>Research / policy</td><td>Close site-specific evidence tasks and test the Phase 1 versus Track 3 boundary without collapsing uncertainty.</td></tr>
+<tr><td>Verification / security</td><td>Audit claim gates and connect public evidence to independently testable verification mechanisms.</td></tr>
+</table>
+<div class="tools" style="margin-top:10px"><a class="btn" href="research.html">Research Operations Console</a><a class="btn" href="ambiguous-case-studies.html">Ambiguous closure pilot</a><a class="btn" href="TRACK3_ONE_PAGE_SUMMARY.md">One-page technical summary</a><a class="btn" href="CONTRIBUTING.md">Contribution guide</a></div>
+</section>
+
+<section class="section panel">
+<h2>Primary AI 2040 references</h2>
+<div class="tools" style="margin-top:10px">
+<a class="btn" href="https://ai-2040.com/supplements/verification-plan/get-involved">Track 3 · Verification Plan</a>
+<a class="btn" href="https://ai-2040.com/print/covert-ai-projects">Plan A · Covert AI Projects</a>
+<a class="btn" href="https://ai-2040.com/print/scenario?book=1&plan=A">Plan A scenario</a>
+</div>
+<p class="soft" style="margin-bottom:0">AI 2040's public Track 3 page identifies the goal as verifying the absence of secret compute. The Covert AI Projects supplement describes accounting for pre-deal compute, tracing sales/resales to physical end use, and locating remaining unaccounted compute.</p>
+</section>
+<div class="cards" style="margin-top:10px">
+  <div class="card"><div class="num mono">0</div><div class="label">Open site-specific grid research rows</div></div>
+  <div class="card"><div class="num mono">11</div><div class="label">Documented no-public-record outcomes</div></div>
+  <div class="card"><div class="num mono">1,218</div><div class="label">Canonical Track 3 evidence records</div></div>
+  <div class="card"><div class="num mono">93</div><div class="label">Remote-sensing acquisition targets</div></div>
+  <div class="card"><div class="num mono">1,395</div><div class="label">Track 3 domain cells</div></div><div class="card"><div class="num mono">214</div><div class="label">Open publisher research tasks</div></div><div class="card"><div class="num mono">24</div><div class="label">Follow-on observation tasks</div></div>
+</div>
+<section class="section"><div id="cards" class="cards"></div></section>
+<section class="section panel">
+<h2>Observation-layer scope</h2>
+<p class="soft">The interconnection core is North American public-evidence coverage. Its strongest direct contribution is public accounting and observability of large compute/load infrastructure and associated entities; it is not the bilateral U.S.–China verification layer of a mature Track 3 regime. The public-source boundary also means a genuinely covert project could avoid these signals. The defensible capability claim is to <strong>raise the cost of hiding and map the ambiguous middle</strong>, not to claim discovery of every secret facility.</p>
+<div class="tools"><a class="btn" href="epoch-queue-vs-satellite.html">Queue vs. satellite / permit blind-spot note</a></div>
+</section>
+<section class="section panel">
+<h2>Plan A → repository contribution map</h2>
+<p class="soft">This table is generated from <code>data/track3/ai2040_plan_a_mapping.json</code>. Status describes this repository's current implementation state, not the truth of the underlying world.</p>
+<div style="overflow:auto;margin-top:12px"><table><thead><tr><th>AI 2040 element</th><th>Repository evidence / artifact</th><th>Status</th><th>Next contribution</th></tr></thead><tbody id="map"></tbody></table></div>
+</section>
+<section class="section panel">
+<h2>Large-load verification universe</h2>
+<p class="soft">The contribution now includes a public North American large-load universe, a 93-site Epoch AI connection-research layer, a 93-site public project-enrichment bridge, a complete 93-site remote-sensing target ledger, and a source-backed transformer-event ledger. Project records are deliberately separated from aggregate evidence so overlapping utility, regulator, queue, and planning populations are not double-counted.</p>
+<div class="tools">
+<a class="btn" href="data/market_universe_manifest.json">Market universe manifest</a>
+<a class="btn" href="data/large_load_scope.json">Scope accounting</a><a class="btn" href="data/public_data_catalog.json">Complete data catalog</a>
+<a class="btn" href="data/project_level_extractions.json">271 project records</a>
+<a class="btn" href="data/project_level_map.json">Map records</a>
+<a class="btn" href="data/epoch_connection_research_targets.json">93 Epoch targets</a><a class="btn" href="data/track3/public_site_dossier.json">Complete 93-site dossier</a><a class="btn" href="data/external/intel_accelerator_enrichment.json">93-site public enrichment</a><a class="btn" href="data/track3/remote_sensing_observation_targets.json">93-site remote sensing targets</a><a class="btn" href="data/track3/transformer_supply_chain_events.json">Transformer events</a>
+<a class="btn" href="data/track3/evidence_records.json">1,218 Track 3 evidence records</a>
+<a class="btn" href="data/supplemental_large_load_evidence.json">61 supplemental evidence units</a>
+</div>
+</section>
+<section class="section panel">
+<h2>Machine-readable research layer</h2>
+<p class="soft">For researchers and tooling, the repository exposes both a Plan A traceability table and an audit-chain schema. These separate AI 2040's proposed verification concepts from the evidence actually ingested by this repository.</p>
+<div class="tools">
+<a class="btn" href="data/track3/ai2040_plan_a_mapping.json">Contribution mapping JSON</a>
+<a class="btn" href="data/track3/ai2040_plan_a_traceability.json">Recommendation / Appendix B traceability</a>
+<a class="btn" href="data/track3/plan_a_audit_schema.json">Sales → transfer → inspection schema</a>
+<a class="btn" href="data/track3/external_source_snapshots.json">External source manifest</a>
+<a class="btn" href="data/ci/commit_audit.json">Commit CI audit</a>
+</div>
+</section>
+<section class="section panel">
+<h2>Reproducibility and CI audit</h2>
+<p class="soft">The repository now records a complete commit-level GitHub Actions audit in <code>data/ci/commit_audit.json</code>, alongside the human-readable audit. Track 3 data-pipeline success is reported separately from Pages deployment status so a website build cannot be mistaken for a successful evidence rebuild.</p>
+<div class="tools">
+<a class="btn" href="data/ci/commit_audit.json">Complete commit audit JSON</a>
+<a class="btn" href="https://github.com/AnonRish/continental-load-registry/blob/main/CI_AUDIT_2026-09-26.md">Human-readable CI audit</a>
+<a class="btn" href="https://github.com/AnonRish/continental-load-registry/blob/main/CITATION.md">Citation guide</a>
+</div>
+</section>
+<section class="section panel">
+<h2>Reference the work</h2>
+<pre>AnonRish, Continental Large-Load Interconnection &amp; Telemetry Registry: AI 2040 Plan A Track 3 research contribution (2026).
+https://github.com/AnonRish/continental-load-registry</pre>
+<p class="soft">For scholarly use, cite the repository and the upstream source/dataset that supports the particular claim. The machine-readable citation metadata is in <a href="https://github.com/AnonRish/continental-load-registry/blob/main/CITATION.cff">CITATION.cff</a>, with human-readable guidance in <a href="https://github.com/AnonRish/continental-load-registry/blob/main/CITATION.md">CITATION.md</a>.</p>
+</section>
+<section class="section good">
+<h2>What to contribute next</h2>
+<p class="soft">The most consequential extensions are not another dashboard layer. They are evidence chains that connect <span class="mono">production → sale → transfer/resale → current owner → physical location → inspection</span>, plus a separately auditable pathway for <span class="mono">unrecorded compute → external discovery → candidate site → physical evidence → accounting resolution</span>.</p>
+<p class="soft" style="margin-bottom:0">Use the <a href="https://github.com/AnonRish/continental-load-registry/blob/main/.github/ISSUE_TEMPLATE/track3_evidence.md">Track 3 evidence issue template</a> or submit a focused pull request with the source, dates, raw value, normalized value, scope, and provenance.</p>
+</section>
+</main>
+<footer><div class="wrap faint small">Independent open-source research infrastructure · AI 2040 Plan A alignment documented here for citation and extension.</div></footer>
+<script>
+(async()=>{
+  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  try{
+    const [m,s]=await Promise.all([
+      fetch('data/track3/ai2040_plan_a_mapping.json').then(r=>r.json()),
+      fetch('data/track3/summary.json').then(r=>r.json())
+    ]);
+    const ms=m.mappings||[];
+    const counts={};
+    for(const x of ms) counts[x.status]=(counts[x.status]||0)+1;
+    document.getElementById('cards').innerHTML=[
+      ['Mapped elements',ms.length,'AI 2040 Track 3 mapping rows'],
+      ['Partial',counts.PARTIAL||0,'Implemented in part, not a complete verification chain'],
+      ['Snapshots',counts.INGESTED_SNAPSHOT||0,'Public source snapshots preserved'],
+      ['Design only',counts.DESIGN_ONLY||0,'Schema/research pathway documented, no completed result claimed'],
+      ['Epoch sites',s.epoch_site_count||0,'Current frontier-AI site reference universe'],
+      ['Observation tasks',s.observation_task_count||0,'Current state-dependent acquisition backlog']
+    ].map(x=>'<div class="card"><div class="num mono">'+esc(x[0]==='Mapped elements'?x[1]:x[1])+'</div><div style="font-weight:600">'+esc(x[0])+'</div><div class="label">'+esc(x[2])+'</div></div>').join('');
+    document.getElementById('map').innerHTML=ms.map(x=>{
+      const st=x.status==='INGESTED_SNAPSHOT'?'snap':(x.status==='FRAMEWORK_IMPLEMENTED'?'snap':'partial');
+      return '<tr><td><strong>'+esc(x.track3_element)+'</strong><div class="faint" style="margin-top:3px">'+esc(x.ai2040_reference)+'</div></td><td><code>'+esc((x.repo_artifacts||[]).join(', '))+'</code></td><td><span class="badge '+st+'">'+esc(x.status)+'</span></td><td>'+esc(x.contribution)+'</td></tr>';
+    }).join('');
+  }catch(e){
+    document.getElementById('cards').innerHTML='<div class="notice">Could not load the machine-readable mapping or current summary: '+esc(e.message)+'</div>';
+  }
+})();
+</script>
+</body>
+</html>

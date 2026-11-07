@@ -1,0 +1,17 @@
+{
+  "_FABRICATED": true,
+  "_WARNING": "Every value below is SYNTHETIC. The FIELD NAMES AND SHAPE are real, taken from NVIDIA's public nvattest/nvat documentation for `nvattest collect-evidence` output as of the research done for docs/hardware/nvidia-attestation.md. The evidence/certificate/nonce VALUES are fabricated placeholders -- they are not a real GPU's attestation report and will not pass real NVIDIA remote attestation (NRAS) verification. This file exists so frontier_verify.attestations.nvidia_provider has a concrete, real-shaped target to eventually parse against, without pretending real hardware produced it. See docs/adr/0001-attestation-abstraction-and-network-tap-deferral.md.",
+  "evidences": [
+    {
+      "version": "1.0",
+      "arch": "HOPPER",
+      "nonce": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "vbios_version": "96.00.00.00.01",
+      "driver_version": "575.03",
+      "evidence": "FABRICATED_BASE64_PLACEHOLDER_NOT_REAL_ATTESTATION_EVIDENCE_BYTES==",
+      "certificate": "-----BEGIN CERTIFICATE-----\nFABRICATEDPLACEHOLDERCERTIFICATEDATANOTAREALNVIDIACERTIFICATE\n-----END CERTIFICATE-----"
+    }
+  ],
+  "result_code": 0,
+  "result_message": "Ok"
+}

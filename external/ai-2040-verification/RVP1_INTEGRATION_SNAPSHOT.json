@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "generated_on": "2026-09-28",
+  "repositories": {
+    "ai-2040-plan-a-toolkit": "1968cd35b54614254bd68a586847e1d88dd4ade9",
+    "frontier-verify": "1361644cb6f860b05bcbbacea79f42f28ec36c29",
+    "continental-load-registry": "e458fe02255c929883c516ab5d2441d355f202bb"
+  }
+}

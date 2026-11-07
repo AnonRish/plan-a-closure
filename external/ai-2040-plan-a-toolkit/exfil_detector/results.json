@@ -1,0 +1,70 @@
+{
+  "classifier": {
+    "accuracy": 1.0,
+    "roc_auc": 1.0,
+    "coefficients": {
+      "empirical_entropy": 5.232817352867929,
+      "base64_fraction": 0.530844530957075
+    }
+  },
+  "k": -4.615881127988672,
+  "h": 9.1318829373601,
+  "achieved_fpr": 0.052,
+  "raw_payload": {
+    "0.05": {
+      "detection_rate": 0.9833333333333333,
+      "mean_outputs_to_detect": 19.29491525423729,
+      "n_sessions": 300
+    },
+    "0.1": {
+      "detection_rate": 0.9966666666666667,
+      "mean_outputs_to_detect": 11.354515050167224,
+      "n_sessions": 300
+    },
+    "0.2": {
+      "detection_rate": 1.0,
+      "mean_outputs_to_detect": 5.943333333333333,
+      "n_sessions": 300
+    },
+    "0.3": {
+      "detection_rate": 1.0,
+      "mean_outputs_to_detect": 3.92,
+      "n_sessions": 300
+    },
+    "0.5": {
+      "detection_rate": 1.0,
+      "mean_outputs_to_detect": 2.47,
+      "n_sessions": 300
+    }
+  },
+  "disguised_payload": {
+    "0.1": {
+      "detection_rate": 0.05333333333333334,
+      "mean_outputs_to_detect": 62.8125,
+      "n_sessions": 300
+    },
+    "0.3": {
+      "detection_rate": 0.043333333333333335,
+      "mean_outputs_to_detect": 60.38461538461539,
+      "n_sessions": 300
+    },
+    "0.5": {
+      "detection_rate": 0.03333333333333333,
+      "mean_outputs_to_detect": 65.7,
+      "n_sessions": 300
+    },
+    "0.8": {
+      "detection_rate": 0.05333333333333334,
+      "mean_outputs_to_detect": 64.8125,
+      "n_sessions": 300
+    },
+    "1.0": {
+      "detection_rate": 0.04666666666666667,
+      "mean_outputs_to_detect": 62.857142857142854,
+      "n_sessions": 300
+    }
+  },
+  "clean_entropy_bits_per_char": 4.100866099116413,
+  "raw_payload_entropy_bits_per_char": 6.0,
+  "disguise_bandwidth_ratio": 0.6834776831860688
+}

@@ -1,0 +1,26 @@
+<svg viewBox="0 0 1280 640" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="split" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#fff2df"/>
+      <stop offset="48%" stop-color="#fff2df"/>
+      <stop offset="52%" stop-color="#dceefb"/>
+      <stop offset="100%" stop-color="#dceefb"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#split)"/>
+  <line x1="640" y1="0" x2="640" y2="640" stroke="#1c2128" stroke-width="2" stroke-dasharray="3 7" opacity="0.5"/>
+
+  <text x="640" y="230" text-anchor="middle" font-size="64" font-weight="800" fill="#1c2128">AI 2040 Verification</text>
+  <text x="640" y="284" text-anchor="middle" font-size="24" fill="#57606a">Real trained model · real server · real red-team attacks against it</text>
+
+  <text x="120" y="380" font-size="16" font-weight="700" letter-spacing="0.06em" fill="#9a6700">PROVER-CONTROLLED</text>
+  <text x="120" y="410" font-size="15" fill="#57606a">Rust tap · DiFR checkpoints</text>
+  <text x="120" y="434" font-size="15" fill="#57606a">LoRA backdoor adapters</text>
+
+  <text x="1160" y="380" text-anchor="end" font-size="16" font-weight="700" letter-spacing="0.06em" fill="#0550ae">VERIFIER-CONTROLLED</text>
+  <text x="1160" y="410" text-anchor="end" font-size="15" fill="#57606a">FastAPI + Postgres server</text>
+  <text x="1160" y="434" text-anchor="end" font-size="15" fill="#57606a">Ed25519 tamper-evident log</text>
+
+  <rect x="440" y="500" width="400" height="56" rx="10" fill="#ffffff" stroke="#1c2128" stroke-width="1.6"/>
+  <text x="640" y="535" text-anchor="middle" font-size="22" font-weight="700" fill="#1c2128">21 / 30 sections drafted</text>
+</svg>

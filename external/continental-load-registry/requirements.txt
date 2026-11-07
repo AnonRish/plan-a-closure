@@ -1,0 +1,12 @@
+pandas>=2.0
+requests>=2.31
+pydantic>=2.0
+rapidfuzz>=3.0
+openpyxl>=3.1
+urllib3>=2.0
+
+# Optional -- ingest_grid_queues.py falls back to a hardcoded User-Agent
+# pool if this isn't installed or its cache can't be warmed (see
+# "USER AGENT HANDLING" in that file's module docstring for why that
+# fallback exists rather than treating this as a hard dependency).
+# fake-useragent>=1.5
