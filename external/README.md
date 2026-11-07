@@ -43,9 +43,8 @@ on a shared machine and they skip. MANIFEST.json lists the skip reasons of the r
 MANIFEST.json gives, for each repository, the GitHub source and the commit that was copied, a hash of the vendored tree,
 and every difference from that commit:
 
-* compute-ledger, packet-forge and tap-logger-rtl come from `anonrish-verification-repos-2.zip`, which is stored in the
-  GitHub packet-forge repository; on GitHub, compute-ledger and tap-logger-rtl are still empty and packet-forge holds only
-  that zip.
+* compute-ledger, packet-forge and tap-logger-rtl were first copied from `anonrish-verification-repos-2.zip`. Their
+  GitHub repositories now hold the same trees (the tree hashes match), so MANIFEST.json points at those.
 * continental-load-registry is vendored without its data/ directory (389 MB) and two PDFs, except the two small files in
   data/track3/ that its tests read. Its pipeline and dashboard need the rest of data/, which is in the GitHub repository.
 * fides: the LICENSE names AnonRish as the copyright holder.

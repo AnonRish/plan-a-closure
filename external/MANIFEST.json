@@ -138,14 +138,13 @@
       }
     },
     "compute-ledger": {
-      "source": "https://github.com/AnonRish/packet-forge (anonrish-verification-repos-2.zip at commit 6b63366a9df6)",
-      "commit": "a36e00b1aa11205638a4f7badbe7d415ac97640e",
-      "commit_date": "2026-10-06",
-      "intended_home": "https://github.com/AnonRish/compute-ledger",
+      "source": "https://github.com/AnonRish/compute-ledger",
+      "commit": "2e962e09b5d9c63553c386a4ecf0c578d7264cd7",
+      "commit_date": "2026-11-07",
       "license": "Apache-2.0",
       "vendored_changes": [],
       "notes": [
-        "The GitHub repository exists but is empty; the code here is from the batch zip."
+        "First vendored from commit a36e00b1aa11 in anonrish-verification-repos-2.zip (stored in the packet-forge repository at commit 6b63366a9df6); the GitHub repository now holds the same tree (same tree_sha256)."
       ],
       "tree_sha256": "3a67eddf666f303320c1f0cb67fda7152a36909585f3d6f3ba47f9372eaf3a59",
       "files": 23,
@@ -338,14 +337,13 @@
       }
     },
     "packet-forge": {
-      "source": "https://github.com/AnonRish/packet-forge (anonrish-verification-repos-2.zip at commit 6b63366a9df6)",
-      "commit": "1f18f1dbb9872e6535a617e602c94abc52e6ec64",
-      "commit_date": "2026-10-06",
-      "intended_home": "https://github.com/AnonRish/packet-forge",
+      "source": "https://github.com/AnonRish/packet-forge",
+      "commit": "3d41d9a4bc16a847038074270c910bc22b30faf0",
+      "commit_date": "2026-11-07",
       "license": "Apache-2.0",
       "vendored_changes": [],
       "notes": [
-        "On GitHub, packet-forge holds a placeholder commit with the batch zip; the code here is the full repository from that zip.",
+        "First vendored from commit 1f18f1dbb987 in anonrish-verification-repos-2.zip (stored in the packet-forge repository at commit 6b63366a9df6); the GitHub repository now holds the same tree (same tree_sha256).",
         "Two tests need tshark and tcpdump; the tap-reader tests build a Rust adapter with cargo, which fetches its crates; four replay traffic through the kernel and run only as root, because they create a temporary TUN interface (10.99.0.1/24)."
       ],
       "tree_sha256": "0baa86b11e336fe2e037bfaf20f363ea72e8285865918a940f662d23ebb74daf",
@@ -369,14 +367,13 @@
       }
     },
     "tap-logger-rtl": {
-      "source": "https://github.com/AnonRish/packet-forge (anonrish-verification-repos-2.zip at commit 6b63366a9df6)",
-      "commit": "3374adb746e6c1b14dec3d421d03981d21603342",
-      "commit_date": "2026-10-06",
-      "intended_home": "https://github.com/AnonRish/tap-logger-rtl",
+      "source": "https://github.com/AnonRish/tap-logger-rtl",
+      "commit": "b04264d183ecba6fa07a92257946f81c744d6afa",
+      "commit_date": "2026-11-07",
       "license": "Apache-2.0",
       "vendored_changes": [],
       "notes": [
-        "The GitHub repository exists but is empty; the code here is from the batch zip.",
+        "First vendored from commit 3374adb746e6 in anonrish-verification-repos-2.zip (stored in the packet-forge repository at commit 6b63366a9df6); the GitHub repository now holds the same tree (same tree_sha256).",
         "29 of its tests need Icarus Verilog, Verilator and yosys and skip without them; the recorded run had all three."
       ],
       "tree_sha256": "ef576c0309f05e81ed513e60d9a3cb5c51a864b9157a9a3de46bc8290bf4c61e",

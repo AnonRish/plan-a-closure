@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.4
+
+- compute-ledger, packet-forge and tap-logger-rtl now have their code on GitHub, with the same trees as the vendored
+  copies. `external/MANIFEST.json` points at those repositories and commits, and `external/README.md` no longer says
+  they are empty.
+
 ## 0.5.3
 
 For operators who run the pilot without sudo.

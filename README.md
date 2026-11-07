@@ -7,7 +7,7 @@
 Every joule, packet byte and byte of memory on an enrolled cluster must be *explained* by verified work.
 What is left over (the residual) upper-bounds hidden compute, hidden exfiltration and hidden persistent state.
 
-> **Status: v0.5.3, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
+> **Status: v0.5.4, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
 > (238 tests, `pytest`, plus 12 that run the torch code on CPU where torch is installed, 7 of them rehearsing the
 > whole GPU path against a fake NVML and nvidia-smi). The 13 vendored repositories
 > under `external/` add their own suites (2,708 tests passed here, `closure external test`). **No physical claim is
@@ -114,14 +114,14 @@ check` fails if a vendored tree changed after it was tested, or if a test that a
 | ai-2040-verification | `0199a4bd0411` | 4 / 0 | VP-1.3, VP-IO.7, VP-IO.8b, VP-2.12, VP-3.8, GI-WS-05, GI-WS-08, GI-WS-10, GI-T4, GI-OP.2, GI-OP.3, GI-OP.4, HP-3.3.4e |
 | aisecurity-rfds | `00d44ecc5095` | 1443 / 68 | VP-2.12 |
 | assurance-curves | `17cf95003a99` | 112 / 0 | VP-IO.4, VP-3.6, VP-A.2 |
-| compute-ledger | `a36e00b1aa11` | 87 / 0 | VP-0.3, VP-1.1, VP-2.3, GI-T3 |
+| compute-ledger | `2e962e09b5d9` | 87 / 0 | VP-0.3, VP-1.1, VP-2.3, GI-T3 |
 | continental-load-registry | `ad3292b47a76` | 84 / 0 | VP-0.3, VP-1.1, VP-3.8, GI-T3, HP-3.3.4e |
 | covert-timing-warden | `b27c17c317cc` | 115 / 0 | VP-IO.6b, VP-2.12, GI-WS-16, GI-WS-17, GI-OP.2 |
 | cuda-guard | `c16cba4bebba` | 41 / 0 | GI-WS-11, GI-OP.5, GI-OP.6, HP-3.3.2b, HP-3.3.3f |
 | fides | `076cd765eaca` | 121 / 0 | VP-0.2, VP-1.3, VP-IO.2b, VP-IO.3, VP-IO.4, VP-IO.8b, GI-WS-02, GI-WS-03, GI-WS-05, GI-WS-07, GI-WS-08, GI-WS-11, GI-T2, GI-OP.3, GI-OP.5, HP-3.3.3f |
 | frontier-verify | `3e6e0dbcb9b7` | 131 / 4 | VP-0.2, GI-WS-02, GI-WS-11, GI-WS-13 |
-| packet-forge | `1f18f1dbb987` | 86 / 0 | GI-WS-07, GI-OP.1 |
-| tap-logger-rtl | `3374adb746e6` | 44 / 0 | GI-WS-03, GI-WS-12 |
+| packet-forge | `3d41d9a4bc16` | 86 / 0 | GI-WS-07, GI-OP.1 |
+| tap-logger-rtl | `b04264d183ec` | 44 / 0 | GI-WS-03, GI-WS-12 |
 | weight-diode | `f305a745e606` | 158 / 0 | VP-2.14, GI-WS-04 |
 
 Recorded on 6 November 2026 (Python 3.13, Linux x86_64, CPU torch, with Icarus Verilog, Verilator, yosys, tshark and
