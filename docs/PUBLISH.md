@@ -36,6 +36,24 @@ something from history, replace the branch with a single new commit (`git checko
 For every later commit, repeat the two `$env:GIT_*_DATE` lines first. If you edit a vendored repository, run
 `closure external test --record <repo>` afterwards so that `closure external check` passes.
 
+## Updating to a new release
+
+With the new zip downloaded (replace `<version>` with its version, for example `0.5.3`):
+
+```powershell
+Expand-Archive "$HOME\Downloads\plan-a-closure-<version>.zip" -DestinationPath "$HOME\anon\new" -Force
+robocopy "$HOME\anon\new\plan-a-closure" "$HOME\anon\plan-a-closure" /MIR /XD .git   # whole tree replaced, .git kept
+Remove-Item -Recurse -Force "$HOME\anon\new"
+cd "$HOME\anon\plan-a-closure"
+$d = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss+0000")
+$env:GIT_AUTHOR_DATE = $d; $env:GIT_COMMITTER_DATE = $d
+git add -A
+git commit -m "plan-a-closure <version>"
+git push
+```
+
+`/MIR` also removes files that the new release no longer has. Then check the Actions tab as in step 4.
+
 Suggested repository description: *Compute material-balance accounting for inference-only AI verification (AI 2040
 Plan A): pre-registered builder-versus-breaker trial kit.* Topics: `ai-safety`, `compute-governance`,
 `verification`.

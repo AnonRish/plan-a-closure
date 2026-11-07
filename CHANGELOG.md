@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.3
+
+For operators who run the pilot without sudo.
+
+- **A run without root ends cleanly.** Its final `hw-restore` was refused just as every earlier clock or power change
+  was, so the summary listed it as failed although nothing on the GPU had been changed. `hw-restore --same-user`, which
+  `tier0` passes, now reports "nothing to restore" in that case. Run on its own, a refused `hw-restore` still fails and
+  says to use root, because it cannot know who ran the probe; any other failure still shows as one.
+- `docs/OPERATOR_TIER0.md` installs by cloning the public repository and says what a run without root covers;
+  `docs/PUBLISH.md` says how to update the published repository to a new release.
+- New tests: the refused restore in `test_gpu_identity.py`, and a whole `tier0` run without root in
+  `test_hw_rehearsal.py`.
+
 ## 0.5.2
 
 Hardening for whoever lends the GPU. Found by rehearsing the hardware path end to end against a fake NVML and a fake

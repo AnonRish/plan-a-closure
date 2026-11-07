@@ -186,6 +186,11 @@ def smi(gpu_id: str, *args, timeout: float = 60.0) -> tuple:
     return r.returncode == 0, (r.stdout + r.stderr).strip()
 
 
+def not_permitted(msg: str) -> bool:
+    """True if nvidia-smi refused a change because this user may not make it (not root), rather than failing at it."""
+    return any(s in (msg or "").lower() for s in ("permission", "root", "administrator", "not allowed"))
+
+
 def default_power_limit_w(N, nvml_index: int):
     try:
         h = N.nvmlDeviceGetHandleByIndex(int(nvml_index))

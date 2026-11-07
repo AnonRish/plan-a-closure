@@ -141,6 +141,19 @@ def test_tier0_rehearsal_runs_every_hardware_step_and_leaves_the_gpu_as_found(tm
     assert all(c.startswith(f"-i {UUID0} ") for c in _smi_calls(tmp_path))
 
 
+def test_tier0_without_root_runs_through_and_has_nothing_to_restore(tmp_path):
+    env = _env(tmp_path, FAKEGPU_DENY=1)
+    out = tmp_path / "t0"
+    r = _closure(env, "tier0", "--confirm-hardware", "--gpu", "0", "--skip-tests", "--out", str(out), timeout=900)
+    assert r.returncode == 0, r.stdout[-3000:]
+    s = (out / "SUMMARY.md").read_text()
+    assert "every step ran" in s and "| hw-restore | clocks unlocked, power limit as found | 0 |" in s
+    assert "nothing to restore" in next((out / "logs").glob("*-hw-restore.log")).read_text()
+    assert _gpu(tmp_path) == {"clock": None, "limit_w": 700.0}
+    r = _closure(env, "hw-restore", "--gpu", "0")                    # on its own it cannot know who ran the probe
+    assert r.returncode == 1 and "sudo" in r.stdout
+
+
 def test_tier0_passes_a_signal_to_the_running_step_skips_the_rest_and_still_restores(tmp_path):
     env = _env(tmp_path)
     out = tmp_path / "t0"

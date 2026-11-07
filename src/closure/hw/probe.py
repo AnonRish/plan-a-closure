@@ -376,13 +376,13 @@ class TorchRig:
     def _smi(self, *args):
         """nvidia-smi on this GPU only (by UUID when resolved). Without root the clock and power variants are dropped
         and noted, and the probe goes on with precisions and operands, which need no device control."""
-        from .gpu import smi
+        from .gpu import not_permitted, smi
         if not self.control:
             raise Unavailable(self._no_control or "device control is off: clock and power-limit variants are skipped")
         ok, msg = smi(self.smi_id, *args)
         if not ok:
             cmd = f"nvidia-smi {' '.join(map(str, args))}"
-            if any(s in msg.lower() for s in ("permission", "root", "administrator", "not allowed")):
+            if not_permitted(msg):
                 self.control = False
                 self._no_control = f"device control needs root (`{cmd}`: {msg}); clock and power-limit variants dropped"
                 raise Unavailable(self._no_control)

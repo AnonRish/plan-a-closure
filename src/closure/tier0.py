@@ -130,8 +130,8 @@ def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, ech
     target, start_w = (None, None) if mock else _gpu_at_start(gpu, echo)
     steps = plan(out, gpu, mock, run_tests, rehearsal=bool(target is not None and target.rehearsal))
     if not mock:                                      # always last, even after a failure or a signal: the GPU as found
-        steps.append(("hw-restore", "clocks unlocked, power limit as found",
-                      [sys.executable, "-m", "closure.cli", "hw-restore", "--gpu", str(gpu)]
+        steps.append(("hw-restore", "clocks unlocked, power limit as found",   # every step runs as this same user
+                      [sys.executable, "-m", "closure.cli", "hw-restore", "--gpu", str(gpu), "--same-user"]
                       + (["--power-limit-w", f"{start_w:g}"] if start_w else []), None))
 
     # A signal (Ctrl-C, a scheduler's SIGTERM, a closed terminal) is passed to the running step as SIGTERM, so it restores

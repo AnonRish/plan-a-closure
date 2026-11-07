@@ -86,3 +86,20 @@ def test_rehearsal_results_can_never_stand_in_for_a_hardware_run(tmp_path, monke
         cli._apply_probe(cfg, f, tmp_path / "run", hardware=True, rehearsal=False)
     cli._apply_probe(cfg, f, tmp_path / "run2", hardware=True, rehearsal=True)       # a rehearsal may use its own probe
     assert cfg.probe_sha256 == json.loads(f.read_text())["sha256"]
+
+
+def test_a_refused_restore_means_nothing_to_restore_only_within_one_run(monkeypatch, capsys):
+    # Without root, tier0's last step is refused just as every earlier clock or power change was, so nothing was changed
+    # and nothing failed. On its own, hw-restore cannot know who ran the probe, so it asks for root. Real failures show.
+    import sys
+    from closure import cli
+    monkeypatch.setitem(sys.modules, "pynvml", types.SimpleNamespace(nvmlInit=lambda: None))
+    monkeypatch.setattr(G, "resolve", lambda i, N=None: G.GpuTarget(0, "cuda:0", 0, "GPU-x", "uuid"))
+    no = "Unable to apply the change for GPU 00000000:18:00.0: Insufficient Permissions"
+    monkeypatch.setattr(G, "restore", lambda t, w, N=None: [("nvidia-smi -i GPU-x -rgc", False, no),
+                                                            ("nvidia-smi -i GPU-x -pl 700", False, no)])
+    run = lambda same: cli.cmd_hw_restore(types.SimpleNamespace(gpu=0, power_limit_w=700.0, same_user=same))
+    assert run(True) == 0 and "nothing to restore" in capsys.readouterr().out
+    assert run(False) == 1 and "sudo" in capsys.readouterr().out
+    monkeypatch.setattr(G, "restore", lambda t, w, N=None: [("nvidia-smi -i GPU-x -rgc", False, "GPU is lost")])
+    assert run(True) == 1 and "FAIL" in capsys.readouterr().out

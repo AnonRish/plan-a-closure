@@ -7,8 +7,8 @@
 Every joule, packet byte and byte of memory on an enrolled cluster must be *explained* by verified work.
 What is left over (the residual) upper-bounds hidden compute, hidden exfiltration and hidden persistent state.
 
-> **Status: v0.5.2, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
-> (237 tests, `pytest`, plus 11 that run the torch code on CPU where torch is installed, 6 of them rehearsing the
+> **Status: v0.5.3, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
+> (238 tests, `pytest`, plus 12 that run the torch code on CPU where torch is installed, 7 of them rehearsing the
 > whole GPU path against a fake NVML and nvidia-smi). The 13 vendored repositories
 > under `external/` add their own suites (2,708 tests passed here, `closure external test`). **No physical claim is
 > demonstrated yet.** Each one is decided by the pre-registered trial in
@@ -170,7 +170,7 @@ covered. `gemm_audit.py` is a design-time screen, not the physical audit the pap
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"                # Python 3.10 or newer
-pytest                                  # 237 tests (248 with torch installed)
+pytest                                  # 238 tests (250 with torch installed)
 closure selftest                        # end-to-end simulated trial, PASS/FAIL
 closure tier0 --mock --out runs/tier0   # the whole one-GPU pilot on fake hardware: logs, SUMMARY.md, bundle
 closure redteam                         # gateway sampling + recomputation against substituted models (toy model)

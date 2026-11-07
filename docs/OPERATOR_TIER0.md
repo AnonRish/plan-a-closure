@@ -40,7 +40,8 @@ is CUDA itself: kernels, timing and energy on a real GPU.
   GPU before it exits; the remaining steps are skipped, `hw-restore` still runs, and the summary and bundle are still
   written. Only SIGKILL cannot be caught: after one, run `sudo -E env PATH="$PATH" closure hw-restore --gpu 0`.
 - **Without root.** Clock and power variants cannot be applied; they are dropped and noted, and the probe still measures
-  precisions and operand patterns, so the slack it reports covers less.
+  precisions and operand patterns, so the slack it reports covers less. The final `hw-restore` then reports that there
+  was nothing to restore.
 - **Sustained load.** Dense GEMMs and memory passes at up to 90% of the GPU's capacity, within its power and thermal
   limits.
 - **Hidden load.** The "hidden" work is the same synthetic GEMM load, run on the same GPU on a schedule committed before
@@ -51,14 +52,15 @@ is CUDA itself: kernels, timing and energy on a real GPU.
 ## Run it
 
 ```bash
-unzip plan-a-closure.zip && cd plan-a-closure       # or clone it, once the repository is public
+git clone https://github.com/AnonRish/plan-a-closure && cd plan-a-closure   # or unzip plan-a-closure.zip
 python -m venv .venv && . .venv/bin/activate          # Python 3.10 or newer
 pip install -e ".[test,hw]"                           # hw = pynvml + torch: install the CUDA build of torch your node needs
 closure tier0 --mock --out runs/rehearsal             # optional rehearsal on fake hardware, about 2 minutes
 sudo -E env PATH="$PATH" closure tier0 --confirm-hardware --gpu 0 --out runs/tier0
 ```
 
-Root is needed only for clock and power-limit control. Use an exclusive allocation for the whole run (for example Slurm
+Root is needed only for clock and power-limit control; without `sudo` the run still completes, minus those variants.
+Use an exclusive allocation for the whole run (for example Slurm
 `--exclusive`). If the OpenTimestamps client `ots` is installed, the pre-registration is timestamped automatically before
 any audit data exist; otherwise its hash is logged and kept in the signed chain.
 

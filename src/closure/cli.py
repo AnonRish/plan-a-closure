@@ -688,7 +688,11 @@ def cmd_tier0(a) -> int:
 
 def cmd_hw_restore(a) -> int:
     """Unlock the SM clocks and set the power limit back on one GPU: what hw-probe does on exit, for when a run was
-    killed with SIGKILL (or the node lost power) before it could. Needs root, like hw-probe."""
+    killed with SIGKILL (or the node lost power) before it could. Needs root, like hw-probe.
+
+    --same-user (tier0 passes it): every step that could have changed this GPU ran as this user. If this user may not
+    change clocks or power limits, none of those steps did either, so there is nothing to restore and that is not a
+    failure. On its own the command cannot know who ran the probe, so a refusal asks for root instead."""
     import pynvml as N
     from .hw import gpu as G
     N.nvmlInit()
@@ -698,8 +702,16 @@ def cmd_hw_restore(a) -> int:
     print(f"power limit -> {w:.0f} W ({'given' if a.power_limit_w is not None else 'the GPU default'})" if w else
           "power limit: NVML gave no default; pass --power-limit-w to set it")
     rows = G.restore(target, w, N=N)
+    failed = [msg for _, ok, msg in rows if not ok]
+    refused = bool(failed) and all(G.not_permitted(m) for m in failed)
+    if refused and getattr(a, "same_user", False):
+        print(f"nothing to restore: this user may not lock clocks or set power limits ({failed[0]}), so no step of "
+              "this run changed them")
+        return 0
     for cmd, ok, msg in rows:
         print(("ok    " if ok else "FAIL  ") + cmd + ("" if ok else f"  ({msg})"))
+    if refused:
+        print(f'not permitted: run it as root, e.g. sudo -E env PATH="$PATH" closure hw-restore --gpu {a.gpu}')
     return 0 if rows and all(ok for _, ok, _ in rows) else 1
 
 
@@ -824,6 +836,9 @@ def main(argv=None) -> int:
     s = sp.add_parser("hw-restore", help="unlock the clocks and restore the power limit of one GPU (after a killed run)")
     s.add_argument("--gpu", type=int, default=0, help="index among the GPUs CUDA shows this process")
     s.add_argument("--power-limit-w", type=float, default=None, help="limit to set back (default: the GPU's default)")
+    s.add_argument("--same-user", action="store_true",
+                   help="every step that could have changed this GPU ran as this user (tier0 passes this): if this "
+                        "user may not change clocks or power limits, there is nothing to restore")
     s.set_defaults(f=cmd_hw_restore)
     s = sp.add_parser("tier0", help="the whole Tier 0 pilot on one GPU (about 2 h), unattended, bundled for sending back")
     s.add_argument("--out", default="runs/tier0"); s.add_argument("--gpu", type=int, default=0)
