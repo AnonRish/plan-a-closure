@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.6.0
+
+Treaty mechanisms: what the halt and treaty proposals need from verification, made concrete enough to compute, test or
+run (`src/closure/treaty/`, `closure treaty ...`, `docs/TREATY_COVERAGE.md`).
+
+- `thresholds`: the compute thresholds the proposals name, with their sources, and how many days a fleet needs to run
+  a threshold-sized training run in secret at the hidden rate a trial measured (`covert-days --run <trial folder>`).
+- `deterrence`: per-period and winner-take-all deterrence conditions, and a CUSUM over block residuals against the
+  time a sustained hidden load needs to reach a threshold run. Closed forms are checked against simulation.
+- `coalition`: the middle-powers agreement's activation threshold on bundled World Bank GDP and population data, the
+  smallest activating coalitions, Shapley-Shubik power, and its redline ladder with the six-month persistence rule,
+  leak escalation and the risk-averse presumption.
+- `mockrun`: A Narrow Path's mock training run on CPU or one GPU. The provider stops the job when energy divided by the
+  device's energy floor reaches the budget, and checks the job's starting weights against its seed.
+- `geoloc`: delay-based chip location over TCP (the chip connects out, so NAT is fine), with Ed25519-signed challenges.
+- `inspection`, `beacon`, `quorum`: inspection sample sizes and unpredictable samples, commit-reveal randomness and
+  sortition, and k-of-n approval of critical actions.
+- New tests: `tests/test_treaty.py`, and `tests/test_treaty_torch.py` (the FLOP formula against torch's own counter,
+  and the drill on CPU).
+
 ## 0.5.5
 
 After the first run on real hardware: a Colab T4 shakedown (8 November 2026) that stopped at `hw-selftest`

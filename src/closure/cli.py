@@ -893,6 +893,8 @@ def main(argv=None) -> int:
     s.set_defaults(f=cmd_dcbus_decimate)
     from .pause.cli import register as _register_pause
     _register_pause(sp)
+    from .treaty.cli import add_parser as _register_treaty
+    _register_treaty(sp)
     a = ap.parse_args(argv)
     try:
         return a.f(a)

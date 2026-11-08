@@ -17,6 +17,8 @@ closure claims                  # Plan A's numbers, re-derived (52 of 56 reprodu
 closure pause claims            # the hardwired-pause paper's numbers (111 of 114 reproduce; 3 hold under a stated reading)
 closure coverage                # checks the Plan A matrix and prints its status counts (docs/PLAN_A_COVERAGE.md)
 closure external check          # the vendored repositories are the trees that were tested
+closure treaty coalition         # the middle-powers agreement on World Bank data (docs/TREATY_COVERAGE.md)
+closure treaty mock-run --budget-flop 4e11   # A Narrow Path's mock training run, on CPU
 ```
 
 To run the vendored repositories' own suites as well (about 10 more minutes): `pip install -e ".[hw,external]"` and
