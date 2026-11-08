@@ -31,6 +31,13 @@ PROFILES = {
                      classes=("constant", "idle_gap", "duty", "dilute"), intensities=(0.01, 0.02, 0.05, 0.10, 0.20)),
     "hw-full": dict(L=120, n_ref_blocks=360, n_audit_blocks=720, n_regimes=3, alpha=0.01,
                     classes=("constant", "idle_gap", "duty", "dilute")),
+    # Tier 0 where a session ends at 12 hours (Kaggle, Colab): about 9 hours, the registered analysis and decision
+    # rules at the largest scale that fits (amendment v0.5). 204 null blocks, so H1.2 can be decided; 12 blocks for
+    # every class x intensity; reference blocks interleaved with the audit; 5 warm-up blocks; one regime, so n_eff can
+    # reach 15 even with residuals as autocorrelated as run 3's busy time (rho 0.66).
+    "long": dict(L=60, n_ref_blocks=144, n_audit_blocks=396, n_regimes=1, alpha=0.01,
+                 classes=("constant", "idle_gap", "duty", "dilute"), intensities=(0.02, 0.05, 0.10, 0.20),
+                 schedule="balanced", n_per_cell=12, calibration="interleaved", warmup_blocks=5),
 }
 
 
@@ -105,6 +112,8 @@ def cmd_verify(a) -> int:
     res = json.loads((out / "results.json").read_text())
     checks = {"chain_ok": ok, "entries": n, "signature_ok": sig_ok,
               "schedule_commitment_ok": verify_commit(rev["schedule"], pre["schedule_commitment"], rev["nonce"]),
+              **({"order_commitment_ok": bool("order" in rev and "order_nonce" in rev and verify_commit(
+                  rev["order"], pre["order_commitment"], rev["order_nonce"]))} if "order_commitment" in pre else {}),
               "prereg_hash_ok": sha256_hex(canonical(pre)) == by.get("prereg", {}).get("prereg_sha256"),
               "results_hash_ok": sha256_hex(canonical(res)) == by.get("results", {}).get("results_sha256")}
     if pre["cfg"].get("probe_sha256"):
@@ -500,6 +509,17 @@ def cmd_drift(a) -> int:
     return 0
 
 
+def cmd_criteria(a) -> int:
+    """The pre-registered T1 decision rules read off a finished trial folder (criteria.py)."""
+    from .criteria import evaluate, summary_lines
+    run = Path(a.run)
+    res = json.loads((run / "results.json").read_text())
+    alpha = float(json.loads((run / "prereg.json").read_text())["cfg"]["alpha"])
+    ev = evaluate(res, alpha)
+    print(json.dumps(clean(ev), indent=2) if a.json else "\n".join(summary_lines(ev)))
+    return 0
+
+
 def cmd_claims(a) -> int:
     from . import claims
     cs = claims.check_all()
@@ -754,10 +774,11 @@ def cmd_tier0(a) -> int:
     """Run the Tier 0 pilot end to end without keyboard input; see tier0.py and docs/OPERATOR_TIER0.md."""
     from . import tier0
     if not (a.mock or a.confirm_hardware):
-        print("refusing: pass --confirm-hardware (about 2 h on one GPU: clock locking, power-limit changes, sustained load and "
-              "hidden-load injection; clocks and limit are restored afterwards) or --mock to rehearse without a GPU")
+        print("refusing: pass --confirm-hardware (about 2 h on one GPU, or about 10.5 h with --trial-profile long: clock "
+              "locking, power-limit changes, sustained load and hidden-load injection; clocks and limit are restored "
+              "afterwards) or --mock to rehearse without a GPU")
         return 2
-    return tier0.run(Path(a.out), gpu=a.gpu, mock=a.mock, run_tests=not a.skip_tests)
+    return tier0.run(Path(a.out), gpu=a.gpu, mock=a.mock, run_tests=not a.skip_tests, profile=a.trial_profile)
 
 
 def cmd_hw_restore(a) -> int:
@@ -884,6 +905,8 @@ def main(argv=None) -> int:
     s.set_defaults(f=cmd_hw_probe)
     s = sp.add_parser("drift", help="did the energy model drift between calibration and audit? (a trial folder)")
     s.add_argument("--run", required=True); s.set_defaults(f=cmd_drift)
+    s = sp.add_parser("criteria", help="the pre-registered T1 decision rules (H1.1 to H1.4) read off a trial folder")
+    s.add_argument("--run", required=True); s.add_argument("--json", action="store_true"); s.set_defaults(f=cmd_criteria)
     s = sp.add_parser("hw-state"); s.add_argument("--device", default="cuda:0"); s.add_argument("--blocks", type=int, default=32)
     s.add_argument("--block-mb", type=int, default=64)
     s.add_argument("--k", type=int, default=None, help="blocks per challenge; default: enough that sampling alone "
@@ -930,6 +953,9 @@ def main(argv=None) -> int:
     s.add_argument("--out", default="runs/tier0"); s.add_argument("--gpu", type=int, default=0)
     s.add_argument("--mock", action="store_true"); s.add_argument("--confirm-hardware", action="store_true")
     s.add_argument("--skip-tests", action="store_true", help="skip the unit tests at the start")
+    s.add_argument("--trial-profile", choices=("smoke", "long"), default="smoke",
+                   help="smoke: a 1 h trial that checks the pipeline (the default); long: about 9 h, enough to decide "
+                        "the registered rules H1.1 to H1.4 (fits a 12-hour Kaggle or Colab session)")
     s.set_defaults(f=cmd_tier0)
     s = sp.add_parser("claims"); s.add_argument("--all", action="store_true"); s.add_argument("--strict", action="store_true"); s.set_defaults(f=cmd_claims)
     s = sp.add_parser("coverage"); s.add_argument("--write", default=None); s.set_defaults(f=cmd_coverage)

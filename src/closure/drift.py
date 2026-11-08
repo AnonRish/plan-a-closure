@@ -3,8 +3,8 @@
 The trial calibrates on reference blocks, then audits. If the GPU's power behaviour changes in between (clocks,
 temperature, the VM), audit blocks without hidden load stop looking like calibration blocks, and false alarms follow.
 Colab T4 run 3 showed exactly this (docs/DEVIATIONS.md section 3). This report reads a trial folder's raw.npz and
-prereg.json and compares the two directly. It is a diagnostic: it decides nothing, and the registered analysis does
-not use it.
+prereg.json and compares the two directly, and reports how far calibration residuals moved from the first third of the
+reference blocks to the last. It is a diagnostic: it decides nothing, and the registered analysis does not use it.
 """
 from __future__ import annotations
 
@@ -45,7 +45,10 @@ def report(run_dir) -> dict:
     ra = (Ea - Xa @ th)[:n_a].reshape(-1, L).sum(1)
     clean = Ha[:n_a].reshape(-1, L).sum(1) == 0
     sd = float(rb.std()) if rb.size > 1 else float("nan")
-    out = {"block_windows": L,
+    third = rb.size // 3                                      # reference blocks are in time order
+    trend = float((rb[-third:].mean() - rb[:third].mean()) / sd) if third >= 5 and sd > 0 else None
+    out = {"block_windows": L, "calibration_design": cfg.get("calibration", "sequential"),
+           "calibration_trend_sds": trend,
            "calibration": {"blocks": int(rb.size), "idle_power_w": _idle_w(Xr, Er, Hr), "linear": _linear(Xr, Er, Hr),
                            "block_residual_sd_j": sd},
            "audit_without_hidden_energy": {"blocks": int(clean.sum()), "idle_power_w": _idle_w(Xa, Ea, Ha),
@@ -76,4 +79,8 @@ def summary_lines(rep: dict) -> list:
     if c["linear"] and a["linear"]:
         lines.append(f"- energy per unit of work {c['linear']['j_per_unit']:.3f} J during calibration, "
                      f"{a['linear']['j_per_unit']:.3f} J during audit")
+    if rep.get("calibration_trend_sds") is not None:
+        lines.append(f"- calibration blocks, last third against first third: {rep['calibration_trend_sds']:+.2f} SDs"
+                     + ("; reference blocks were interleaved with the audit, so drift reaches both alike"
+                        if rep.get("calibration_design") == "interleaved" else ""))
     return lines
