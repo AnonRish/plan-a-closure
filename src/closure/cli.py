@@ -493,6 +493,13 @@ def cmd_hw_state(a) -> int:
     return 0 if out["pass"] else 1
 
 
+def cmd_drift(a) -> int:
+    """Calibration against audit in a finished trial folder: a check on assumption A2 (drift.py)."""
+    from .drift import report
+    print(json.dumps(clean(report(a.run)), indent=2))
+    return 0
+
+
 def cmd_claims(a) -> int:
     from . import claims
     cs = claims.check_all()
@@ -875,6 +882,8 @@ def main(argv=None) -> int:
     s.add_argument("--rel-tol", type=float, default=5e-3); s.add_argument("--seed", type=int, default=1)
     s.add_argument("--mock", action="store_true"); s.add_argument("--confirm-hardware", action="store_true")
     s.set_defaults(f=cmd_hw_probe)
+    s = sp.add_parser("drift", help="did the energy model drift between calibration and audit? (a trial folder)")
+    s.add_argument("--run", required=True); s.set_defaults(f=cmd_drift)
     s = sp.add_parser("hw-state"); s.add_argument("--device", default="cuda:0"); s.add_argument("--blocks", type=int, default=32)
     s.add_argument("--block-mb", type=int, default=64)
     s.add_argument("--k", type=int, default=None, help="blocks per challenge; default: enough that sampling alone "
