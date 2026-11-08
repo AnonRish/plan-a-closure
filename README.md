@@ -7,8 +7,8 @@
 Every joule, packet byte and byte of memory on an enrolled cluster must be *explained* by verified work.
 What is left over (the residual) upper-bounds hidden compute, hidden exfiltration and hidden persistent state.
 
-> **Status: v0.5.5, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
-> (249 tests, `pytest`, plus 15 that run the torch code on CPU where torch is installed, 8 of them rehearsing the
+> **Status: v0.6.0, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
+> (273 tests, `pytest`, plus 21 that run the torch code on CPU where torch is installed, 9 of them rehearsing the
 > whole GPU path against a fake NVML and nvidia-smi). The 13 vendored repositories
 > under `external/` add their own suites (2,708 tests passed here, `closure external test`). **No physical claim is
 > demonstrated yet.** The first run on real hardware, a Colab T4 shakedown on 8 November 2026, stopped at
@@ -82,6 +82,23 @@ Findings from re-deriving the plan's numbers: 52 of 56 reproduce. Three hold onl
 the 100B ZDR fleet cap exceeds the 60B 2034 world-compute figure; Appendix A.4.2 says 100B H100e while its figure uses
 ~33B, though the bound does not depend on pool size. One is inconsistent: the 2028 "uncertainty" is 2% for the US and
 4% for China, which matches the full interval width for one and the half-width for the other.
+
+## Treaty mechanisms (`closure treaty`)
+
+The halt and treaty proposals (ControlAI's *A Narrow Path* and Direct Institutional Plan, the middle-powers paper at
+asi-prevention.com, MIRI's *Mechanisms to Verify International Agreements* and *AI Governance to Avoid Extinction*,
+Barnett and Thiergart on what evaluations can and cannot do, and CBPAI's *Deal of the Century*) rest on verification
+this repository builds. [docs/TREATY_COVERAGE.md](docs/TREATY_COVERAGE.md) maps every mechanism they name to code, to a
+GPU or cluster step, or to "not code", and states what the computations show.
+
+| module | what it makes concrete | command |
+| --- | --- | --- |
+| `treaty/thresholds.py` | the named compute thresholds (1e25 FLOP and 1e17 FLOP/s licences, a 1e26 draft) and the days a fleet needs to run a threshold-sized covert run at the hidden rate a trial measured | `closure treaty covert-days` |
+| `treaty/deterrence.py` | when detection deters: per-period and winner-take-all conditions, and a CUSUM over block residuals against the time to a threshold run, each checked by simulation | `closure treaty deterrence`, `race` |
+| `treaty/coalition.py` | the middle-powers agreement: activation at 20% of world GDP and population (World Bank data), smallest coalitions, Shapley-Shubik power, the redline ladder with its persistence and leak rules | `closure treaty coalition`, `redlines` |
+| `treaty/mockrun.py` | A Narrow Path's mock training run: a provider that sees only an energy meter stops a training job at its FLOP budget, and the job's starting weights are checked against its seed | `closure treaty mock-run` |
+| `treaty/geoloc.py` | delay-based chip location: timed, signed challenges from landmarks bound how far a chip can be from its declared site | `closure treaty geo-landmark`, `geo-chip`, `geo-check` |
+| `treaty/inspection.py`, `beacon.py`, `quorum.py` | inspection samples nobody can predict, lot-selected witnesses, and k-of-n approval of critical actions | `closure treaty inspect-plan`, `beacon-commit`, `sortition`, `quorum-verify` |
 
 ## Plan A coverage (checked against the pasted documents and the live pages)
 
@@ -176,7 +193,7 @@ covered. `gemm_audit.py` is a design-time screen, not the physical audit the pap
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"                # Python 3.10 or newer
-pytest                                  # 249 tests (264 with torch installed)
+pytest                                  # 273 tests (294 with torch installed)
 closure selftest                        # end-to-end simulated trial, PASS/FAIL
 closure tier0 --mock --out runs/tier0   # the whole one-GPU pilot on fake hardware: logs, SUMMARY.md, bundle
 closure redteam                         # gateway sampling + recomputation against substituted models (toy model)

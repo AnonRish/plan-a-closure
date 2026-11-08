@@ -188,3 +188,13 @@ def test_a_small_gpu_s_own_power_limit_is_the_capacity_and_the_trial_records_it_
     cfg = json.loads((out / "prereg.json").read_text())["cfg"]
     assert cfg["p_max_w"] == 70.0 and cfg["workload"]["dim"] == 96 and not cfg["workload"]["auto_sized"]
     assert 20.0 < cfg["workload"]["idle_w_measured"] < 45.0
+
+
+def test_the_mock_training_run_takes_its_meter_from_the_resolved_gpu(tmp_path):
+    env = _env(tmp_path)
+    r = _closure(env, "treaty", "mock-run", "--device", "cuda:0", "--e-floor", "1e-9", "--budget-flop", "2e11",
+                 "--out", str(tmp_path / "mr"), timeout=300)
+    assert r.returncode in (0, 1), r.stderr[-2000:]
+    d = json.loads((tmp_path / "mr" / "drill.json").read_text())
+    assert d["meter"] == "NVML energy counter" and d["device"] == "cpu" and UUID0 in r.stderr   # rehearsal: CPU torch
+    assert d["energy_at_stop_j"] is not None and d["compliant"] is (d["job_flop_at_most"] <= d["budget_flop"])
