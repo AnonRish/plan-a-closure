@@ -11,7 +11,9 @@ import numpy as np
 
 from closure.hw import selftest as ST
 from closure.hw.workloads import MIN_DIM, measure_idle_w, native_half, size_unit
-from closure.tier0 import _unit_args
+from pathlib import Path
+
+from closure.tier0 import _trial_clock_args, _unit_args
 
 
 def test_size_unit_halves_until_one_unit_fits_the_budget():
@@ -106,3 +108,17 @@ def test_tier0_passes_the_selftest_unit_on_to_the_probe_and_the_trial():
     assert _unit_args(log) == ["--dim", "4096", "--mem-elems", str(1 << 28)]
     assert _unit_args(json.dumps({"r2": 0.97, "pass": True})) == []          # mock runs print no unit
     assert _unit_args("Traceback (most recent call last): ...") == []
+
+
+RUN3_PROBE = Path(__file__).resolve().parents[1] / "results" / "shakedown-2026-11-08-colab-t4-run3" / "extracted" / "probe.json"
+
+
+def test_tier0_locks_the_trial_at_the_highest_clock_the_t4_held_under_its_cap(tmp_path):
+    # Run 3's probe: locks at 1575 and 1335 MHz were pulled down to 1125 and 975 MHz by the 70 W cap at full load;
+    # 1110 MHz held at 65.2 W. The trial then calibrates and audits at one clock.
+    assert _trial_clock_args(RUN3_PROBE) == ["--lock-clock-mhz", "1110"]
+    pr = json.loads(RUN3_PROBE.read_text())
+    pr["status"] = "REHEARSAL"
+    (tmp_path / "p.json").write_text(json.dumps(pr))
+    assert _trial_clock_args(tmp_path / "p.json") == []                      # never on a rehearsal or mock probe
+    assert _trial_clock_args(tmp_path / "missing.json") == []

@@ -266,6 +266,28 @@ def cmd_preflight(a) -> int:
 REHEARSAL_STATUS = "REHEARSAL-CPU (fake devices; no physical meaning)"
 
 
+def _lock_clocks(targets, mhz) -> tuple:
+    """Lock the SM clocks of these GPUs at mhz (`nvidia-smi -lgc mhz,mhz`) so a trial calibrates and audits at one
+    clock (assumption A2; docs/DEVIATIONS.md section 3). (locked MHz or None, note). A refusal is recorded, not fatal."""
+    if not mhz:
+        return None, None
+    from .hw import gpu as G
+    for t in targets:
+        ok, msg = G.smi(t.uuid, "-lgc", f"{int(mhz)},{int(mhz)}")
+        if not ok:
+            _unlock_clocks(targets)
+            print(f"WARNING: could not lock SM clocks at {int(mhz)} MHz ({msg}); running with clocks unlocked",
+                  file=sys.stderr, flush=True)
+            return None, f"lock at {int(mhz)} MHz refused: {msg}"
+    return int(mhz), None
+
+
+def _unlock_clocks(targets) -> None:
+    from .hw import gpu as G
+    for t in targets:
+        G.smi(t.uuid, "-rgc")
+
+
 def _hw_parts(a):
     """(reader, load, clock, n_gpu, to_stop, targets). On hardware every --gpus index (default: every GPU CUDA shows) is
     resolved to its physical GPU by UUID, so NVML reads the energy of the GPUs torch actually loads (hw/gpu.py)."""
@@ -290,6 +312,7 @@ def _hw_parts(a):
     reader = NvmlReader([t.nvml_index for t in targets])
     rehearsal = any(t.rehearsal for t in targets)
     p_max = float(reader.power_limit_w())          # this GPU's limit (a T4: 70 W), not an H100's 700 W
+    locked, lock_note = _lock_clocks(targets, getattr(a, "lock_clock_mhz", None))   # before sizing and idle
     kw = dict(dim=128, mem_elems=1 << 16, device="cpu") if rehearsal else {}
     if getattr(a, "dim", None):                     # given (tier0 passes hw-selftest's size on): used as is
         kw.update(dim=int(a.dim), auto_size=False)
@@ -298,11 +321,12 @@ def _hw_parts(a):
     load = TorchLoad([t.index for t in targets], p_max_w=p_max, **kw)
     idle = measure_idle_w(reader, len(targets), seconds=0.5 if rehearsal else 3.0, settle_s=0.2 if rehearsal else 2.0)
     load.p_idle = min(max(idle, 0.0), 0.9 * p_max)
+    load.locked_mhz, load.lock_note = locked, lock_note
     u = load.describe()
     print(f"unit of work: {u['dim']}x{u['dim']} {u['dtype']} GEMM + {u['mem_elems']}-element pass, "
           f"{1e3 * u['unit_s']:.1f} ms against a {1e3 * u['slot_s']:.0f} ms slot"
-          f"{'' if u['auto_sized'] else ' (size given)'}; power limit {p_max:.0f} W, idle {idle:.1f} W per GPU",
-          file=sys.stderr, flush=True)
+          f"{'' if u['auto_sized'] else ' (size given)'}; power limit {p_max:.0f} W, idle {idle:.1f} W per GPU"
+          + (f"; SM clocks locked at {locked} MHz" if locked else ""), file=sys.stderr, flush=True)
     if not u["fits_slot"]:
         print(f"WARNING: a unit takes longer than {1e3 * u['budget_s']:.0f} ms, so low load levels will run more work "
               "than they ask for; hw-selftest checks whether the levels still differ", file=sys.stderr, flush=True)
@@ -356,12 +380,17 @@ def cmd_hw_trial(a) -> int:
             cfg.p_max_w = float(load.p_max)         # unit of verified work is recorded with it in the pre-registration
             cfg.workload = {k: v for k, v in load.describe().items() if k != "tried"}
             cfg.workload["idle_w_measured"] = float(load.p_idle)
+            cfg.workload["locked_sm_mhz"] = getattr(load, "locked_mhz", None)
+            if getattr(load, "lock_note", None):
+                cfg.workload["clock_lock_note"] = load.lock_note
         src = HwSource(reader, load, dt=cfg.dt, n_gpu=n_gpu, p_max_w=cfg.p_max_w, seed=a.seed, **clock)
         hook = _pause_hook if a.pause_after_prereg else (_stamp_hook if getattr(a, "stamp_prereg", False) else None)
         res = run_trial(src, cfg, out, _signer(out), pause_hook=hook)
     finally:
         if to_stop is not None:
             to_stop.stop()
+        if getattr(load, "locked_mhz", None):
+            _unlock_clocks(targets)
     _print_headline(res)
     return 0
 
@@ -383,12 +412,15 @@ def cmd_hw_selftest(a) -> int:
     finally:
         if to_stop is not None:
             to_stop.stop()
+        if getattr(load, "locked_mhz", None):
+            _unlock_clocks(targets)
     unit = load.describe() if hasattr(load, "describe") else None
     out = report(rows, unit)
     out["gpus"] = [t.describe() for t in targets]
     if unit is not None:                            # tier0 passes this size on to hw-probe and hw-trial
         out["unit"] = unit
         out["power_limit_w"], out["idle_w_measured_at_start"] = float(load.p_max), float(load.p_idle)
+        out["locked_sm_mhz"] = getattr(load, "locked_mhz", None)
     if getattr(load, "errors", None):
         out["load_errors"] = list(load.errors)
     if any(t.rehearsal for t in targets):
@@ -419,9 +451,16 @@ def cmd_state_sim(a) -> int:
 
 def cmd_hw_state(a) -> int:
     """Residency test on real device memory: honest GPU-resident prover vs a prover that parks part of the
-    stream in host DRAM. Reports whether tier timing separates beyond jitter at this block size."""
+    stream in host DRAM. Reports whether tier timing separates beyond jitter at this block size.
+
+    Two things can let a parked block through: a challenge that samples no parked block (pure combinatorics, fixed by
+    the number of blocks per challenge) and a challenge that touches one but is not slow enough (the physics). The
+    challenge size is chosen so the first stays under 0.1%; the old default of 8 blocks could not reach the
+    registered 99% (docs/DEVIATIONS.md section 3). The result reports the two separately."""
     from . import state as S
     bb = a.block_mb << 20
+    a.k_given = bool(a.k)
+    a.k = a.k if a.k else S.challenge_size(a.blocks, a.park_frac, a.sampling_assurance)
     v = S.Verifier(n_blocks=a.blocks, block_bytes=bb)
     if a.mock:
         tier = S.TierModel(bw_slow=a.mock_slow_bw)
@@ -437,11 +476,18 @@ def cmd_hw_state(a) -> int:
     p = [S.run_challenge(v, parked, a.k, thr) for _ in range(a.trials)]
     fa = float(np.mean([not r["passed"] for r in h]))
     det = float(np.mean([not r["passed"] for r in p]))
+    parked_set = parked.parked()
+    touched = [r for r in p if any(i in parked_set for i in r["idx"])]
     out = {"status": "MOCK" if a.mock else "HARDWARE", "device": a.device, "block_mb": a.block_mb, "k": a.k,
-           "trials": a.trials, "park_frac": a.park_frac, "time_threshold_s": thr,
+           "k_chosen": "given" if a.k_given else f"for {a.sampling_assurance:.1%} sampling detection",
+           "blocks": a.blocks, "trials": a.trials, "park_frac": a.park_frac, "parked_blocks": len(parked_set),
+           "sampling_limit": S.sampling_limit(a.blocks, len(parked_set), a.k), "time_threshold_s": thr,
            "honest_median_s": float(np.median([r["elapsed_s"] for r in h])),
            "parked_median_s": float(np.median([r["elapsed_s"] for r in p])),
-           "honest_false_alarm": fa, "parked_detection": det, "digest_ok_honest": all(r["digest_ok"] for r in h),
+           "honest_false_alarm": fa, "parked_detection": det,
+           "challenges_touching_parked": len(touched),
+           "detected_when_touching_parked": (float(np.mean([not r["passed"] for r in touched])) if touched else None),
+           "digest_ok_honest": all(r["digest_ok"] for r in h),
            "pass": fa <= 0.01 and det >= 0.99}
     print(json.dumps(clean(out), indent=2))
     return 0 if out["pass"] else 1
@@ -809,6 +855,8 @@ def main(argv=None) -> int:
         s.add_argument("--dim", type=int, default=None,
                        help="GEMM size of one unit of work; default: halve from 8192 until a unit fits the 100 ms slot")
         s.add_argument("--mem-elems", type=int, default=None, help="elements in the memory-bound pass of one unit")
+        s.add_argument("--lock-clock-mhz", type=int, default=None,
+                       help="lock SM clocks at this MHz for the run and unlock after (tier0 picks it from probe.json)")
         if name == "hw-trial":
             s.add_argument("--probe", default=None, help="sealed probe.json from `closure hw-probe` (energy floor + slack)")
             s.add_argument("--stamp-prereg", action="store_true",
@@ -828,7 +876,10 @@ def main(argv=None) -> int:
     s.add_argument("--mock", action="store_true"); s.add_argument("--confirm-hardware", action="store_true")
     s.set_defaults(f=cmd_hw_probe)
     s = sp.add_parser("hw-state"); s.add_argument("--device", default="cuda:0"); s.add_argument("--blocks", type=int, default=32)
-    s.add_argument("--block-mb", type=int, default=64); s.add_argument("--k", type=int, default=8)
+    s.add_argument("--block-mb", type=int, default=64)
+    s.add_argument("--k", type=int, default=None, help="blocks per challenge; default: enough that sampling alone "
+                   "touches a parked block with probability --sampling-assurance (17 of 32 at 25%% parked)")
+    s.add_argument("--sampling-assurance", type=float, default=0.999)
     s.add_argument("--trials", type=int, default=200); s.add_argument("--park-frac", type=float, default=0.25)
     s.add_argument("--mock", action="store_true"); s.add_argument("--mock-slow-bw", type=float, default=2e9)
     s.set_defaults(f=cmd_hw_state)

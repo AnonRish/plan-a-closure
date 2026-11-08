@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.6.1
+
+After Colab T4 runs 2 and 3 (8 November 2026), which went through every step (`docs/DEVIATIONS.md` sections 2 and 3;
+run 3's bundle and a drift analysis in `results/shakedown-2026-11-08-colab-t4-run3/`).
+
+- **hw-state reaches its own target.** With 8 of 32 blocks parked, an 8-block challenge touches a parked block at
+  most 93.0% of the time, so the registered 99% was out of reach (run 3: 94.0%). The challenge size is now chosen
+  from the hypergeometric so that sampling alone reaches 99.9% (17 of 32 blocks), and the result reports the parked
+  count, the sampling limit, and detection among the challenges that touched a parked block. Criterion unchanged.
+- **The trial runs at one clock.** `hw-trial` and `hw-selftest` take `--lock-clock-mhz`, lock the SM clocks for the
+  run, record the lock in `prereg.json` and unlock afterwards. `closure tier0` picks the highest clock `probe.json`
+  shows the GPU holding at full load under its power limit (1110 MHz on run 3's T4), because run 3's unlocked energy
+  model drifted between calibration and audit. Pre-registration amendment v0.4.
+- **The notebook survives a restarted session.** The summary, download and mock-run cells find the newest run folder
+  when the session has forgotten it (run 2's bundle was lost this way), and the notebook says to download straight
+  away.
+
 ## 0.6.0
 
 Treaty mechanisms: what the halt and treaty proposals need from verification, made concrete enough to compute, test or

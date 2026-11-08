@@ -1,0 +1,10 @@
+$ /usr/bin/python3 -m closure.cli hw-trial --profile smoke --gpus 0 --out runs/tier0-20261108-155308/T1-smoke --stamp-prereg --confirm-hardware --dim 4096 --mem-elems 268435456 --probe runs/tier0-20261108-155308/probe.json
+
+GPU: cuda:0 = NVML index 0 (GPU-7174a006-6864-a619-70b7-36781e48e9e1), matched by uuid
+unit of work: 4096x4096 float16 GEMM + 268435456-element pass, 9.0 ms against a 100 ms slot (size given); power limit 70 W, idle 29.3 W per GPU
+note: signing_key.bin in the run directory is the PRIVATE signing key: never publish it (.gitignore excludes it; a hand-made zip would not)
+PRE-REGISTRATION WRITTEN: runs/tier0-20261108-155308/T1-smoke/prereg.json
+  sha256(canonical) = f133a5de282fb059e5433376031d2475bf00ba0b924b3a6cc111c53e01570ea4
+  `ots` not found: prereg.json was not externally timestamped (its hash is in the chain and in this log)
+status=HARDWARE (NVML energy counter; spoofable)  FPR=3/23 (95% upper 0.3036)  closure_gap=0.31622776601683794  coverage=0.9666666666666667
+slack_inflated_gap=0.3984  (s_max=0.1352; measured by hw-probe (HARDWARE-PROBE (NVML energy counter; spoofable)), sha256 e07769d9946f59ec)

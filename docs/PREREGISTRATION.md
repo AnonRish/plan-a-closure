@@ -1,4 +1,4 @@
-# Pre-registration v0.3 (freeze and timestamp BEFORE any audit data exist)
+# Pre-registration v0.4 (freeze and timestamp BEFORE any audit data exist)
 
 Freeze procedure: commit this file and the analysis code; timestamp this file (`ots stamp docs/PREREGISTRATION.md`); run
 `closure hw-probe` first (section 3, H1.6 and H1.7); record the git commit and a hash of the package source in the run's
@@ -23,6 +23,17 @@ do different work: the units at 25% load must be under 80% of the units at 100% 
 8192 x 8192 bf16 unit took about 0.54 s, so every load level ran flat out and the self-test could test nothing; and with
 a fixed 700 W capacity, a T4 trial would have labelled each hidden load with about 15 times the energy injected. The
 r2 > 0.9 threshold and the analysis are unchanged.
+
+v0.4 (8 November 2026), made before any registered (Tier 1) data existed, after three Colab T4 shakedowns
+([DEVIATIONS.md](DEVIATIONS.md) sections 2 and 3). (a) `hw-state` chooses its challenge size so that random sampling
+alone touches a parked block with probability at least 99.9% (17 of 32 blocks when a quarter are parked), and reports
+detection among the challenges that touched a parked block separately. Reason: at the old default of 8 blocks, no
+test could exceed 93.0%, so the registered 99% was out of reach (run 3: 94.0%). The criterion (false alarms <= 1%,
+detection >= 99%) is unchanged. (b) `closure tier0` locks the trial's SM clocks at the highest clock the probe saw the
+GPU hold at full load under its power limit, and records it in `prereg.json` (`cfg.workload.locked_sm_mhz`). Reason:
+run 3's unlocked T4 drifted between calibration and audit (energy per unit of work +46% at mid load, idle power
+-2.4 W), giving 3 false alarms in 23 null blocks; assumption A2 asks for the same clocks. The slack the probe measures
+is still against its unlocked reference, which overstates it if anything. The analysis is unchanged.
 
 ## 1. Definitions
 

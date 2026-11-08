@@ -1,0 +1,122 @@
+{
+  "calibration_minutes": [
+    0.0,
+    30.235503633817036
+  ],
+  "audit_minutes": [
+    30.252782209714255,
+    60.47348981698354
+  ],
+  "idle_power_w_by_20_min": {
+    "0-20": 29.78603614457842,
+    "20-40": 29.066285714285755,
+    "40-60": 27.3790000000004
+  },
+  "mid_load_energy_per_unit_by_half_hour": {
+    "0-30": {
+      "windows": 518,
+      "j_per_unit": 0.3794136114488239,
+      "intercept_j": 29.379437252531172
+    },
+    "30-60": {
+      "windows": 621,
+      "j_per_unit": 0.5537643257871416,
+      "intercept_j": 22.25016894465619
+    }
+  },
+  "full_load_by_10_min": {
+    "0-10": {
+      "windows": 360,
+      "units_per_window": 102.275,
+      "energy_j": 67.2089500000001,
+      "units_per_busy_second": 111.20128144780286
+    },
+    "10-20": {
+      "windows": 316,
+      "units_per_window": 97.71518987341773,
+      "energy_j": 66.48053797468337,
+      "units_per_busy_second": 113.62699490523586
+    },
+    "20-30": {
+      "windows": 258,
+      "units_per_window": 103.0077519379845,
+      "energy_j": 67.65744186046521,
+      "units_per_busy_second": 110.71742928040942
+    },
+    "30-40": {
+      "windows": 30,
+      "units_per_window": 106.6,
+      "energy_j": 68.78679999999973,
+      "units_per_busy_second": 107.75522518005779
+    },
+    "40-50": {
+      "windows": 165,
+      "units_per_window": 99.23636363636363,
+      "energy_j": 66.87310909090888,
+      "units_per_busy_second": 118.89039758931484
+    },
+    "50-60": {
+      "windows": 48,
+      "units_per_window": 91.8125,
+      "energy_j": 65.85214583333557,
+      "units_per_busy_second": 120.4620596286187
+    }
+  },
+  "block_residuals_j": {
+    "calibration": {
+      "blocks": 60,
+      "mean": 0.006628900829673986,
+      "sd": 27.703280961191957,
+      "skew": 1.2895977969045365
+    },
+    "audit_without_hidden_energy": {
+      "blocks": 30,
+      "mean": -35.97235287616467,
+      "sd": 85.32765344648675,
+      "mean_first_half": -5.148333030859026,
+      "mean_second_half": -66.79637272147032
+    }
+  },
+  "probe_reference_sm_mhz_by_level": {
+    "0.0": 585.0,
+    "0.25": 585.0,
+    "0.5": 1095.0,
+    "0.9": 1057.5
+  },
+  "probe_locked_clocks_at_top_level": {
+    "clock-1575MHz": {
+      "sm_mhz": 1125.0,
+      "power_w": 65.76177193620062,
+      "feasible": true
+    },
+    "clock-1335MHz": {
+      "sm_mhz": 975.0,
+      "power_w": 65.59367679272408,
+      "feasible": true
+    },
+    "clock-1110MHz": {
+      "sm_mhz": 1110.0,
+      "power_w": 65.16330412781025,
+      "feasible": true
+    },
+    "clock-870MHz": {
+      "sm_mhz": 870.0,
+      "power_w": 63.098251456039684,
+      "feasible": true
+    },
+    "clock-645MHz": {
+      "sm_mhz": 645.0,
+      "power_w": 60.23279838705276,
+      "feasible": true
+    },
+    "clock-405MHz": {
+      "sm_mhz": 405.0,
+      "power_w": 55.3894571866774,
+      "feasible": false
+    }
+  },
+  "tier0_would_lock_the_trial_at": [
+    "--lock-clock-mhz",
+    "1110"
+  ]
+}

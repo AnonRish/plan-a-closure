@@ -6,6 +6,7 @@ state parked in a slower tier shows up as time. Verifier needs no storage: it re
 from __future__ import annotations
 
 import hashlib
+import math
 import os
 import secrets
 import time
@@ -86,6 +87,10 @@ class Prover:
         n_slow = sum(1 for i in idx if i in self.slow)
         return total, self.tier.time(len(idx) - n_slow, n_slow, self.bb, self.rng)
 
+    def parked(self) -> set:
+        """Blocks kept in the slow tier (known to the test harness, never to the verifier)."""
+        return set(self.slow)
+
 
 class DropProver(Prover):
     """Keeps hidden state by *not storing* a fraction f of the stream (zeros instead)."""
@@ -129,7 +134,23 @@ def run_challenge(verifier: Verifier, prover, k: int, t_thr: float) -> dict:
     idx, dkey = verifier.new_challenge(k)
     d, t = prover.answer(idx, verifier.digest_key(dkey))
     ok_d = d == verifier.expected(idx, dkey)
-    return {"digest_ok": ok_d, "time_ok": t <= t_thr, "elapsed_s": t, "passed": ok_d and t <= t_thr}
+    return {"digest_ok": ok_d, "time_ok": t <= t_thr, "elapsed_s": t, "passed": ok_d and t <= t_thr, "idx": list(idx)}
+
+
+def challenge_size(n_blocks: int, park_frac: float, assurance: float = 0.999) -> int:
+    """Blocks per challenge so that a uniform sample of them touches at least one parked block with probability
+    >= assurance, when ceil(park_frac x n_blocks) of the n_blocks are parked (hypergeometric; ledger.audit_sample_size).
+    With 8 of 32 parked, 8 blocks per challenge touch one at most 93.0% of the time and 17 do 99.94% of the time."""
+    from .ledger import audit_sample_size
+    parked = max(1, math.ceil(float(park_frac) * int(n_blocks) - 1e-9))
+    return int(audit_sample_size(int(n_blocks), parked, float(assurance)))
+
+
+def sampling_limit(n_blocks: int, n_parked: int, k: int) -> float:
+    """The most a challenge of k uniform blocks can detect: P(it touches at least one of n_parked parked blocks)."""
+    if n_parked <= 0:
+        return 0.0
+    return 1.0 - math.comb(int(n_blocks) - int(n_parked), int(k)) / math.comb(int(n_blocks), int(k))
 
 
 def p_detect_digest(f_dropped: float, k: int) -> float:
@@ -150,6 +171,11 @@ class TorchProver:
     def receive(self, i: int, data: bytes):
         t = self.torch.frombuffer(bytearray(data), dtype=self.torch.uint8)
         self.blocks[i] = t if self.rng.random() < self.park_frac else t.to(self.device)
+
+    def parked(self) -> set:
+        """Blocks left in host memory (known to the test harness, never to the verifier)."""
+        dev = str(self.torch.device(self.device))
+        return {i for i, b in self.blocks.items() if str(b.device) != dev}
 
     def answer(self, idx, K: np.ndarray):
         torch = self.torch

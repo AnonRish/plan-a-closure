@@ -1,0 +1,22 @@
+plan-a-closure 0.6.0 tier0 (HARDWARE) -> runs/tier0-20261108-071101
+GPU: cuda:0 = NVML index 0 (GPU-c9928662-06ab-1210-f4b5-093998576a82), matched by uuid; power limit at start: 70 W
+[1] unit-tests: unit tests (log: runs/tier0-20261108-071101/logs/01-unit-tests.log)
+    exit 0 after 10.7 min
+[2] selftest: simulated end-to-end self-test (log: runs/tier0-20261108-071101/logs/02-selftest.log)
+    exit 0 after 0.1 min
+[3] preflight: NVML, energy counter, torch, clock sync, which physical GPU (log: runs/tier0-20261108-071101/logs/03-preflight.log)
+    exit 0 after 0.0 min
+[4] hw-selftest: energy tracks verified work on this GPU (log: runs/tier0-20261108-071101/logs/04-hw-selftest.log)
+    exit 0 after 2.7 min
+[5] hw-probe: efficiency slack and energy floor (log: runs/tier0-20261108-071101/logs/05-hw-probe.log)
+    exit 0 after 34.8 min
+[6] hw-state: device-memory residency (log: runs/tier0-20261108-071101/logs/06-hw-state.log)
+    exit 1 after 8.6 min
+[7] hw-trial: smoke trial with blind hidden-load injection (log: runs/tier0-20261108-071101/logs/07-hw-trial.log)
+    exit 0 after 60.6 min
+[8] verify: evidence chain, signature, commitments (log: runs/tier0-20261108-071101/logs/08-verify.log)
+    exit 0 after 0.0 min
+[9] hw-restore: clocks unlocked, power limit as found (log: runs/tier0-20261108-071101/logs/09-hw-restore.log)
+    exit 0 after 0.0 min
+wrote runs/tier0-20261108-071101/SUMMARY.md
+wrote runs/tier0-20261108-071101/tier0_bundle.tar.gz (sha256 eb9dbb7873036e691d853ab86d66974d23182f086f2fbacec4aaa1ea0e7cdf80): send this file back. signing_key.bin was left out on purpose; keep it private.
