@@ -82,6 +82,22 @@ def _trial_clock_args(probe_path: Path) -> list:
     return ["--lock-clock-mhz", str(int(round(best)))] if best else []
 
 
+def provenance() -> str:
+    """Which code ran: the git commit of the checkout this package was imported from, and whether tracked files differ
+    from it. A version number alone does not pin the code; a commit does."""
+    root = Path(__file__).resolve().parents[2]
+    try:
+        h = subprocess.run(["git", "-C", str(root), "rev-parse", "--short=12", "HEAD"], capture_output=True,
+                           text=True, timeout=15)
+        if h.returncode != 0:
+            return "not a git checkout"
+        d = subprocess.run(["git", "-C", str(root), "status", "--porcelain", "--untracked-files=no"],
+                           capture_output=True, text=True, timeout=15)
+        return f"commit {h.stdout.strip()}, {'clean' if d.returncode == 0 and not d.stdout.strip() else 'modified'}"
+    except (OSError, subprocess.TimeoutExpired):
+        return "git unavailable"
+
+
 def _unit_args(selftest_output: str) -> list:
     """`--dim N --mem-elems M` from the unit hw-selftest printed, so hw-probe and hw-trial measure the same unit of work
     (on a small GPU the unit is sized down from 8192; see hw/workloads.py). Empty when it printed none (mock runs)."""
@@ -163,7 +179,7 @@ def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, ech
     logs.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "CLOSURE_TIER0_INNER": "1", "PYTHONUNBUFFERED": "1"}
     started, results, stopped = _now(), [], None
-    echo(f"plan-a-closure {__version__} tier0 ({'MOCK: fake hardware' if mock else 'HARDWARE'}) -> {out}")
+    echo(f"plan-a-closure {__version__} ({provenance()}) tier0 ({'MOCK: fake hardware' if mock else 'HARDWARE'}) -> {out}")
     target, start_w = (None, None) if mock else _gpu_at_start(gpu, echo)
     steps = plan(out, gpu, mock, run_tests, rehearsal=bool(target is not None and target.rehearsal))
     if not mock:                                      # always last, even after a failure or a signal: the GPU as found
@@ -259,7 +275,7 @@ def _step_output(out: Path, results: list, key: str) -> str:
 
 def summary(out: Path, results: list, mock: bool, started: str, stopped, rehearsal: bool = False) -> str:
     L = ["# Tier 0 pilot: summary", "",
-         f"- plan-a-closure {__version__}; mode: "
+         f"- plan-a-closure {__version__} ({provenance()}); mode: "
          + ("MOCK (fake hardware: a rehearsal, no physical claim)" if mock else
             "REHEARSAL (CPU torch against a fake NVML: no physical claim)" if rehearsal else "HARDWARE"),
          f"- started {started}, finished {_now()}; host {platform.platform()}, Python {platform.python_version()}",
@@ -307,6 +323,16 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
               f"- closure gap {_fmt(res.get('closure_gap_fraction'))} of capacity energy; slack-inflated gap "
               f"{_fmt(sl.get('slack_inflated_gap_fraction'))}",
               "- the smoke profile checks the pipeline; the registered numbers come from the Tier 1 run (`hw-full`)"]
+        wl = ((_read(out / "T1-smoke" / "prereg.json") or {}).get("cfg") or {}).get("workload") or {}
+        if wl:
+            L.append(f"- SM clocks: {'locked at ' + str(wl['locked_sm_mhz']) + ' MHz' if wl.get('locked_sm_mhz') else 'not locked'}"
+                     + (f" ({wl['clock_lock_note']})" if wl.get("clock_lock_note") else ""))
+        try:
+            from .drift import report, summary_lines
+            L += ["", "## Calibration drift (assumption A2; a diagnostic, not a criterion)", ""]
+            L += summary_lines(report(out / "T1-smoke"))
+        except (OSError, KeyError, ValueError) as e:
+            L.append(f"- drift report unavailable ({type(e).__name__}: {e})")
     ver = _json_in(_step_output(out, results, "verify"))
     if ver:
         L += ["", "## Verification", "", "- " + ", ".join(f"{k}: {v}" for k, v in ver.items())]

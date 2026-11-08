@@ -98,7 +98,9 @@ residency timing and the blind smoke trial on a real device.
 
 - **Colab:** open `notebooks/tier0_colab.ipynb` in Google Colab
   ([direct link](https://colab.research.google.com/github/AnonRish/plan-a-closure/blob/main/notebooks/tier0_colab.ipynb)),
-  choose a GPU runtime and run the cells (about two hours; keep the tab open).
+  choose a T4 runtime and use Runtime > Run all (about 2 hours 20 minutes; keep the tab open). One cell runs Tier 0
+  and the mock training run, then saves the results to Google Drive (if you allow it in the first cell) and downloads
+  them, so a session dropped after the run cannot lose them.
 - **A cloud VM with one GPU and a root shell:** the commands under "Run it" above, unchanged.
 
 Such a run is an engineering shakedown on a non-target device: inside a VM, without an independent meter (assumption A6
@@ -114,9 +116,9 @@ at the top of the `hw-selftest` log: on a T4 expect about 4096 x 4096 float16 an
 
 Runs 2 and 3 (0.6.0) went through every step ([DEVIATIONS.md](DEVIATIONS.md) sections 2 and 3). Since 0.6.1,
 `hw-state` sizes its challenges so its 99% target is reachable, and `hw-trial` runs with SM clocks locked at the
-highest clock `probe.json` shows the GPU holding at full load (on a T4 about 1110 MHz; the run log says which). Run the
-summary and download cells as soon as the run ends: Colab drops idle sessions, and later replaces the machine and
-its files.
+highest clock `probe.json` shows the GPU holding at full load (on a T4 about 1110 MHz; the run log says which). Since
+0.6.2 `SUMMARY.md` also names the commit that ran and reports whether the energy model drifted between calibration
+and audit (`closure drift --run <trial folder>`), and the notebook saves and downloads in the same cell as the run.
 
 ## What it does not claim
 

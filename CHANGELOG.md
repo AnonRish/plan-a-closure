@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.2
+
+- **The notebook cannot lose a run.** `notebooks/tier0_colab.ipynb` runs with Runtime > Run all. One cell runs Tier 0,
+  then the mock training run, then copies the bundle, `SUMMARY.md` and `drill.json` to Google Drive (optional) and
+  downloads them. Nothing waits on a later cell that a dropped session could break, as run 2's download did. The
+  setup cell fails fast without a GPU, checks out an exact ref (`REF`, `main` by default), prints the commit, and sets
+  persistence mode. `tests/test_notebook.py` checks this structure.
+- **Which code ran.** `closure tier0` prints the git commit it runs from (and whether tracked files differ) and puts it
+  in `SUMMARY.md`; a version number alone does not pin the code.
+- **Drift is reported.** `closure drift --run <trial folder>` compares audit blocks without hidden energy with the
+  calibration blocks (mean shift, spread, idle power, energy per unit), and `SUMMARY.md` shows it with the trial's SM
+  clock. It is a diagnostic of assumption A2, not a criterion; on run 3 it flags the drift found by hand
+  (shift -1.30 calibration SDs, spread 3.08x).
+
 ## 0.6.1
 
 After Colab T4 runs 2 and 3 (8 November 2026), which went through every step (`docs/DEVIATIONS.md` sections 2 and 3;

@@ -21,6 +21,10 @@ def test_tier0_mock_runs_every_step_and_bundles_everything_but_the_private_key(t
     pre = json.loads((out / "T1-smoke" / "prereg.json").read_text())
     assert pre["cfg"]["probe_sha256"] == json.loads((out / "probe.json").read_text())["sha256"]
     assert "--confirm-hardware" not in (out / "logs" / "06-hw-trial.log").read_text().splitlines()[0]
+    assert "## Calibration drift (assumption A2" in summary and "drift suspected:" in summary
+    from closure.tier0 import provenance
+    line = summary.splitlines()[2]
+    assert f"({provenance()})" in line and (provenance().startswith("commit ") or "git" in provenance())
 
 
 def test_tier0_refuses_without_confirmation_and_into_a_used_directory(tmp_path):
