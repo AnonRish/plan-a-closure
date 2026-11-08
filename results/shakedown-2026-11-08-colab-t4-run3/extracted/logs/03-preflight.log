@@ -1,0 +1,24 @@
+$ /usr/bin/python3 -m closure.cli preflight --gpu 0
+
+PASS  python  3.13.16
+PASS  import numpy  
+PASS  import cryptography  
+PASS  pynvml/NVML init  driver 580.82.07
+PASS  GPU count>0  1
+PASS  torch.cuda available  2.14.1+cu130
+PASS  GPU identity (--gpu 0)  cuda:0 = NVML index 0 (GPU-7174a006-6864-a619-70b7-36781e48e9e1), matched by uuid
+PASS  energy counter readable  27463197 mJ
+WARN  NTP synchronised  System has not been booted with systemd as init system (PID 1). Can't operate.
+Failed to connect to bus: Host is down
+PASS  running as root  
+SKIP  MIG disabled  NVMLError_NotSupported: Not Supported
+WARN  persistence mode on  run `nvidia-smi -pm 1` as root
+PASS  no other compute processes on GPU 0  
+PASS  supported SM clocks listed  87 clocks, 300-1590 MHz
+PASS  power-limit range  60-70 W
+PASS  GPU model  Tesla T4, compute capability 7.5
+PASS  int8 GEMM (torch._int_mm)  
+WARN  fp8 GEMM (torch._scaled_mm, compute capability 8.9+)  the fp8 floor variant will be dropped
+PASS  free GPU memory >= 8 GB  15.5 of 15.6 GB free
+WARN  tcpdump present  install for TAP capture
+SKIP  capture interface  set CLOSURE_IFACE=<tap-nic> to check

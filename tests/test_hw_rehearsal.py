@@ -198,3 +198,16 @@ def test_the_mock_training_run_takes_its_meter_from_the_resolved_gpu(tmp_path):
     d = json.loads((tmp_path / "mr" / "drill.json").read_text())
     assert d["meter"] == "NVML energy counter" and d["device"] == "cpu" and UUID0 in r.stderr   # rehearsal: CPU torch
     assert d["energy_at_stop_j"] is not None and d["compliant"] is (d["job_flop_at_most"] <= d["budget_flop"])
+
+
+def test_a_trial_can_lock_sm_clocks_and_records_and_releases_the_lock(tmp_path):
+    env = _env(tmp_path)
+    out = tmp_path / "T1"
+    r = _closure(env, "hw-trial", "--profile", "rehearsal", "--gpus", "0", "--out", str(out), "--confirm-hardware",
+                 "--lock-clock-mhz", "1110")
+    assert r.returncode == 0, r.stdout[-2000:] + r.stderr[-2000:]
+    assert "SM clocks locked at 1110 MHz" in r.stderr
+    assert json.loads((out / "prereg.json").read_text())["cfg"]["workload"]["locked_sm_mhz"] == 1110
+    log = (tmp_path / "smi.log").read_text()
+    assert "-lgc 1110,1110" in log and log.rstrip().splitlines()[-1].endswith("-rgc")   # unlocked at the end
+    assert _gpu(tmp_path)["clock"] is None

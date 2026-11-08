@@ -1,0 +1,17 @@
+$ /usr/bin/python3 -m closure.cli hw-state --device cuda:0
+
+{
+  "status": "HARDWARE",
+  "device": "cuda:0",
+  "block_mb": 64,
+  "k": 8,
+  "trials": 200,
+  "park_frac": 0.25,
+  "time_threshold_s": 0.03712117182059005,
+  "honest_median_s": 0.025720948500065788,
+  "parked_median_s": 0.055003525999381964,
+  "honest_false_alarm": 0.0,
+  "parked_detection": 0.94,
+  "digest_ok_honest": true,
+  "pass": false
+}

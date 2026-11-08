@@ -70,6 +70,19 @@ def test_dcbus_analyze_recovers_clock_skew_and_reanalyses(tmp_path, capsys):
     assert res["status"].startswith("HARDWARE+DCBUS")
 
 
+def test_hw_state_old_challenge_size_was_sampling_limited_and_the_default_now_reaches_99_percent(capsys):
+    # Run 3 on a Colab T4 (docs/DEVIATIONS.md section 3): k = 8 with 8 of 32 blocks parked detected 94.0%, under
+    # the registered 99%. No 8-block challenge can do better than 93.0% there: the misses sample no parked block.
+    assert main(["hw-state", "--mock", "--block-mb", "1", "--k", "8", "--trials", "200"]) == 1
+    old = json.loads(capsys.readouterr().out)
+    assert old["parked_blocks"] == 8 and abs(old["sampling_limit"] - 0.9301) < 1e-4
+    assert old["detected_when_touching_parked"] == 1.0 and old["parked_detection"] < 0.99
+    assert main(["hw-state", "--mock", "--block-mb", "1", "--trials", "200"]) == 0
+    new = json.loads(capsys.readouterr().out)
+    assert new["k"] == 17 and new["sampling_limit"] > 0.999 and new["parked_detection"] >= 0.99
+    assert new["k_chosen"].startswith("for 99.9%") and new["honest_false_alarm"] <= 0.01
+
+
 def test_hw_state_mock_separates_parked_from_resident(capsys):
     assert main(["hw-state", "--mock", "--block-mb", "1", "--blocks", "32", "--k", "16", "--trials", "60",
                  "--park-frac", "0.3"]) == 0

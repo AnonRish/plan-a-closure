@@ -9,8 +9,10 @@ hardware, never waits for keyboard input, and leaves one bundle to send back. St
   hw-selftest   does energy track verified work on this GPU (r2 > 0.9), and do the load levels do different work?
                 its unit of work, sized to the GPU, is passed on to hw-probe and hw-trial (stops the run on failure)
   hw-probe      efficiency slack over clocks, caps, precisions and operands; the energy floor, int8 and fp8 included
-  hw-state      device-memory residency: blocks parked in host memory are caught by time
-  hw-trial      smoke T1 (30 min reference, 30 min blind audit with hidden-load injection), the probe bound into the
+  hw-state      device-memory residency: blocks parked in host memory are caught by time (challenge size
+                chosen so sampling alone touches a parked block 99.9% of the time)
+  hw-trial      smoke T1 (30 min reference, 30 min blind audit with hidden-load injection) with SM clocks locked at
+                the highest clock the probe saw held at full load, the probe bound into the
                 pre-registration, prereg.json stamped with `ots` if installed before any audit data exist
   verify        hash chain, signature, schedule commitment, prereg, results and probe hashes
 
@@ -53,6 +55,31 @@ def _json_in(text: str):
         return json.loads(text[i:j + 1])
     except ValueError:
         return None
+
+
+def _trial_clock_args(probe_path: Path) -> list:
+    """`--lock-clock-mhz N`: the highest SM clock the probe saw this GPU hold at its top load level under its power
+    limit (within 2% of the lock, at most 95% of the limit), so the trial calibrates and audits at one clock
+    (assumption A2). Run 3 on a Colab T4 drifted without it (docs/DEVIATIONS.md section 3). Empty for a rehearsal or
+    mock probe, or when no locked clock held."""
+    pr = _read(Path(probe_path))
+    if not pr or not str(pr.get("status", "")).startswith("HARDWARE"):
+        return []
+    rig = pr.get("rig") or {}
+    cap = rig.get("start_power_limit_w") or rig.get("default_power_limit_w")
+    best = None
+    for v in pr.get("variants", []):
+        if v.get("kind") != "clock_cap" or not v.get("allowed") or v.get("value") is None:
+            continue
+        f = float(v["value"])
+        top = max(v.get("levels", []), key=lambda lv: lv.get("level", 0.0), default=None)
+        if not top or not top.get("feasible") or top.get("sm_mhz") is None or top.get("power_w_mean") is None:
+            continue
+        held = abs(float(top["sm_mhz"]) - f) <= 0.02 * f
+        under = cap is None or float(top["power_w_mean"]) <= 0.95 * float(cap)
+        if held and under and (best is None or f > best):
+            best = f
+    return ["--lock-clock-mhz", str(int(round(best)))] if best else []
 
 
 def _unit_args(selftest_output: str) -> list:
@@ -175,6 +202,12 @@ def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, ech
                 continue
             if key in ("hw-probe", "hw-trial") and unit_args and "--dim" not in argv:
                 argv = argv + unit_args
+            if key == "hw-trial" and "--lock-clock-mhz" not in argv:
+                clock_args = _trial_clock_args(out / "probe.json")
+                if clock_args:
+                    echo(f"    hw-trial locks SM clocks at {clock_args[1]} MHz, the highest clock probe.json shows "
+                         "this GPU holding at full load")
+                argv = argv + clock_args
             if key == "hw-trial" and (out / "probe.json").exists():
                 argv = argv + ["--probe", str(out / "probe.json")]
             lf = logs / f"{i:02d}-{key}.log"

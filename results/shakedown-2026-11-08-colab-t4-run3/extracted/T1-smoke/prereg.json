@@ -1,0 +1,58 @@
+{
+  "analysis": "closure.trial.analyze (alpha/2 Bonferroni for combined)",
+  "assumptions": [
+    "A1 additivity: hidden work adds energy/busy-time on top of verified work (no free lunch from sharing).",
+    "A2 exchangeability: calibration and audit blocks come from the same regime mix (same stack, clocks, cooling, firmware).",
+    "A3 approximate normality of block residual sums, checked by the Jarque-Bera diagnostic stored with the calibration.",
+    "A4 no efficiency slack: the adversary is no more energy-efficient than the calibration reference (the 'slack' class tests this and is expected to evade).",
+    "A5 the verified-work features are trustworthy (they come from the tap/recompute evidence, not from the prover).",
+    "A6 the power meter is independent of the prover (DC-bus instrument); NVML-only runs are labelled as spoofable."
+  ],
+  "calibration_head": "8748070e2c31cc4b0f0f4514638a7c159f0de1d93c25afe5eb347ca350320ae9",
+  "cfg": {
+    "L": 30,
+    "alpha": 0.01,
+    "beta": 0.05,
+    "classes": [
+      "constant",
+      "idle_gap",
+      "duty",
+      "dilute"
+    ],
+    "dt": 1.0,
+    "e_floor_j_per_flop": 2.0390430681250967e-12,
+    "e_floor_source": "measured by hw-probe (HARDWARE-PROBE (NVML energy counter; spoofable)), sha256 e07769d9946f59ec",
+    "intensities": [
+      0.05,
+      0.2
+    ],
+    "n_audit_blocks": 60,
+    "n_gpu": 1,
+    "n_ref_blocks": 60,
+    "n_regimes": 1,
+    "p_hidden": 0.5,
+    "p_max_w": 70.0,
+    "probe_sha256": "e07769d9946f59ec2657d65f4f7a1aa2c5fc9fd99e2801c3d67c51e7cf9319b5",
+    "seed": 1,
+    "slack_s_max": 0.13524119165020387,
+    "slack_source": "measured by hw-probe (HARDWARE-PROBE (NVML energy counter; spoofable)), sha256 e07769d9946f59ec",
+    "status": "HARDWARE (NVML energy counter; spoofable)",
+    "workload": {
+      "auto_sized": false,
+      "budget_s": 0.020000000000000004,
+      "dim": 4096,
+      "dtype": "float16",
+      "fits_slot": true,
+      "idle_w_measured": 29.25768022188973,
+      "mem_elems": 268435456,
+      "slot_s": 0.1,
+      "unit_s": 0.008958075999544235
+    }
+  },
+  "code": {
+    "git_commit": "60a2d38d3c83546456d609cc4e8c23020eeb271c",
+    "package": "0.6.0",
+    "src_sha256": "c712914ca345f847b52dcaf6cffa64f1f03d8a41a539a7052fd972bba1d6ea02"
+  },
+  "schedule_commitment": "70056e0c6285e881e9c94e58afc4ae0f31513f39ed4aa7d4a40ac53430031e8f"
+}

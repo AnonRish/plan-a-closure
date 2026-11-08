@@ -112,6 +112,12 @@ unit is sized to the GPU and runs in fp16 on GPUs older than compute capability 
 limit, and `hw-selftest` checks that the load levels do different work. On a small GPU, look at the `unit of work:` line
 at the top of the `hw-selftest` log: on a T4 expect about 4096 x 4096 float16 and a few milliseconds per unit.
 
+Runs 2 and 3 (0.6.0) went through every step ([DEVIATIONS.md](DEVIATIONS.md) sections 2 and 3). Since 0.6.1,
+`hw-state` sizes its challenges so its 99% target is reachable, and `hw-trial` runs with SM clocks locked at the
+highest clock `probe.json` shows the GPU holding at full load (on a T4 about 1110 MHz; the run log says which). Run the
+summary and download cells as soon as the run ends: Colab drops idle sessions, and later replaces the machine and
+its files.
+
 ## What it does not claim
 
 Tier 0 checks that the pipeline, the probe and the meter alignment work on this device. Its smoke trial has small samples.

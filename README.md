@@ -7,14 +7,15 @@
 Every joule, packet byte and byte of memory on an enrolled cluster must be *explained* by verified work.
 What is left over (the residual) upper-bounds hidden compute, hidden exfiltration and hidden persistent state.
 
-> **Status: v0.6.0, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
-> (273 tests, `pytest`, plus 21 that run the torch code on CPU where torch is installed, 9 of them rehearsing the
+> **Status: v0.6.1, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
+> (275 tests, `pytest`, plus 22 that run the torch code on CPU where torch is installed, 10 of them rehearsing the
 > whole GPU path against a fake NVML and nvidia-smi). The 13 vendored repositories
 > under `external/` add their own suites (2,708 tests passed here, `closure external test`). **No physical claim is
-> demonstrated yet.** The first run on real hardware, a Colab T4 shakedown on 8 November 2026, stopped at
-> `hw-selftest` because the unit of work was sized for an H100; that is fixed in 0.5.5, and the run, its bundle and a
-> model that reproduces the failure are in [docs/DEVIATIONS.md](docs/DEVIATIONS.md). Each claim is decided by the
-> pre-registered trial in
+> demonstrated yet.** Three shakedown runs on Colab T4s (8 November 2026, NVML only) are in
+> [docs/DEVIATIONS.md](docs/DEVIATIONS.md): the first stopped at `hw-selftest` (a unit of work sized for an H100, fixed
+> in 0.5.5); the second and third went through every step. Run 3 had energy tracking verified work at r2 = 0.94 and
+> the probe measuring slack and the energy floor, and found two problems fixed in 0.6.1: the residency test's challenge
+> size, and an energy model that drifted on an unlocked GPU. Each claim is decided by the pre-registered trial in
 > [docs/PREREGISTRATION.md](docs/PREREGISTRATION.md) on instrumented hardware (Amodo's Side Channel Cloud, the
 > Verifiable Compute Foundation cluster). A report whose status says `SIMULATED` validates the estimators only. The
 > one-GPU pilot is one unattended command, `closure tier0` ([operator guide](docs/OPERATOR_TIER0.md)).
@@ -193,7 +194,7 @@ covered. `gemm_audit.py` is a design-time screen, not the physical audit the pap
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"                # Python 3.10 or newer
-pytest                                  # 273 tests (294 with torch installed)
+pytest                                  # 275 tests (297 with torch installed)
 closure selftest                        # end-to-end simulated trial, PASS/FAIL
 closure tier0 --mock --out runs/tier0   # the whole one-GPU pilot on fake hardware: logs, SUMMARY.md, bundle
 closure redteam                         # gateway sampling + recomputation against substituted models (toy model)
