@@ -15,7 +15,7 @@ The whole pilot is one command. It needs no meeting and never waits for keyboard
 | `hw-selftest` | the GPU's energy tracks the verified work (r2 > 0.9) and the load levels do different work; sizes the unit of work to the GPU and passes it on to `hw-probe` and `hw-trial` | about 3 min |
 | `hw-probe` | efficiency slack over clock caps, power caps, precisions (tf32, fp16, int8, fp8) and activation patterns; the lowest joules per FLOP | about 40 min |
 | `hw-state` | device memory holds the verifier's data; blocks moved to host memory are caught by timing | a few minutes |
-| `hw-trial` | 30 min reference and a 30 min blind audit with synthetic hidden load injected on the same GPU | about 1 h |
+| `hw-trial` | 30 min reference and a 30 min blind audit with synthetic hidden load injected on the same GPU (`--trial-profile long`: reference blocks interleaved with a balanced blind audit, enough to read the registered decision rules) | about 1 h (long: about 9 h) |
 | `verify` | hash chain, Ed25519 signature, schedule commitment, pre-registration, results and probe hashes | seconds |
 | `hw-restore` | always runs last, even after a failure or a signal: SM clocks unlocked, power limit set back to what it was | seconds |
 
@@ -68,7 +68,7 @@ any audit data exist; otherwise its hash is logged and kept in the signed chain.
 
 - `runs/tier0/tier0_bundle.tar.gz`: every log, the probe, the trial's evidence and `SUMMARY.md`.
 - **Do not send `signing_key.bin`.** It is the run's private key and is deliberately left out of the bundle. Keep it or
-  delete it. The public key is in `T1-smoke/signature.json`.
+  delete it. The public key is in `T1-smoke/signature.json` (`T1-long/` for the long trial).
 - If an independent power meter logged during the trial, export it as `timestamp_s,power_w` and run
   `closure dcbus-analyze --run runs/tier0/T1-smoke --csv bus.csv`. Send `results_dcbus.json` as well. The meter must be
   DC-coupled and report absolute watts; an AC-coupled probe cannot give energy and the command refuses it.
@@ -101,7 +101,19 @@ residency timing and the blind smoke trial on a real device.
   choose a T4 runtime and use Runtime > Run all (about 2 hours 20 minutes; keep the tab open). One cell runs Tier 0
   and the mock training run, then saves the results to Google Drive (if you allow it in the first cell) and downloads
   them, so a session dropped after the run cannot lose them.
-- **A cloud VM with one GPU and a root shell:** the commands under "Run it" above, unchanged.
+- **Kaggle, for the long trial:** `notebooks/tier0_kaggle.ipynb` runs `closure tier0 --trial-profile long` (about
+  10.5 hours) as a committed run, which goes on with the browser closed. In a new Kaggle notebook, File > Import
+  Notebook with the link
+  [github.com/AnonRish/plan-a-closure/blob/main/notebooks/tier0_kaggle.ipynb](https://github.com/AnonRish/plan-a-closure/blob/main/notebooks/tier0_kaggle.ipynb);
+  set Accelerator to GPU T4 x2 (the P100 has no NVML energy counter) and Internet on (Kaggle asks for a
+  phone-verified account for both), check that at least 11 GPU hours of the weekly quota are left, then Save Version >
+  Save & Run All (Commit). The run happens outside `/kaggle/working`; only the bundle, `SUMMARY.md` and `drill.json` are
+  copied there, so they are saved with the version and the private key is not. If the run is still going 11 hours 20
+  minutes into the session it is stopped cleanly, so the summary and the bundle of every finished step are saved
+  before Kaggle's 12-hour limit (a trial stopped this way keeps its finished blocks in `raw_partial.npz`, published but
+  not analysed). A free Colab session is not reliable for this long.
+- **A cloud VM with one GPU and a root shell:** the commands under "Run it" above, unchanged (add
+  `--trial-profile long` for the long trial).
 
 Such a run is an engineering shakedown on a non-target device: inside a VM, without an independent meter (assumption A6
 does not hold), and usually without clock or power control. It is not the registered trial. Record it in
@@ -119,6 +131,16 @@ Runs 2 and 3 (0.6.0) went through every step ([DEVIATIONS.md](DEVIATIONS.md) sec
 highest clock `probe.json` shows the GPU holding at full load (on a T4 about 1110 MHz; the run log says which). Since
 0.6.2 `SUMMARY.md` also names the commit that ran and reports whether the energy model drifted between calibration
 and audit (`closure drift --run <trial folder>`), and the notebook saves and downloads in the same cell as the run.
+
+**What the long trial adds (0.7.0, amendment v0.5).** The smoke trial has about 30 null blocks and at most 7 hidden
+blocks per class and intensity: too few to decide the false-alarm rule H1.2, which needs 200 null blocks, or to certify
+95% detection. The long profile is the registered analysis at the largest scale a 12-hour session holds: 60-second
+blocks, 204 null blocks, 12 hidden blocks for every class and intensity (2, 5, 10 and 20%), and calibration blocks
+interleaved through the run, so a slow drift reaches calibration and audit blocks alike instead of turning into false
+alarms. `SUMMARY.md` then reads the decision rules H1.1 to H1.4 off the results (`closure criteria --run <trial
+folder>`), says which ones the data decide, and gives the pooled detection rate at hidden fractions of at least 5% with
+its 95% lower bound. That bound reaches 95% once about 60 such blocks are all detected; the long trial has about 100.
+It is still a shakedown reading: NVML only, so assumption A6 does not hold.
 
 ## What it does not claim
 

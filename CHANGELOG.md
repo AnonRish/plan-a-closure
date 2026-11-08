@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.7.0
+
+A long trial that can decide the registered rules, for GPUs whose sessions end at 12 hours. Pre-registration amendment
+v0.5; the Tier 1 profiles are unchanged.
+
+- **`closure tier0 --trial-profile long`** (about 10.5 hours in all, 9 of them the trial). The one-hour smoke trial has
+  about 30 null blocks and at most 7 hidden blocks per class and intensity, too few to decide H1.2 (200 null blocks)
+  or to certify 95% detection. The `long` profile has 60-second blocks, 204 null blocks, 12 hidden blocks for every
+  class and intensity (2, 5, 10, 20%), 144 reference blocks and 5 warm-up blocks.
+- **Interleaved calibration** (`TrialConfig.calibration = "interleaved"`). Reference blocks sit at random positions,
+  one in each of 144 equal stretches of the run, committed with the schedule before any data exist and checked by
+  `closure verify` (`order_commitment_ok`). A slow drift then reaches calibration and audit blocks alike: in a
+  simulated step change halfway through a run, sequential calibration gives energy false alarms on more than half the
+  null blocks and interleaved calibration on at most 3% (`tests/test_trial_design.py`).
+- **Balanced schedules** (`schedule = "balanced"`): exactly `n_per_cell` audit blocks for every class and intensity,
+  in random order, so no cell is left too small by chance.
+- **The decision rules, read off a run.** `closure criteria --run <trial folder>`, `SUMMARY.md` and `results.md` say
+  whether H1.1 to H1.4 hold, fail or cannot be decided at the run's size, and give the overall T1 outcome
+  (`criteria.py`). `results.json` adds `detection_at_or_above_fraction` (H1.3 as written, with Clopper-Pearson lower
+  bounds). Run 3 reads as UNDERPOWERED (energy residuals not normal) with H1.2 not decided (23 null blocks).
+- **Kaggle notebook** (`notebooks/tier0_kaggle.ipynb`): the long trial as a committed Kaggle run that goes on with the
+  browser closed; outside `/kaggle/working` except for the three deliverables, so the private key is never saved; a
+  clean stop at 11 h 20 min so the summary and bundle survive Kaggle's 12-hour limit.
+- **Fix: the busy-time minimum detectable fraction** was divided by the block's capacity energy instead of its capacity
+  time, which understated it by a factor of `p_max`. Run 3's figure is 9.5%, not 0.14% (`docs/DEVIATIONS.md` section
+  3, corrected). No decision rule used it.
+- **A stopped trial keeps its data.** A trial stopped before its data are complete (a time limit's SIGTERM, an error)
+  keeps the finished blocks in `raw_partial.npz`, reveals the committed schedule and records the stop in the chain;
+  `SUMMARY.md` says how far it got. Such data are published, never analysed (no optional stopping). `raw.npz` and
+  `schedule_reveal.json` are now written before the model is fitted, so a failed analysis can be rerun from them.
+- `closure drift` also reports how far calibration residuals moved from the first third of the run to the last.
+
 ## 0.6.2
 
 - **The notebook cannot lose a run.** `notebooks/tier0_colab.ipynb` runs with Runtime > Run all. One cell runs Tier 0,

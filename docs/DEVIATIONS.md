@@ -127,9 +127,15 @@ number):
 So audit blocks with no hidden energy had residuals of mean -36 J and SD 85 J, against SD 28 J during calibration
 (skewed: Jarque-Bera p = 3e-12 for the energy channel, so its assumption A3 fails and its claims from this run are void).
 That breaks assumption A2 (same clocks and cooling for calibration and audit), and it is where the false alarms come
-from. The busy-time channel held: 0/23 false alarms, residuals consistent with normal (p = 0.42), and the smallest
-detectable hidden load per block was 0.14% of capacity against 5.0% for energy. The 31.6% closure gap is the smoke
-profile's limit (no cell had more than 7 blocks, too few to certify 95% detection), not a measurement of the method.
+from. The busy-time channel held: 0/23 false alarms and residuals consistent with normal (p = 0.42); the smallest
+hidden load it detects per block is 9.5% of the block's busy time, against 5.0% of capacity energy for the energy
+channel. The 31.6% closure gap is the smoke profile's limit (no cell had more than 7 blocks, too few to certify 95%
+detection), not a measurement of the method.
+
+*Correction (8 November 2026, 0.7.0).* This paragraph first said the busy-time channel's smallest detectable load was
+0.14% of capacity. `results.json` had divided the busy-time figure (seconds) by the block's capacity energy (joules)
+instead of its capacity time, which understates it by a factor of `p_max` (70 on this T4). Corrected in the code and
+here; no decision rule uses the figure (amendment v0.5).
 
 Since 0.6.1, `closure tier0` locks the trial's SM clocks at the highest clock the probe saw the GPU hold at full load
 under its power limit, and records it in `prereg.json` (amendment v0.4). On this GPU that is 1110 MHz, which held at

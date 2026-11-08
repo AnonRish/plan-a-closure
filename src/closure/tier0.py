@@ -11,9 +11,11 @@ hardware, never waits for keyboard input, and leaves one bundle to send back. St
   hw-probe      efficiency slack over clocks, caps, precisions and operands; the energy floor, int8 and fp8 included
   hw-state      device-memory residency: blocks parked in host memory are caught by time (challenge size
                 chosen so sampling alone touches a parked block 99.9% of the time)
-  hw-trial      smoke T1 (30 min reference, 30 min blind audit with hidden-load injection) with SM clocks locked at
-                the highest clock the probe saw held at full load, the probe bound into the
-                pre-registration, prereg.json stamped with `ots` if installed before any audit data exist
+  hw-trial      T1 with SM clocks locked at the highest clock the probe saw held at full load, the probe bound into
+                the pre-registration, prereg.json stamped with `ots` if installed before any audit data exist.
+                --trial-profile smoke (the default): 30 min reference, then a 30 min blind audit with hidden-load
+                injection. --trial-profile long: about 9 h, reference blocks interleaved with a balanced blind audit,
+                enough to decide the registered rules H1.1 to H1.4 (fits a 12-hour Kaggle or Colab session)
   verify        hash chain, signature, schedule commitment, prereg, results and probe hashes
 
 Each step's exact command, output, exit status and duration go to OUT/logs/. OUT/SUMMARY.md collects the headline
@@ -40,6 +42,12 @@ from . import __version__
 
 PRIVATE_KEY = "signing_key.bin"
 BUNDLE = "tier0_bundle.tar.gz"
+TRIALS = {"smoke": "smoke trial with blind hidden-load injection",
+          "long": "long trial (about 9 h): interleaved calibration, balanced blind hidden-load schedule"}
+
+
+def trial_dir(profile: str = "smoke") -> str:
+    return f"T1-{profile}"
 
 
 def _now() -> str:
@@ -114,13 +122,22 @@ def _read(p: Path):
         return None
 
 
+def _interrupted(run: Path):
+    """The chain's record of a trial stopped before its data were complete (trial.py keeps raw_partial.npz), or None."""
+    try:
+        recs = [json.loads(line)["record"] for line in (run / "chain.jsonl").read_text(encoding="utf-8").splitlines()]
+    except (OSError, ValueError, KeyError):
+        return None
+    return next((r for r in reversed(recs) if r.get("phase") == "interrupted"), None)
+
+
 def _fmt(x, spec=".4f") -> str:
     if x is None:
         return "n/a"
     return format(x, spec) if isinstance(x, (int, float)) and not isinstance(x, bool) else str(x)
 
 
-def plan(out: Path, gpu: int, mock: bool, run_tests: bool, rehearsal: bool = False) -> list:
+def plan(out: Path, gpu: int, mock: bool, run_tests: bool, rehearsal: bool = False, profile: str = "smoke") -> list:
     """(key, title, argv, stops_the_run_on_failure). hw-trial gets --probe at run time if the probe wrote a file.
     rehearsal: the hardware steps on CPU torch against a fake NVML and nvidia-smi (tests), with small sizes."""
     py = sys.executable
@@ -146,10 +163,10 @@ def plan(out: Path, gpu: int, mock: bool, run_tests: bool, rehearsal: bool = Fal
          + (["--mock"] if mock else [])
          + (["--block-mb", "1", "--blocks", "32", "--k", "16", "--trials", "60", "--park-frac", "0.3"] if mock or small
             else []), False),
-        ("hw-trial", "smoke trial with blind hidden-load injection",
-         cli + ["hw-trial", "--profile", "rehearsal" if small else "smoke", "--gpus", str(gpu), "--out",
-                str(out / "T1-smoke"), "--stamp-prereg"] + hw, True),
-        ("verify", "evidence chain, signature, commitments", cli + ["verify", str(out / "T1-smoke")], True),
+        ("hw-trial", TRIALS[profile],
+         cli + ["hw-trial", "--profile", "rehearsal" if small else profile, "--gpus", str(gpu), "--out",
+                str(out / trial_dir(profile)), "--stamp-prereg"] + hw, True),
+        ("verify", "evidence chain, signature, commitments", cli + ["verify", str(out / trial_dir(profile))], True),
     ]
     return steps
 
@@ -169,8 +186,10 @@ def _gpu_at_start(gpu: int, echo):
         return None, None
 
 
-def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, echo=print) -> int:
+def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, echo=print, profile: str = "smoke") -> int:
     from .hw.gpu import STOP_SIGNALS
+    if profile not in TRIALS:
+        raise ValueError(f"unknown trial profile '{profile}' ({', '.join(TRIALS)})")
     out = Path(out)
     if out.exists() and any(out.iterdir()):
         echo(f"refusing: {out} is not empty; choose a new --out so that no earlier run is mixed into this one")
@@ -179,9 +198,10 @@ def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, ech
     logs.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "CLOSURE_TIER0_INNER": "1", "PYTHONUNBUFFERED": "1"}
     started, results, stopped = _now(), [], None
-    echo(f"plan-a-closure {__version__} ({provenance()}) tier0 ({'MOCK: fake hardware' if mock else 'HARDWARE'}) -> {out}")
+    echo(f"plan-a-closure {__version__} ({provenance()}) tier0 ({'MOCK: fake hardware' if mock else 'HARDWARE'}, "
+         f"{profile} trial) -> {out}")
     target, start_w = (None, None) if mock else _gpu_at_start(gpu, echo)
-    steps = plan(out, gpu, mock, run_tests, rehearsal=bool(target is not None and target.rehearsal))
+    steps = plan(out, gpu, mock, run_tests, rehearsal=bool(target is not None and target.rehearsal), profile=profile)
     if not mock:                                      # always last, even after a failure or a signal: the GPU as found
         steps.append(("hw-restore", "clocks unlocked, power limit as found",   # every step runs as this same user
                       [sys.executable, "-m", "closure.cli", "hw-restore", "--gpu", str(gpu), "--same-user"]
@@ -247,7 +267,8 @@ def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, ech
             elif rc != 0 and critical and not stopped:
                 stopped = key
         (out / "SUMMARY.md").write_text(summary(out, results, mock, started, stopped,
-                                                rehearsal=bool(target is not None and target.rehearsal)), encoding="utf-8")
+                                                rehearsal=bool(target is not None and target.rehearsal),
+                                                trial=trial_dir(profile)), encoding="utf-8")
         tgz, digest = bundle(out)
     finally:
         for sg, h in old.items():
@@ -273,7 +294,8 @@ def _step_output(out: Path, results: list, key: str) -> str:
     return ""
 
 
-def summary(out: Path, results: list, mock: bool, started: str, stopped, rehearsal: bool = False) -> str:
+def summary(out: Path, results: list, mock: bool, started: str, stopped, rehearsal: bool = False,
+            trial: str = "T1-smoke") -> str:
     L = ["# Tier 0 pilot: summary", "",
          f"- plan-a-closure {__version__} ({provenance()}); mode: "
          + ("MOCK (fake hardware: a rehearsal, no physical claim)" if mock else
@@ -313,35 +335,53 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
         L += ["", "## Device-memory residency (T2 pilot)", "",
               f"- pass = {st.get('pass')}: honest false alarm {_fmt(st.get('honest_false_alarm'))}, parked-block detection "
               f"{_fmt(st.get('parked_detection'))} (block {st.get('block_mb')} MB, k = {st.get('k')})"]
-    res = _read(out / "T1-smoke" / "results.json")
+    res = _read(out / trial / "results.json")
+    pre = _read(out / trial / "prereg.json") or {}
+    stop = None if res else _interrupted(out / trial)
+    if stop:
+        b = stop.get("blocks") or {}
+        L += ["", "## Smoke trial (T1)" if trial == trial_dir("smoke") else "## Long trial (T1)", "",
+              f"- stopped before its data were complete ({stop.get('reason')}): {b.get('ref', 0)} reference and "
+              f"{b.get('aud', 0)} audit blocks finished. They are kept in `{trial}/raw_partial.npz`, with the schedule "
+              "revealed, and not analysed: stopping early is not part of the pre-registered design."]
     if res:
         fp = (res.get("false_positive") or {}).get("combined") or {}
         sl = res.get("slack") or {}
-        L += ["", "## Smoke trial (T1)", "",
+        smoke = trial == trial_dir("smoke")
+        L += ["", "## Smoke trial (T1)" if smoke else "## Long trial (T1)", "",
               f"- status: {res.get('status')}",
               f"- false positives {fp.get('k')}/{fp.get('n')} (95% upper {_fmt(fp.get('cp95_upper'))})",
               f"- closure gap {_fmt(res.get('closure_gap_fraction'))} of capacity energy; slack-inflated gap "
               f"{_fmt(sl.get('slack_inflated_gap_fraction'))}",
-              "- the smoke profile checks the pipeline; the registered numbers come from the Tier 1 run (`hw-full`)"]
-        wl = ((_read(out / "T1-smoke" / "prereg.json") or {}).get("cfg") or {}).get("workload") or {}
+              "- the smoke profile checks the pipeline; the registered numbers come from the Tier 1 run (`hw-full`)"
+              if smoke else
+              "- the long profile reads the registered decision rules at shakedown scale (below); the registered numbers "
+              "come from the Tier 1 run (`hw-full`)"]
+        wl = (pre.get("cfg") or {}).get("workload") or {}
         if wl:
             L.append(f"- SM clocks: {'locked at ' + str(wl['locked_sm_mhz']) + ' MHz' if wl.get('locked_sm_mhz') else 'not locked'}"
                      + (f" ({wl['clock_lock_note']})" if wl.get("clock_lock_note") else ""))
         try:
             from .drift import report, summary_lines
             L += ["", "## Calibration drift (assumption A2; a diagnostic, not a criterion)", ""]
-            L += summary_lines(report(out / "T1-smoke"))
+            L += summary_lines(report(out / trial))
         except (OSError, KeyError, ValueError) as e:
             L.append(f"- drift report unavailable ({type(e).__name__}: {e})")
+        try:
+            from .criteria import evaluate, summary_lines as rule_lines
+            L += ["", "## Pre-registered T1 decision rules, read at this run's scale", ""]
+            L += rule_lines(evaluate(res, float((pre.get("cfg") or {}).get("alpha", 0.01))))
+        except (KeyError, TypeError, ValueError) as e:
+            L.append(f"- decision rules unavailable ({type(e).__name__}: {e})")
     ver = _json_in(_step_output(out, results, "verify"))
     if ver:
         L += ["", "## Verification", "", "- " + ", ".join(f"{k}: {v}" for k, v in ver.items())]
     L += ["", "## What to send back", "",
           f"- `{BUNDLE}`: everything in this folder except `{PRIVATE_KEY}`.",
-          f"- Keep `T1-smoke/{PRIVATE_KEY}` private or delete it: anyone holding it can forge this run's signature. "
-          "The public key is in `T1-smoke/signature.json`.",
+          f"- Keep `{trial}/{PRIVATE_KEY}` private or delete it: anyone holding it can forge this run's signature. "
+          f"The public key is in `{trial}/signature.json`.",
           "- If an independent power meter logged during the trial, export it as `timestamp_s,power_w` and run "
-          f"`closure dcbus-analyze --run {out / 'T1-smoke'} --csv bus.csv`, then send `results_dcbus.json` as well."]
+          f"`closure dcbus-analyze --run {out / trial} --csv bus.csv`, then send `results_dcbus.json` as well."]
     return "\n".join(L) + "\n"
 
 

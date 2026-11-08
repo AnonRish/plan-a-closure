@@ -49,5 +49,7 @@ def to_markdown(res: dict, cfg) -> str:
     for cl, row in res["detection_combined"].items():
         cells = [("n/a" if v["rate"] is None else f"{v['rate']:.2f} (n={v['n']})") for v in row.values()]
         lines.append(f"| {cl} | " + " | ".join(cells) + " |")
+    from .criteria import evaluate, summary_lines
+    lines += ["", "## Pre-registered T1 decision rules, read at this run's scale"] + summary_lines(evaluate(res, cfg.alpha))
     lines += ["", "## Assumptions (a failed assumption voids the claim)"] + [f"- {a}" for a in res["assumptions"]]
     return "\n".join(lines) + "\n"

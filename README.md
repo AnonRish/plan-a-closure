@@ -7,8 +7,8 @@
 Every joule, packet byte and byte of memory on an enrolled cluster must be *explained* by verified work.
 What is left over (the residual) upper-bounds hidden compute, hidden exfiltration and hidden persistent state.
 
-> **Status: v0.6.2, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
-> (282 tests, `pytest`, plus 22 that run the torch code on CPU where torch is installed, 10 of them rehearsing the
+> **Status: v0.7.0, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
+> (296 tests, `pytest`, plus 22 that run the torch code on CPU where torch is installed, 10 of them rehearsing the
 > whole GPU path against a fake NVML and nvidia-smi). The 13 vendored repositories
 > under `external/` add their own suites (2,708 tests passed here, `closure external test`). **No physical claim is
 > demonstrated yet.** Three shakedown runs on Colab T4s (8 November 2026, NVML only) are in
@@ -21,7 +21,9 @@ What is left over (the residual) upper-bounds hidden compute, hidden exfiltratio
 > one-GPU pilot is one unattended command, `closure tier0` ([operator guide](docs/OPERATOR_TIER0.md)).
 > Without an H100, [notebooks/tier0_colab.ipynb](notebooks/tier0_colab.ipynb)
 > ([open in Colab](https://colab.research.google.com/github/AnonRish/plan-a-closure/blob/main/notebooks/tier0_colab.ipynb))
-> runs the same pilot on a free Colab GPU as a labelled shakedown (no independent meter, so not the registered trial).
+> runs the same pilot on a free Colab GPU as a labelled shakedown (no independent meter, so not the registered trial),
+> and [notebooks/tier0_kaggle.ipynb](notebooks/tier0_kaggle.ipynb) runs it with a nine-hour trial on Kaggle, large
+> enough to read the pre-registered decision rules H1.1 to H1.4 (`closure criteria`).
 
 ## The gap this targets
 
@@ -194,7 +196,7 @@ covered. `gemm_audit.py` is a design-time screen, not the physical audit the pap
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"                # Python 3.10 or newer
-pytest                                  # 282 tests (304 with torch installed)
+pytest                                  # 296 tests (318 with torch installed)
 closure selftest                        # end-to-end simulated trial, PASS/FAIL
 closure tier0 --mock --out runs/tier0   # the whole one-GPU pilot on fake hardware: logs, SUMMARY.md, bundle
 closure redteam                         # gateway sampling + recomputation against substituted models (toy model)
@@ -204,6 +206,8 @@ closure external check                  # vendored repositories: trees match ext
 pip install -e ".[hw,external]" && closure external test --install   # their own suites (external/README.md)
 closure sim-trial --out runs/sim        # writes results.md, chain.jsonl, signature.json, prereg.json, raw.npz
 closure verify runs/sim                 # chain, signature, commitment, prereg and results hashes
+closure criteria --run runs/sim         # the pre-registered decision rules H1.1 to H1.4, read off the run
+closure sim-trial --profile long --out runs/long   # the long design: interleaved calibration, balanced schedule
 closure hw-probe --mock --out runs/probe.json                  # efficiency slack and energy floor on a fake rig
 closure sim-trial --out runs/sim2 --probe runs/probe.json      # binds the probe into the pre-registration and the report
 python scripts/sim_study.py 10          # the 10-seed simulation study (docs/SIM_STUDY.md)

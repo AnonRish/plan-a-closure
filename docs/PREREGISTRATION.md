@@ -1,4 +1,4 @@
-# Pre-registration v0.4 (freeze and timestamp BEFORE any audit data exist)
+# Pre-registration v0.5 (freeze and timestamp BEFORE any audit data exist)
 
 Freeze procedure: commit this file and the analysis code; timestamp this file (`ots stamp docs/PREREGISTRATION.md`); run
 `closure hw-probe` first (section 3, H1.6 and H1.7); record the git commit and a hash of the package source in the run's
@@ -35,6 +35,30 @@ run 3's unlocked T4 drifted between calibration and audit (energy per unit of wo
 -2.4 W), giving 3 false alarms in 23 null blocks; assumption A2 asks for the same clocks. The slack the probe measures
 is still against its unlocked reference, which overstates it if anything. The analysis is unchanged.
 
+v0.5 (8 November 2026), made before any registered (Tier 1) data existed and before any run of the profile it adds.
+(a) A `long` trial profile for Tier 0 on GPUs whose sessions end at 12 hours (Kaggle, Colab): `L` = 60, 144 reference
+and 396 audit blocks after 5 warm-up blocks that are kept in `raw.npz` but never analysed (about 9 hours), `alpha` =
+0.01, one regime, the classes `constant`, `idle_gap`, `duty` and `dilute` at intensities 2, 5, 10 and 20%. The schedule
+is balanced: exactly 12 audit blocks for every class and intensity and 204 null blocks, in random order. Reference
+blocks are interleaved with the audit, one at a random position in each of 144 equal stretches of the run; their
+positions are committed with the schedule before any data exist (`order_commitment` in `prereg.json`, revealed in
+`schedule_reveal.json` and checked by `closure verify`), and the model is fitted on them once the data are in. The
+analysis and the decision rules are unchanged. Reason: the smoke trial has about 30 null blocks and at most 7 blocks per
+class and intensity, so neither H1.2 (at least 200 null blocks) nor H1.3 can be decided from it; a 12-hour session
+cannot hold the registered `L` = 120 design with 200 null blocks (270 blocks in 9 hours); and run 3's energy model
+drifted within the hour, while interleaving makes calibration and audit blocks exchangeable in time by design (a drift
+then widens the null distribution and lowers `n_eff`, which H1.1 reports, instead of producing false alarms). One regime,
+because two regimes of 72 blocks would leave `n_eff` under 15 at run 3's busy-time autocorrelation (rho 0.66).
+(b) Reporting only. `results.json` adds `detection_at_or_above_fraction`: H1.3 as written, the detection rate among
+blocks whose hidden fraction is at least 5% (and 2%), per class and pooled over the non-slack classes, with
+Clopper-Pearson lower bounds. `closure criteria --run <trial folder>` (and `SUMMARY.md`, `results.md`) read H1.1 to H1.4
+and the overall T1 outcome off `results.json`; a class is decided for H1.3 once it has 8 such blocks, the minimum the
+f95 rules already use. The busy-time `min_detectable_fraction_per_regime` is now a fraction of the block's capacity time
+(GPU-seconds); it had been divided by the block's capacity energy, which understated it by a factor of `p_max` (run 3:
+9.5%, reported as 0.14%; [DEVIATIONS.md](DEVIATIONS.md) section 3). No decision rule uses it.
+(c) The Tier 1 profiles (`hw-short`, `hw-full`) are unchanged and still calibrate before the audit. Whether Tier 1
+adopts interleaved calibration will be decided by amendment, before any Tier 1 data exist, from the long shakedowns.
+
 ## 1. Definitions
 
 - **Window** `dt`=1 s. **Block** `L` windows. **Cluster capacity** per block = `n_gpu × p_max × L × dt`, where `p_max`
@@ -67,7 +91,8 @@ the independent meter, hardware modification, physical access, attacks on the ve
 
 Design. Verified load: synthetic GEMM + memory-bound passes at levels {0, .1, .2, .3, .5, .7, .9, 1.0} (T1a), then a
 served model with tap-derived token counts (T1b). Profile `hw-full`: 360 reference blocks, 720 audit blocks,
-`L`=120 windows, `alpha`=0.01, 3 regimes (36 h at 1 s windows); `hw-short` for a first pass (12 h). NVML run first, then
+`L`=120 windows, `alpha`=0.01, 3 regimes (36 h at 1 s windows); `hw-short` for a first pass (12 h); `long` for Tier 0
+shakedowns on 12-hour sessions (9 h, amendment v0.5). NVML run first, then
 re-analysis with the DC-bus meter on the **same** run (`dcbus-analyze`). The independent channel must be absolute power in
 watts, DC-coupled and calibrated: an AC-coupled current probe has no DC response and cannot give energy, and `dcbus-analyze`
 rejects such traces (a forced run is labelled METER UNVERIFIED and does not support H1.5).
