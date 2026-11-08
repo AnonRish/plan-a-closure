@@ -1,0 +1,19 @@
+$ /usr/bin/python3 -m closure.cli hw-selftest --gpus 0
+
+GPU: cuda:0 = NVML index 0 (GPU-cb437013-6bd1-42f1-b6e9-b3d059a55a5a), matched by uuid
+{
+  "windows": 150,
+  "r2": 0.7190115313841463,
+  "residual_sd_j": 7.890755033579121,
+  "idle_power_w": 30.02627145399965,
+  "theta": {
+    "duration_s": 38.319387881550135,
+    "prefill_units": 15.951143739799322,
+    "decode_units": 5.96701148744475e-15,
+    "steps": 0.0
+  },
+  "pass": false,
+  "gpus": [
+    "cuda:0 = NVML index 0 (GPU-cb437013-6bd1-42f1-b6e9-b3d059a55a5a), matched by uuid"
+  ]
+}

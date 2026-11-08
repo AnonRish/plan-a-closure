@@ -7,14 +7,20 @@
 Every joule, packet byte and byte of memory on an enrolled cluster must be *explained* by verified work.
 What is left over (the residual) upper-bounds hidden compute, hidden exfiltration and hidden persistent state.
 
-> **Status: v0.5.4, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
-> (238 tests, `pytest`, plus 12 that run the torch code on CPU where torch is installed, 7 of them rehearsing the
+> **Status: v0.5.5, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
+> (249 tests, `pytest`, plus 15 that run the torch code on CPU where torch is installed, 8 of them rehearsing the
 > whole GPU path against a fake NVML and nvidia-smi). The 13 vendored repositories
 > under `external/` add their own suites (2,708 tests passed here, `closure external test`). **No physical claim is
-> demonstrated yet.** Each one is decided by the pre-registered trial in
+> demonstrated yet.** The first run on real hardware, a Colab T4 shakedown on 8 November 2026, stopped at
+> `hw-selftest` because the unit of work was sized for an H100; that is fixed in 0.5.5, and the run, its bundle and a
+> model that reproduces the failure are in [docs/DEVIATIONS.md](docs/DEVIATIONS.md). Each claim is decided by the
+> pre-registered trial in
 > [docs/PREREGISTRATION.md](docs/PREREGISTRATION.md) on instrumented hardware (Amodo's Side Channel Cloud, the
 > Verifiable Compute Foundation cluster). A report whose status says `SIMULATED` validates the estimators only. The
 > one-GPU pilot is one unattended command, `closure tier0` ([operator guide](docs/OPERATOR_TIER0.md)).
+> Without an H100, [notebooks/tier0_colab.ipynb](notebooks/tier0_colab.ipynb)
+> ([open in Colab](https://colab.research.google.com/github/AnonRish/plan-a-closure/blob/main/notebooks/tier0_colab.ipynb))
+> runs the same pilot on a free Colab GPU as a labelled shakedown (no independent meter, so not the registered trial).
 
 ## The gap this targets
 
@@ -170,7 +176,7 @@ covered. `gemm_audit.py` is a design-time screen, not the physical audit the pap
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"                # Python 3.10 or newer
-pytest                                  # 238 tests (250 with torch installed)
+pytest                                  # 249 tests (264 with torch installed)
 closure selftest                        # end-to-end simulated trial, PASS/FAIL
 closure tier0 --mock --out runs/tier0   # the whole one-GPU pilot on fake hardware: logs, SUMMARY.md, bundle
 closure redteam                         # gateway sampling + recomputation against substituted models (toy model)

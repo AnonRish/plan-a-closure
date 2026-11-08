@@ -1,0 +1,7 @@
+$ /usr/bin/python3 -m closure.cli selftest
+
+{"chain_ok": true, "entries": 4, "signature_ok": true, "schedule_commitment_ok": true, "prereg_hash_ok": true, "results_hash_ok": true}
+PASS  chain+signature+commitment verify
+PASS  FPR 95% upper bound < 10%
+PASS  constant 20% hidden load detected >= 90%
+PASS  hidden-energy bound covers >= 90% (non-slack)

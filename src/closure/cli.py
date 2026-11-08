@@ -15,7 +15,7 @@ import numpy as np
 
 from . import __version__
 from .evidence import Chain, Signer, canonical, clean, verify_sig
-from .sim import FEATURES, SimConfig, SimSource
+from .sim import SimConfig, SimSource
 from .trial import TrialConfig, analyze, fit_channels, run_trial
 from .energy import EnergyFloor
 
@@ -276,7 +276,7 @@ def _hw_parts(a):
     import pynvml as N
     from .hw import gpu as G
     from .hw.nvml import NvmlReader
-    from .hw.workloads import TorchLoad
+    from .hw.workloads import TorchLoad, measure_idle_w
     N.nvmlInit()
     if a.gpus:
         idx = [int(x) for x in a.gpus.split(",")]
@@ -289,8 +289,23 @@ def _hw_parts(a):
     G.install_stop_handlers()                       # a SIGTERM (e.g. a scheduler time limit) stops the load cleanly
     reader = NvmlReader([t.nvml_index for t in targets])
     rehearsal = any(t.rehearsal for t in targets)
-    load = (TorchLoad([t.index for t in targets], dim=128, mem_elems=1 << 16, device="cpu") if rehearsal
-            else TorchLoad([t.index for t in targets]))
+    p_max = float(reader.power_limit_w())          # this GPU's limit (a T4: 70 W), not an H100's 700 W
+    kw = dict(dim=128, mem_elems=1 << 16, device="cpu") if rehearsal else {}
+    if getattr(a, "dim", None):                     # given (tier0 passes hw-selftest's size on): used as is
+        kw.update(dim=int(a.dim), auto_size=False)
+    if getattr(a, "mem_elems", None):
+        kw.update(mem_elems=int(a.mem_elems))
+    load = TorchLoad([t.index for t in targets], p_max_w=p_max, **kw)
+    idle = measure_idle_w(reader, len(targets), seconds=0.5 if rehearsal else 3.0, settle_s=0.2 if rehearsal else 2.0)
+    load.p_idle = min(max(idle, 0.0), 0.9 * p_max)
+    u = load.describe()
+    print(f"unit of work: {u['dim']}x{u['dim']} {u['dtype']} GEMM + {u['mem_elems']}-element pass, "
+          f"{1e3 * u['unit_s']:.1f} ms against a {1e3 * u['slot_s']:.0f} ms slot"
+          f"{'' if u['auto_sized'] else ' (size given)'}; power limit {p_max:.0f} W, idle {idle:.1f} W per GPU",
+          file=sys.stderr, flush=True)
+    if not u["fits_slot"]:
+        print(f"WARNING: a unit takes longer than {1e3 * u['budget_s']:.0f} ms, so low load levels will run more work "
+              "than they ask for; hw-selftest checks whether the levels still differ", file=sys.stderr, flush=True)
     return reader, load, {}, len(targets), load, targets
 
 
@@ -337,7 +352,11 @@ def cmd_hw_trial(a) -> int:
         if getattr(a, "probe", None):
             _apply_probe(cfg, a.probe, out, hardware=not a.mock, rehearsal=rehearsal)
         cfg.n_gpu = n_gpu
-        src = HwSource(reader, load, dt=cfg.dt, n_gpu=n_gpu, seed=a.seed, **clock)
+        if hasattr(load, "describe"):              # real load generator: capacity is this GPU's power limit, and the
+            cfg.p_max_w = float(load.p_max)         # unit of verified work is recorded with it in the pre-registration
+            cfg.workload = {k: v for k, v in load.describe().items() if k != "tried"}
+            cfg.workload["idle_w_measured"] = float(load.p_idle)
+        src = HwSource(reader, load, dt=cfg.dt, n_gpu=n_gpu, p_max_w=cfg.p_max_w, seed=a.seed, **clock)
         hook = _pause_hook if a.pause_after_prereg else (_stamp_hook if getattr(a, "stamp_prereg", False) else None)
         res = run_trial(src, cfg, out, _signer(out), pause_hook=hook)
     finally:
@@ -348,29 +367,30 @@ def cmd_hw_trial(a) -> int:
 
 
 def cmd_hw_selftest(a) -> int:
-    """First thing to run on the cluster: is the evidence chain sane before any hidden-load trial?"""
+    """First thing to run on the cluster: is the evidence chain sane before any hidden-load trial? (hw/selftest.py)"""
+    from .hw.selftest import LEVELS, report
     from .hw.source import HwSource
-    from .residual import nnls
     reader, load, clock, n_gpu, to_stop, targets = _hw_parts(a)
-    src = HwSource(reader, load, dt=1.0, n_gpu=n_gpu, seed=a.seed, **clock)
+    src = HwSource(reader, load, dt=1.0, n_gpu=n_gpu, p_max_w=float(getattr(load, "p_max", 700.0)), seed=a.seed,
+                   **clock)
     rows = []
     try:
-        for level in (0.0, 0.25, 0.5, 0.75, 1.0):
+        for level in LEVELS:
             src.force_level = level
             for _ in range(a.windows):
                 b = src.run_block(1, None)
-                rows.append((level, b["X"][0], b["E"][0], b["busy"][0]))
+                rows.append((level, b["X"][0], b["E"][0]))
     finally:
         if to_stop is not None:
             to_stop.stop()
-    X, y = np.array([r[1] for r in rows]), np.array([r[2] for r in rows])
-    th = nnls(X, y)
-    res = y - X @ th
-    r2 = 1 - float(np.sum(res ** 2) / np.sum((y - y.mean()) ** 2))
-    idle_w = float(np.mean([r[2] / r[1][0] for r in rows if r[0] == 0.0]))
-    out = {"windows": len(rows), "r2": r2, "residual_sd_j": float(res.std()), "idle_power_w": idle_w,
-           "theta": dict(zip(FEATURES, th.tolist())), "pass": r2 > 0.9 and idle_w > 0,
-           "gpus": [t.describe() for t in targets]}
+    unit = load.describe() if hasattr(load, "describe") else None
+    out = report(rows, unit)
+    out["gpus"] = [t.describe() for t in targets]
+    if unit is not None:                            # tier0 passes this size on to hw-probe and hw-trial
+        out["unit"] = unit
+        out["power_limit_w"], out["idle_w_measured_at_start"] = float(load.p_max), float(load.p_idle)
+    if getattr(load, "errors", None):
+        out["load_errors"] = list(load.errors)
     if any(t.rehearsal for t in targets):
         out["status"] = REHEARSAL_STATUS
     print(json.dumps(clean(out), indent=2))
@@ -528,7 +548,8 @@ def cmd_hw_probe(a) -> int:
         target = G.resolve(a.gpu)                    # the physical GPU by UUID: nvidia-smi and NVML touch only it
         print("GPU:", target.describe(), file=sys.stderr, flush=True)
         G.install_stop_handlers()                    # SIGTERM/SIGINT/SIGHUP: restore clocks and power limit, then exit
-        rig = P.TorchRig(target=target, dim=a.dim, window_s=a.window_s)
+        rig = P.TorchRig(target=target, dim=a.dim or 8192, mem_elems=a.mem_elems or (1 << 29), window_s=a.window_s,
+                         auto_size=a.dim is None)   # no --dim: halve from 8192 until a unit fits the slot
         status = REHEARSAL_STATUS if target.rehearsal else "HARDWARE-PROBE (NVML energy counter; spoofable)"
     if a.clocks == "auto":                       # clocks this device supports, so no variant is wasted on an invalid clock
         clocks = P.pick_clocks(rig.supported_clocks())
@@ -785,13 +806,18 @@ def main(argv=None) -> int:
         s.add_argument("--gpus", default=None); s.add_argument("--mock", action="store_true")
         s.add_argument("--confirm-hardware", action="store_true"); s.add_argument("--windows", type=int, default=30)
         s.add_argument("--pause-after-prereg", action="store_true")
+        s.add_argument("--dim", type=int, default=None,
+                       help="GEMM size of one unit of work; default: halve from 8192 until a unit fits the 100 ms slot")
+        s.add_argument("--mem-elems", type=int, default=None, help="elements in the memory-bound pass of one unit")
         if name == "hw-trial":
             s.add_argument("--probe", default=None, help="sealed probe.json from `closure hw-probe` (energy floor + slack)")
             s.add_argument("--stamp-prereg", action="store_true",
                            help="non-interactive: `ots stamp` prereg.json if available and log its hash, then continue")
         s.set_defaults(f=fn)
     s = sp.add_parser("hw-probe"); s.add_argument("--out", default="probe.json"); s.add_argument("--gpu", type=int, default=0)
-    s.add_argument("--dim", type=int, default=8192); s.add_argument("--window-s", type=float, default=8.0)
+    s.add_argument("--dim", type=int, default=None,
+                   help="GEMM size of one unit; default: halve from 8192 until a unit fits the 100 ms slot")
+    s.add_argument("--mem-elems", type=int, default=None); s.add_argument("--window-s", type=float, default=8.0)
     s.add_argument("--clocks", default="auto", help="'auto' picks six of the device's supported SM clocks, or a list in MHz")
     s.add_argument("--power-caps", default="auto", help="'auto' uses 0.7,0.5 of the default limit, raised to the device minimum")
     s.add_argument("--precisions", default="tf32,fp16,int8,fp8"); s.add_argument("--kernels", default="cublaslt")

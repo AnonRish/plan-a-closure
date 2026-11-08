@@ -86,3 +86,90 @@ def test_residency_prover_answers_challenges_correctly_on_cpu():
 def test_reproducibility_check_runs_on_cpu():
     r = torch_repro_check("cpu", batch_sizes=(1, 4), n=4)
     assert r["device"] == "cpu" and 0.0 <= r["bitwise_equal_rate"] <= 1.0 and np.isfinite(r["max_abs_diff"])
+
+
+class ExactMeter:
+    """Energy of a modelled GPU: idle watts always, plus (busy - idle) while a unit runs. Exact and linear in work, so a
+    shortfall in the self-test's fit can only come from the load generator."""
+
+    def __init__(self, idle_w=30.0, busy_w=68.0):
+        import threading
+        self.idle, self.busy, self.lock = idle_w, busy_w, threading.Lock()
+        self.t0, self.since, self.busy_s = time.perf_counter(), None, 0.0
+
+    def begin(self):
+        with self.lock:
+            self.since = time.perf_counter()
+
+    def end(self):
+        with self.lock:
+            self.busy_s += time.perf_counter() - self.since
+            self.since = None
+
+    def energy_j(self):
+        with self.lock:
+            now = time.perf_counter()
+            busy = self.busy_s + ((now - self.since) if self.since is not None else 0.0)
+            return self.idle * (now - self.t0) + (self.busy - self.idle) * busy
+
+    def util(self):
+        return 1.0 if self.since is not None else 0.0
+
+
+def _slow_matmul(meter, seconds_at_512):
+    def mm(A, B):                                                   # a GEMM's time grows as dim**3
+        meter.begin()
+        time.sleep(seconds_at_512 * (A.shape[0] / 512) ** 3)
+        meter.end()
+        return A
+    return mm
+
+
+def _selftest(load, meter, dt=0.2, windows=10):
+    from closure.hw.selftest import LEVELS, report
+    from closure.hw.source import HwSource
+    src = HwSource(meter, load, dt=dt, sub=dt / 4, n_gpu=1)
+    rows = []
+    try:
+        for level in LEVELS:
+            src.force_level = level
+            for _ in range(windows):
+                b = src.run_block(1, None)
+                rows.append((level, b["X"][0], b["E"][0]))
+    finally:
+        load.stop()
+    return report(rows, load.describe())
+
+
+def test_a_unit_longer_than_the_slot_reproduces_the_t4_failure_and_sizing_fixes_it(monkeypatch):
+    """The Colab T4 run at a fifth of the time scale: a 20 ms slot and a 108 ms unit (a 100 ms slot and a 540 ms unit on
+    the T4), idle 30 W and 68 W while a unit runs (the T4 is capped at 70 W)."""
+    from closure.hw.workloads import TorchLoad
+    meter = ExactMeter()
+    monkeypatch.setattr(torch, "matmul", _slow_matmul(meter, 0.108))
+    old = _selftest(TorchLoad([0], dim=512, mem_elems=1 << 12, slot_s=0.02, device="cpu", auto_size=False), meter)
+    assert not old["pass"] and not old["levels_distinct"] and old["work_ratio_25_to_100"] > 0.8
+    assert "did not change the work done" in old["diagnosis"]
+
+    meter = ExactMeter()
+    monkeypatch.setattr(torch, "matmul", _slow_matmul(meter, 0.108))
+    load = TorchLoad([0], dim=512, mem_elems=1 << 12, slot_s=0.02, device="cpu")
+    u = load.describe()
+    assert u["dim"] == 128 and u["fits_slot"] and [x["dim"] for x in u["tried"]] == [512, 256, 128]
+    new = _selftest(load, meter)
+    assert new["pass"] and new["levels_distinct"] and new["r2"] > 0.95, new
+    assert new["work_ratio_25_to_100"] < 0.5
+
+
+def test_load_generator_counts_units_as_they_finish():
+    from closure.hw.workloads import TorchLoad
+    load = TorchLoad([0], dim=64, mem_elems=1 << 12, slot_s=0.02, device="cpu")
+    try:
+        assert load.describe()["dtype"] == "bfloat16" and load.errors == []
+        load.set_state(1.0)
+        time.sleep(0.05)
+        first = load.pop_units()[0]
+        time.sleep(0.05)
+        assert first > 0 and load.pop_units()[0] > 0                 # no slot-sized lumps: every pop finds work
+    finally:
+        load.stop()

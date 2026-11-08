@@ -130,6 +130,9 @@ def test_tier0_rehearsal_runs_every_hardware_step_and_leaves_the_gpu_as_found(tm
     for log in (out / "logs").glob("*.log"):                               # every step ran to its end: no crash
         assert "Traceback" not in log.read_text(), log.name
     assert '"r2"' in (out / "logs" / "03-hw-selftest.log").read_text()  # its statistics mean nothing on a fake
+    assert "## Energy tracks verified work (hw-selftest)" in s
+    if "| hw-selftest | energy tracks verified work on this GPU | 0 |" in s:   # its unit is passed on to the trial
+        assert "--dim 128 --mem-elems 65536" in (out / "logs" / "06-hw-trial.log").read_text().splitlines()[0]
     pr = json.loads((out / "probe.json").read_text())
     assert pr["status"].startswith("REHEARSAL") and pr["rig"]["nvidia_smi_id"] == UUID0
     assert {"clock_cap", "power_cap", "precision", "operand"} <= {v["kind"] for v in pr["variants"]}
@@ -169,3 +172,19 @@ def test_tier0_passes_a_signal_to_the_running_step_skips_the_rest_and_still_rest
     assert "| hw-restore | clocks unlocked, power limit as found | 0 |" in s
     assert _gpu(tmp_path) == {"clock": None, "limit_w": 700.0}
     assert (out / "tier0_bundle.tar.gz").exists()
+
+
+def test_a_small_gpu_s_own_power_limit_is_the_capacity_and_the_trial_records_it_with_the_unit(tmp_path):
+    env = _env(tmp_path, FAKEGPU_LIMITS_W="70,60,70", FAKEGPU_POWER_W="30,45")      # a T4's limits
+    r = _closure(env, "hw-selftest", "--gpus", "0", "--windows", "3")
+    js = json.loads(r.stdout[r.stdout.find("{"):])
+    assert js["power_limit_w"] == 70.0 and js["unit"]["dim"] == 128 and js["unit"]["fits_slot"], r.stderr[-1500:]
+    assert 20.0 < js["idle_w_measured_at_start"] < 45.0 and set(js["per_level"]) == {"0", "0.25", "0.5", "0.75", "1"}
+    assert "unit of work: 128x128 bfloat16 GEMM" in r.stderr and "power limit 70 W" in r.stderr
+    out = tmp_path / "T1"
+    r = _closure(env, "hw-trial", "--profile", "rehearsal", "--gpus", "0", "--out", str(out), "--confirm-hardware",
+                 "--dim", "96")
+    assert r.returncode == 0, r.stdout[-2000:] + r.stderr[-2000:]
+    cfg = json.loads((out / "prereg.json").read_text())["cfg"]
+    assert cfg["p_max_w"] == 70.0 and cfg["workload"]["dim"] == 96 and not cfg["workload"]["auto_sized"]
+    assert 20.0 < cfg["workload"]["idle_w_measured"] < 45.0

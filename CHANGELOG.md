@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.5.5
+
+After the first run on real hardware: a Colab T4 shakedown (8 November 2026) that stopped at `hw-selftest`
+(`docs/DEVIATIONS.md` section 1, the bundle and logs in `results/shakedown-2026-11-08-colab-t4/`).
+
+- **The unit of work fits the GPU.** It was a fixed 8192 x 8192 bf16 GEMM plus a 1 GiB pass, 2 to 3 ms on an H100 but
+  about 0.54 s on a T4, five times the 100 ms slot, so every load level above zero ran flat out and energy had no varying
+  work to track. `TorchLoad` and the probe's `TorchRig` now halve the size from 8192 until one unit takes at most a fifth
+  of a slot (`hw/workloads.py: size_unit`), and run in the device's native half precision: bf16 from compute capability
+  8.0, fp16 before it (V100, T4), where bf16 has no tensor cores. On an H100 nothing changes.
+- **Units are counted as they finish**, not at the end of each slot.
+- **Capacity is the GPU's own.** `p_max` was a fixed 700 W; hardware commands now read the power limit from NVML and
+  measure idle power at start, and `hw-trial` records both, with the unit of work, in `prereg.json` (`cfg.p_max_w`,
+  `cfg.workload`). With 700 W a T4 trial would have labelled each hidden load with about 15 times the energy injected.
+- **`hw-selftest` checks that the load levels differ** (the units at 25% load under 80% of those at 100%), prints the
+  units and power per level and the unit of work, and explains a failure. The r2 > 0.9 threshold is unchanged.
+  Pre-registration amendment v0.3 (`docs/PREREGISTRATION.md`), made before any audit data exist.
+- **`closure tier0` passes hw-selftest's unit on** to `hw-probe` and `hw-trial` (`--dim`, `--mem-elems`, new on both
+  and on `hw-selftest`), and `SUMMARY.md` reports the hw-selftest result.
+- `notebooks/tier0_colab.ipynb` (with `docs/OPERATOR_TIER0.md`): the Tier 0 pilot on a free Colab GPU as a labelled
+  shakedown; it prints the installed version and writes each run to a fresh folder.
+- New tests: `tests/test_unit_size.py` (sizing, precision choice, idle measurement, the self-test's checks and
+  diagnoses, the tier0 hand-off); in `tests/test_torch_cpu.py` a time-scaled copy of the T4 run that fails on the old
+  load generator and passes on the new one; probe auto-sizing in `tests/test_probe.py`.
+
 ## 0.5.4
 
 - compute-ledger, packet-forge and tap-logger-rtl now have their code on GitHub, with the same trees as the vendored
