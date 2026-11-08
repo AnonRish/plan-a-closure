@@ -1,0 +1,83 @@
+{
+  "windows": 150,
+  "r2": 0.9999168544761436,
+  "residual_sd_j": 0.12235294423188273,
+  "idle_power_w": 30.000256878195923,
+  "theta": {
+    "duration_s": 30.011952997196257,
+    "prefill_units": 0.32557925464957016,
+    "decode_units": 0.0,
+    "steps": 0.0
+  },
+  "per_level": {
+    "0": {
+      "windows": 30,
+      "units_per_window": 0.0,
+      "power_w": 30.000256878195923
+    },
+    "0.25": {
+      "windows": 30,
+      "units_per_window": 29.9,
+      "power_w": 39.748511024040845
+    },
+    "0.5": {
+      "windows": 30,
+      "units_per_window": 60.0,
+      "power_w": 49.553962764970166
+    },
+    "0.75": {
+      "windows": 30,
+      "units_per_window": 89.76666666666667,
+      "power_w": 59.24553389669716
+    },
+    "1": {
+      "windows": 30,
+      "units_per_window": 115.7,
+      "power_w": 67.66207527311425
+    }
+  },
+  "work_ratio_25_to_100": 0.2584269662921348,
+  "levels_distinct": true,
+  "pass": true,
+  "gpus": [],
+  "unit": {
+    "dim": 2048,
+    "mem_elems": 4096,
+    "dtype": "bfloat16",
+    "unit_s": 0.008650524000017867,
+    "slot_s": 0.1,
+    "budget_s": 0.020000000000000004,
+    "fits_slot": true,
+    "auto_sized": true,
+    "tried": [
+      {
+        "dim": 8192,
+        "mem_elems": 4096,
+        "unit_s": 0.5403565520000484
+      },
+      {
+        "dim": 4096,
+        "mem_elems": 4096,
+        "unit_s": 0.0678388820000464
+      },
+      {
+        "dim": 2048,
+        "mem_elems": 4096,
+        "unit_s": 0.008650524000017867
+      }
+    ]
+  },
+  "power_limit_w": 700.0,
+  "idle_w_measured_at_start": 120.0,
+  "exit": 0,
+  "wall_s": 150.1,
+  "model": {
+    "tau_bf16_s": 0.54,
+    "tau_fp16_s": 0.05,
+    "idle_w": 30.0,
+    "busy_w": 68.0,
+    "turing_dtype": false,
+    "tau_jitter": 0.0,
+    "busy_sd_w": 0.0
+  }
+}

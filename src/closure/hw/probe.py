@@ -310,7 +310,10 @@ class FakeProbeRig:
 class TorchRig:
     """Real device. One GPU under test, NVML energy counter, ``nvidia-smi`` for clock and power-limit control (needs root).
 
-    One unit of work = one dim x dim GEMM plus one memory-bound pass, the same unit ``TorchLoad`` uses. Numerics are
+    One unit of work = one dim x dim GEMM plus one memory-bound pass, the same unit ``TorchLoad`` uses, and the
+    reference runs in the device's native half precision (bf16, or fp16 before compute capability 8.0) as ``TorchLoad``
+    does. With auto_size the unit is halved from ``dim`` until it takes at most a fifth of a slot (``prepare``): an
+    8192 GEMM takes about half a second on a T4, and a level's units per slot would round to zero. Numerics are
     judged by the relative Frobenius error of a seeded 1024 x 1024 product against a float64 truth (int8 after symmetric
     per-tensor quantisation). int8 runs through ``torch._int_mm`` and fp8 (e4m3) through ``torch._scaled_mm``; a GPU or
     torch build that cannot run them drops the variant with a note (fp8 needs compute capability 8.9 or newer).
@@ -322,11 +325,12 @@ class TorchRig:
 
     def __init__(self, gpu: int = 0, dim: int = 8192, mem_elems: int = 1 << 29, window_s: float = 8.0,
                  reader=None, time_fn=time.perf_counter, sleep_fn=time.sleep, device: str = None, control: bool = True,
-                 target=None):
+                 target=None, auto_size: bool = False):
         self.target = target                           # hw.gpu.GpuTarget: the physical GPU, matched by UUID
         if target is not None:
             gpu, device = target.index, device or target.torch_device
         self.gpu, self.dim, self.mem, self.T = int(gpu), int(dim), int(mem_elems), float(window_s)
+        self.auto_size, self.size_tried = bool(auto_size), []
         self.smi_id = target.uuid if target is not None else str(self.gpu)    # what nvidia-smi -i is given
         self.rehearsal = bool(target is not None and target.rehearsal)
         if self.rehearsal:                             # CPU rehearsal against a fake NVML: short settles, small buffers
@@ -432,7 +436,8 @@ class TorchRig:
         t = self.torch
         t.backends.cuda.matmul.allow_tf32 = False
         if v.kind != "precision":
-            return t.bfloat16
+            from .workloads import native_half
+            return native_half(t, self.dev)            # the reference stack: what TorchLoad runs on this device
         if v.value == "tf32":
             t.backends.cuda.matmul.allow_tf32 = True
             return t.float32
@@ -537,16 +542,24 @@ class TorchRig:
         return self._err[key]
 
     def prepare(self, ref: Variant):
+        from .workloads import MIN_DIM, UNIT_BUDGET_FRAC
         self.apply(ref)
-        A, B, big = self._tensors(ref)
-        end = self.time() + self.WARMUP_S
-        while self.time() < end:                      # warm up: clocks, caches, allocator
-            self._unit(A, B, big)
-        n, t0 = 0, self.time()
-        while self.time() - t0 < self.CALIB_S:
-            self._unit(A, B, big)
-            n += 1
-        self.t_unit_ref = (self.time() - t0) / n
+        while True:
+            A, B, big = self._tensors(ref)
+            end = self.time() + self.WARMUP_S
+            while self.time() < end:                  # warm up: clocks, caches, allocator
+                self._unit(A, B, big)
+            n, t0 = 0, self.time()
+            while self.time() - t0 < self.CALIB_S:
+                self._unit(A, B, big)
+                n += 1
+            self.t_unit_ref = (self.time() - t0) / n
+            self.size_tried.append({"dim": self.dim, "mem_elems": self.mem, "unit_s": self.t_unit_ref})
+            if (not self.auto_size or self.t_unit_ref <= UNIT_BUDGET_FRAC * self.SLOT_S
+                    or self.dim // 2 < MIN_DIM):
+                return
+            del A, B, big                             # too slow for the slot: halve, as TorchLoad does (size_unit)
+            self.dim, self.mem = self.dim // 2, max(1 << 12, self.mem // 2)
 
     def measure(self, v: Variant, level: float) -> dict:
         if self.t_unit_ref is None:
@@ -588,6 +601,7 @@ class TorchRig:
 
     def info(self) -> dict:
         d = {"rig": "TorchRig", "gpu": self.gpu, "device": self.dev, "control": self.control, "dim": self.dim,
+             "mem_elems": self.mem, "auto_size": self.auto_size, "size_tried": list(self.size_tried),
              "window_s": self.T, "default_power_limit_w": self.default_pl_w, "start_power_limit_w": self.start_pl_w,
              "t_unit_ref_s": self.t_unit_ref, "nvidia_smi_id": self.smi_id,
              "target": self.target.describe() if self.target is not None else None, "rehearsal": self.rehearsal}
@@ -596,6 +610,8 @@ class TorchRig:
         try:
             d["device"] = self.reader.info()
             d["torch"] = self.torch.__version__
+            from .workloads import native_half
+            d["reference_dtype"] = str(native_half(self.torch, self.dev)).replace("torch.", "")
         except Exception:
             pass
         return d

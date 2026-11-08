@@ -12,7 +12,7 @@ The whole pilot is one command. It needs no meeting and never waits for keyboard
 | unit tests | the package works on this host | about 2 min |
 | `selftest` | estimators, signature and commitments, end to end on simulated data | under 1 min |
 | `preflight` | NVML, the GPU energy counter, torch with CUDA, clock sync; warnings for root, MIG, persistence mode, other processes, int8 and fp8 support and free memory | seconds |
-| `hw-selftest` | the GPU's energy tracks the verified work (r2 > 0.9) | about 3 min |
+| `hw-selftest` | the GPU's energy tracks the verified work (r2 > 0.9) and the load levels do different work; sizes the unit of work to the GPU and passes it on to `hw-probe` and `hw-trial` | about 3 min |
 | `hw-probe` | efficiency slack over clock caps, power caps, precisions (tf32, fp16, int8, fp8) and activation patterns; the lowest joules per FLOP | about 40 min |
 | `hw-state` | device memory holds the verifier's data; blocks moved to host memory are caught by timing | a few minutes |
 | `hw-trial` | 30 min reference and a 30 min blind audit with synthetic hidden load injected on the same GPU | about 1 h |
@@ -87,6 +87,30 @@ closure external test --install                       # logs in runs/external/
 ```
 
 Send `runs/external/` with the bundle if you run it.
+
+## No H100 yet: a shakedown on a cloud or Colab GPU
+
+Tier 0 has no hard dependency on the GPU model. Precisions the device lacks (TF32 before Ampere, fp8 before compute
+capability 8.9) and clock or power controls a virtual machine refuses are dropped and noted, as described above, and the
+NVML energy counter it needs exists on Volta and newer GPUs (`preflight` stops the run if it is missing). So the same
+command runs on a rented cloud GPU or on a free Colab T4, which checks the pipeline, the NVML energy tracking, the
+residency timing and the blind smoke trial on a real device.
+
+- **Colab:** open `notebooks/tier0_colab.ipynb` in Google Colab
+  ([direct link](https://colab.research.google.com/github/AnonRish/plan-a-closure/blob/main/notebooks/tier0_colab.ipynb)),
+  choose a GPU runtime and run the cells (about two hours; keep the tab open).
+- **A cloud VM with one GPU and a root shell:** the commands under "Run it" above, unchanged.
+
+Such a run is an engineering shakedown on a non-target device: inside a VM, without an independent meter (assumption A6
+does not hold), and usually without clock or power control. It is not the registered trial. Record it in
+`docs/DEVIATIONS.md` (date, device, environment, what was dropped, the bundle's SHA-256) and publish it whatever it
+shows; the registered numbers still come from Tier 1 on instrumented H100/H200 hardware.
+
+The first one (a Colab T4, 8 November 2026, on 0.5.4) stopped at `hw-selftest`: a unit of work sized for an H100 took
+half a second on the T4, so every load level ran flat out ([DEVIATIONS.md](DEVIATIONS.md) section 1). Since 0.5.5 the
+unit is sized to the GPU and runs in fp16 on GPUs older than compute capability 8.0, capacity is the GPU's own power
+limit, and `hw-selftest` checks that the load levels do different work. On a small GPU, look at the `unit of work:` line
+at the top of the `hw-selftest` log: on a T4 expect about 4096 x 4096 float16 and a few milliseconds per unit.
 
 ## What it does not claim
 

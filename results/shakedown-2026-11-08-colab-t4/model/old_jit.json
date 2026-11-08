@@ -1,0 +1,25 @@
+{
+  "windows": 150,
+  "r2": 0.7692323153218383,
+  "residual_sd_j": 7.33684638756011,
+  "idle_power_w": 30.00024639409562,
+  "theta": {
+    "duration_s": 36.72722976904182,
+    "prefill_units": 16.32730987953349,
+    "decode_units": 0.0,
+    "steps": 0.0
+  },
+  "pass": false,
+  "gpus": [],
+  "exit": 1,
+  "wall_s": 150.5,
+  "model": {
+    "tau_bf16_s": 0.54,
+    "tau_fp16_s": 0.05,
+    "idle_w": 30.0,
+    "busy_w": 68.0,
+    "turing_dtype": false,
+    "tau_jitter": 0.25,
+    "busy_sd_w": 4.0
+  }
+}

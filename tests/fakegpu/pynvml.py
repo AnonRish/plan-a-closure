@@ -15,8 +15,9 @@ NVML_CLOCK_SM = 1
 NVML_TEMPERATURE_GPU = 0
 F_MAX = 1980
 CLOCKS = list(range(1980, 344, -15))
-DEFAULT_W, MIN_W, MAX_W = 700.0, 200.0, 700.0
-P_IDLE, P_DYN = 90.0, 450.0
+# FAKEGPU_LIMITS_W="default,min,max" and FAKEGPU_POWER_W="idle,dynamic" model a smaller GPU (a T4: "70,60,70", "30,45")
+DEFAULT_W, MIN_W, MAX_W = (float(x) for x in os.environ.get("FAKEGPU_LIMITS_W", "700,200,700").split(","))
+P_IDLE, P_DYN = (float(x) for x in os.environ.get("FAKEGPU_POWER_W", "90,450").split(","))
 
 
 class NVMLError(Exception):

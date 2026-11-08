@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "plan-a-closure"
-version = "0.5.4"
+version = "0.5.5"
 description = "Compute material-balance accounting (energy, time, traffic, state closure) for inference-only AI verification; pre-registered builder-vs-breaker trial kit."
 requires-python = ">=3.10"
 dependencies = ["numpy>=1.22", "cryptography>=41"]

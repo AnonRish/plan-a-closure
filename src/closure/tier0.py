@@ -6,7 +6,8 @@ hardware, never waits for keyboard input, and leaves one bundle to send back. St
   unit tests    from a source checkout with pytest installed (skipped otherwise, or with --skip-tests)
   selftest      simulated end to end: estimators, signature, commitments                (stops the run on failure)
   preflight     NVML, energy counter, torch, clock sync                                 (stops the run on failure)
-  hw-selftest   does energy track verified work on this GPU? (r2 > 0.9)                 (stops the run on failure)
+  hw-selftest   does energy track verified work on this GPU (r2 > 0.9), and do the load levels do different work?
+                its unit of work, sized to the GPU, is passed on to hw-probe and hw-trial (stops the run on failure)
   hw-probe      efficiency slack over clocks, caps, precisions and operands; the energy floor, int8 and fp8 included
   hw-state      device-memory residency: blocks parked in host memory are caught by time
   hw-trial      smoke T1 (30 min reference, 30 min blind audit with hidden-load injection), the probe bound into the
@@ -52,6 +53,15 @@ def _json_in(text: str):
         return json.loads(text[i:j + 1])
     except ValueError:
         return None
+
+
+def _unit_args(selftest_output: str) -> list:
+    """`--dim N --mem-elems M` from the unit hw-selftest printed, so hw-probe and hw-trial measure the same unit of work
+    (on a small GPU the unit is sized down from 8192; see hw/workloads.py). Empty when it printed none (mock runs)."""
+    u = (_json_in(selftest_output) or {}).get("unit") or {}
+    if u.get("dim") and u.get("mem_elems"):
+        return ["--dim", str(int(u["dim"])), "--mem-elems", str(int(u["mem_elems"]))]
+    return []
 
 
 def _read(p: Path):
@@ -156,12 +166,15 @@ def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, ech
             old[sg] = signal.signal(sg, on_signal)
         except (ValueError, OSError):                 # not the main thread
             pass
+    unit_args = []                                    # hw-selftest's unit of work, passed on so all steps use one unit
     try:
         for i, (key, title, argv, critical) in enumerate(steps, 1):
             always = critical is None
             if (stopped or caught["sig"] is not None) and not always:
                 results.append({"key": key, "title": title, "exit": None, "minutes": 0.0, "log": None, "skipped": True})
                 continue
+            if key in ("hw-probe", "hw-trial") and unit_args and "--dim" not in argv:
+                argv = argv + unit_args
             if key == "hw-trial" and (out / "probe.json").exists():
                 argv = argv + ["--probe", str(out / "probe.json")]
             lf = logs / f"{i:02d}-{key}.log"
@@ -178,6 +191,8 @@ def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, ech
             results.append({"key": key, "title": title, "exit": rc, "minutes": round(mins, 2),
                             "log": str(lf.relative_to(out)), "skipped": False})
             echo(f"    exit {rc} after {mins:.1f} min")
+            if key == "hw-selftest" and rc == 0:
+                unit_args = _unit_args(_step_output(out, results, key))
             if caught["sig"] is not None and not stopped:
                 stopped = f"signal {caught['sig']}"
             elif rc != 0 and critical and not stopped:
@@ -223,6 +238,18 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
     for i, r in enumerate(results, 1):
         L.append(f"| {i} | {r['key']} | {r['title']} | {'skipped' if r['skipped'] else r['exit']} | {r['minutes']} "
                  f"| {r['log'] or ''} |")
+    hs = _json_in(_step_output(out, results, "hw-selftest"))
+    if hs:
+        L += ["", "## Energy tracks verified work (hw-selftest)", "",
+              f"- pass = {hs.get('pass')}: r2 {_fmt(hs.get('r2'))} (needs > 0.9), idle {_fmt(hs.get('idle_power_w'), '.1f')} W"
+              + ("" if hs.get("work_ratio_25_to_100") is None and "levels_distinct" not in hs else
+                 f", work at 25% load / work at 100% load = {_fmt(hs.get('work_ratio_25_to_100'), '.2f')} (needs < 0.8)")]
+        u = hs.get("unit") or {}
+        if u.get("unit_s") is not None:
+            L.append(f"- unit of work: {u.get('dim')}x{u.get('dim')} {u.get('dtype')} GEMM + {u.get('mem_elems')}-element "
+                     f"pass, {1e3 * u['unit_s']:.1f} ms against a {1e3 * u.get('slot_s', 0.1):.0f} ms slot")
+        if hs.get("diagnosis"):
+            L.append(f"- diagnosis: {hs['diagnosis']}")
     pr = _read(out / "probe.json")
     if pr:
         L += ["", "## Probe (H1.6 slack, H1.7 floor)", "",

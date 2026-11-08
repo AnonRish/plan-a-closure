@@ -206,6 +206,20 @@ def test_torchrig_measure_runs_fixed_work_per_slot_and_flags_variants_that_canno
                                                                                       "powercap-70pct", "kernel-x"}
 
 
+def test_torchrig_auto_size_halves_the_unit_until_it_fits_a_fifth_of_the_slot():
+    class SizedRig(VRig):                                         # unit time grows as dim**3, like a GEMM
+        def _unit(self, A, B, big):
+            self.clk.work(self.unit_s * (self.dim / 512) ** 3)
+    rig = SizedRig(VClock(), unit_s=0.1, dim=512, mem_elems=1 << 20, auto_size=True)
+    rig.prepare(P.Variant("reference", "reference"))
+    assert rig.dim == 256 and rig.mem == 1 << 19 and rig.t_unit_ref <= 0.2 * rig.SLOT_S
+    assert [x["dim"] for x in rig.info()["size_tried"]] == [512, 256]
+    assert rig.measure(P.Variant("reference", "reference"), 0.25)["units"] > 0      # 512 would round to 0 per slot
+    fixed = SizedRig(VClock(), unit_s=0.1, dim=512)               # a size that is given is kept
+    fixed.prepare(P.Variant("reference", "reference"))
+    assert fixed.dim == 512 and fixed.measure(P.Variant("reference", "reference"), 0.25)["units"] == 0
+
+
 def test_torchrig_smi_failures_are_classified(monkeypatch):
     from closure.hw import gpu as G
     rig = VRig(VClock())

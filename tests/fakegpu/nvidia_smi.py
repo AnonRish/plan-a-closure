@@ -9,7 +9,7 @@ import json
 import os
 import sys
 
-DEFAULT_W, MIN_W, MAX_W = 700.0, 200.0, 700.0
+DEFAULT_W, MIN_W, MAX_W = (float(x) for x in os.environ.get("FAKEGPU_LIMITS_W", "700,200,700").split(","))
 
 
 def main(args) -> int:

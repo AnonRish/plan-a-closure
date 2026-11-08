@@ -49,6 +49,7 @@ class TrialConfig:
     slack_s_max: float | None = None          # measured by `closure hw-probe` (pre-registered H1.6)
     slack_source: str = "not measured"
     probe_sha256: str | None = None           # seal of the probe.json bound into this pre-registration
+    workload: dict | None = None              # hardware runs: the unit of verified work and the measured idle power
 
 
 def _src_sha256() -> str:
