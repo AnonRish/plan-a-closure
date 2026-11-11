@@ -1,0 +1,56 @@
+$ /usr/bin/python3 -m closure.cli hw-probe --gpu 0 --out /content/plan-a-closure/runs/tier0-20261108-231346/probe.json --confirm-hardware --dim 4096 --mem-elems 268435456
+
+GPU: cuda:0 = NVML index 0 (GPU-ac10dccd-afd7-f442-142a-32b6abd56400), matched by uuid
+round 1/3  reference
+round 1/3  clock-1110MHz
+round 1/3  precision-int8
+round 1/3  operand-sparse90
+round 1/3  clock-1335MHz
+round 1/3  clock-645MHz
+[W1108 23:34:03.415446505 Context.cpp:629] Warning: torch.backends.cuda.preferred_blas_library is an experimental feature. If you see any error or unexpected behavior when this flag is set please file an issue on GitHub. (function operator())
+round 1/3  kernel-cublaslt
+round 1/3  precision-tf32
+round 1/3  precision-fp16
+round 1/3  clock-870MHz
+round 1/3  clock-405MHz
+round 1/3  powercap-87pct
+round 1/3  operand-lowent
+round 1/3  clock-1575MHz
+dropped precision-fp8: precision 'fp8': RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+
+round 1/3  operand-zeros
+round 1/3  reference
+round 2/3  reference
+round 2/3  operand-zeros
+round 2/3  operand-lowent
+round 2/3  powercap-87pct
+round 2/3  operand-sparse90
+round 2/3  precision-int8
+round 2/3  clock-1575MHz
+round 2/3  precision-tf32
+round 2/3  clock-645MHz
+round 2/3  clock-405MHz
+round 2/3  clock-1335MHz
+round 2/3  precision-fp16
+round 2/3  kernel-cublaslt
+round 2/3  clock-870MHz
+round 2/3  clock-1110MHz
+round 2/3  reference
+round 3/3  reference
+round 3/3  clock-1575MHz
+round 3/3  precision-fp16
+round 3/3  operand-zeros
+round 3/3  powercap-87pct
+round 3/3  clock-870MHz
+round 3/3  operand-lowent
+round 3/3  kernel-cublaslt
+round 3/3  clock-645MHz
+round 3/3  clock-1335MHz
+round 3/3  precision-int8
+round 3/3  operand-sparse90
+round 3/3  clock-1110MHz
+round 3/3  precision-tf32
+round 3/3  clock-405MHz
+round 3/3  reference
+status=HARDWARE-PROBE (NVML energy counter; spoofable)  allowed variants=10 (H1.6 needs >= 3)  s_max=0.1255 (stack 0.1245, operand 0.1255)  e_floor=1.96e-12 J/FLOP  band/floor=5.15
+NOTE: variant precision-fp8 dropped: precision 'fp8': RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+
+wrote /content/plan-a-closure/runs/tier0-20261108-231346/probe.json (sha256 d7d186395d77c29c7141f2c82e15c813bf7877405f7b693dbae4411252c708cd)

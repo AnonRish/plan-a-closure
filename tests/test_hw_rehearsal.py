@@ -168,7 +168,9 @@ def test_tier0_passes_a_signal_to_the_running_step_skips_the_rest_and_still_rest
     p.communicate(timeout=300)
     assert p.returncode == 128 + signal.SIGTERM
     s = (out / "SUMMARY.md").read_text()
-    assert "stopped by signal 15" in s and "| hw-trial | smoke trial with blind hidden-load injection | skipped |" in s
+    assert "stopped by signal 15" in s
+    assert ("| hw-trial | smoke trial (about 1 h): interleaved calibration, balanced blind hidden-load schedule "
+            "| skipped |") in s
     assert "| hw-restore | clocks unlocked, power limit as found | 0 |" in s
     assert _gpu(tmp_path) == {"clock": None, "limit_w": 700.0}
     assert (out / "tier0_bundle.tar.gz").exists()

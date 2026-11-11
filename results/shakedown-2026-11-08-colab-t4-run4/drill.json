@@ -1,0 +1,29 @@
+{
+  "budget_flop": 1e+16,
+  "e_floor_j_per_flop": 1.962675301666048e-12,
+  "floor_source": "hw-probe d7d186395d77c29c (HARDWARE-PROBE (NVML energy counter; spoofable))",
+  "meter": "NVML energy counter",
+  "device": "cuda:0",
+  "counted_from": "spawn",
+  "job": {
+    "dim": 4096,
+    "layers": 8,
+    "batch": 2048,
+    "seed": 1,
+    "flop_per_step": 1580547964928,
+    "max_steps": 18981
+  },
+  "stopped_by_provider": true,
+  "job_started_training": true,
+  "energy_at_stop_j": 19627.88300000003,
+  "provider_bound_flop": 1.0000575736260904e+16,
+  "job_steps_logged": 727,
+  "job_flop_logged": 1149058370502656,
+  "job_flop_at_most": 1150638918467584,
+  "budget_used": 0.1149058370502656,
+  "compliant": true,
+  "stop_to_exit_s": 0.1300210952758789,
+  "wall_s": 301.08269476890564,
+  "init_weights_match_seed": true,
+  "job_stderr_tail": ""
+}

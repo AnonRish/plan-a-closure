@@ -147,3 +147,147 @@ design question for Tier 1.
 work once the unit fits the slot; the probe's clock and power controls work; device-memory residency shows up clearly
 as time; and an energy model calibrated in one half hour does not carry over to the next on an unlocked, power-capped
 GPU in a VM. None of it is evidence about H100s, independent metering or the registered thresholds.
+
+*Note on hidden-load labels (10 November 2026, 0.8.0).* The hidden-load fractions quoted in this document are
+labels: what the load generator was asked to inject. `closure physics` now measures what each label drew on an
+otherwise idle GPU in the same run. In run 3 the labels were close: 5% and 20% of capacity (3.5 and 14 W) drew 3.4 and
+14.8 W. In runs 4 and 5 they understate the load, for two reasons. The load generator turned a label into a duty
+cycle from the power limit less idle power (about 40 W per unit of duty), and it ran whole GEMMs until each slot's
+hidden time was used up. On run 4's GPU, with clocks locked at 1110 MHz, the bursts drew 73 W per unit of duty, and
+the loads labelled 5% and 20% drew 11% and 37% of capacity. On run 5's, with clocks free, the bursts drew the 40 W
+assumed, but whole GEMMs overshot each slot by up to one GEMM (6.6 ms of a 100 ms slot), which doubled the smallest
+load: the loads labelled 2, 5, 10 and 20% drew 4.2, 7.2, 11.5 and 22.5% (`physics.json` in each results folder).
+"Detection at 5%" in runs 4 and 5 is detection of a load 1.4 to 2.2 times larger. Since 0.8.0 the hidden load is
+measured on its own before the trial, a label is its measured power, and hidden GEMMs are paid for from a running
+credit so that the average duty is exact (amendment v0.6 (d)).
+
+## 4. Colab T4 run, 8 to 9 November 2026, 23:13Z to 01:23Z (plan-a-closure 0.7.0, commit 1656ad4)
+
+**What ran.** `closure tier0` from the Colab notebook on a fourth T4 (`GPU-ac10dccd...`), NVML only, no independent
+meter: a shakedown. **Every step exited 0**, for the first time. Bundle as returned:
+[results/shakedown-2026-11-08-colab-t4-run4/](../results/shakedown-2026-11-08-colab-t4-run4/), sha256
+`bdcfcb280770b7abe4b4783989d796a0fabc8a0764978eb357a398fbd124d7c6`.
+
+| step | result |
+| --- | --- |
+| unit tests | passed (13.2 min) |
+| hw-selftest | passed: r2 = 0.966, idle 28.2 W, work at 25% / 100% load = 0.29 |
+| hw-probe | passed: 10 allowed stack variants, s_max = 12.6% (stack 12.4%, operand 12.6%); energy floor 1.96e-12 J/FLOP |
+| hw-state | **passed**: honest false alarms 0/200, parked-block detection 200/200, 17 blocks per challenge (amendment v0.4) |
+| hw-trial (smoke) | ran with SM clocks locked at 1110 MHz: false positives 0/23; closure gap 31.6%, slack-inflated 39.7% |
+| verify | passed |
+| mock training run | compliant: 11.5% of the budget used (`drill.json`) |
+
+**The decision rules, read at this scale: UNDERPOWERED,** as a one-hour trial must be. H1.1 fails on the effective
+number of calibration blocks (12.4 for energy, 7.4 for busy time; the rule needs 15), H1.2 needs 200 null blocks and
+has 23, and detection at labels of 5% or more was 24/24.
+
+**Drift.** Audit blocks without hidden load sat +0.60 calibration SDs above the calibration blocks (spread 0.88x):
+with clocks locked the frequency drift of run 3 is gone, and a smaller shift between the first half hour and the second
+remains. This smoke trial still calibrated before its audit.
+
+**What the raw data add (post hoc; `python results/reread.py results/shakedown-2026-11-08-colab-t4-run4`).**
+
+- With clocks locked, time adds up: a unit of work took 8.0 to 8.4 ms of busy time at every requested level up to 0.7,
+  and the load labelled 20% added the same busy share at levels 0, 0.2 and 0.3 (0.36, 0.38, 0.40).
+- The labels understate the load (see the note on labels above): 5% drew 7.8 W, not 3.5; 20% drew 25.9 W, not 14.
+- At full load the load labelled 20% changed power by -0.6 W and cut verified work by 35 units a second: hidden work
+  displaces verified work on a full GPU.
+- The link analysis of amendment v0.6, applied post hoc, is underpowered here too: 60 reference blocks are too few for
+  a conformal threshold at alpha = 0.01 (99 needed), it falls back to Student's t, and it flags 2 of 23 null blocks.
+
+## 5. Kaggle T4 run, 8 to 9 November 2026, 21:03Z to 07:11Z (plan-a-closure 0.7.0, commit 1656ad4): H1.2 fails
+
+**What ran.** `closure tier0 --trial-profile long` from [notebooks/tier0_kaggle.ipynb](../notebooks/tier0_kaggle.ipynb)
+as a committed Kaggle run, on one T4 of a "GPU T4 x2" session (`GPU-763d3d8a...`, driver 580.178.04, torch
+2.11.0+cu130), inside Kaggle's container, NVML only, no independent meter: a shakedown. The first run of the long
+profile, and the first large enough to read the decision rules. **Every step ran; two reported a failed check, and the
+trial failed the false-alarm rule.** Bundle as returned:
+[results/shakedown-2026-11-08-kaggle-t4-run5/](../results/shakedown-2026-11-08-kaggle-t4-run5/), sha256
+`dd7e99973459c74557a4fc5707ebef6f16f54d937bfac564c31a6f300d710a1f`.
+
+| step | result |
+| --- | --- |
+| unit tests | passed (13.0 min) |
+| hw-selftest | passed: r2 = 0.969, idle 31.4 W, work at 25% / 100% load = 0.34 |
+| hw-probe | **exit 1**: the container does not allow clock or power-limit changes ("The current user does not have permission to change clocks"), so 2 stack variants were measurable and H1.6 needs 3. s_max = 9.6% (stack 8.5%, operand 9.6%) is a lower bound for this GPU; energy floor 2.06e-12 J/FLOP |
+| hw-state | **failed**: parked-block detection 97.5% (195/200; needs 99%), honest false alarms 0/200. Median 54.5 ms resident, 113 ms with parked blocks, threshold 70.5 ms |
+| hw-trial (long) | ran 549 minutes, SM clocks not locked: **false positives 11/204 (5.4%)**; closure gap 17.8%, slack-inflated 24.9% |
+| verify | passed: chain, signature, schedule and order commitments, pre-registration, results and probe hashes |
+| mock training run | compliant: 10.4% of the budget used (`drill.json`) |
+
+The pre-registration was stamped with OpenTimestamps before the trial (`T1-long/prereg.json.ots`); the proof was
+pending at four calendars when the bundle was written, and `ots upgrade` then `ots verify` complete it.
+
+**The decision rules as registered: UNDERPOWERED, and H1.2 fails.**
+
+| rule | reading |
+| --- | --- |
+| H1.1 calibration valid | fails: Jarque-Bera p = 3e-10 (energy) and 1.7e-7 (busy time); n_eff 105 and 101 |
+| H1.2 false alarms at most 3% on 200 null blocks | **fails: 11/204 = 5.4%** (95% upper bound 8.8%) |
+| H1.3 primary, labels of 5% or more | 99/102 pooled (95% lower bound 92.6%, not certified); duty 22/24 fails |
+| H1.3 stretch, labels of 2% or more | 105/145 pooled; fails in every class |
+| H1.4 energy bound | holds against the labels (100%) |
+| drift | +0.15 SD, spread 0.97x: interleaving worked (run 4, calibrated first: +0.60 SD) |
+
+This is the result as registered, and it stands: on this GPU, under 0.7.0's analysis, the false-alarm rate was not
+controlled.
+
+**Why (post hoc; `python results/reread.py results/shakedown-2026-11-08-kaggle-t4-run5` reproduces every number).**
+
+1. *The model is a straight line and the GPU is not.* All 11 false alarms are among the 22 null blocks that spent most
+   of their time at requested level 0.5; the other 182 null blocks raised none. With clocks not locked, the GPU ran
+   that level on a faster clock (8.2 ms of busy time per unit of work, against 10.6 ms at level 0.3 and 9.2 ms at 0.7)
+   and drew 4 to 5 W more than a straight line in work gives. Between half load and full load, work rose from 70 to
+   93 units a second and power from 62.6 to 65.4 W: under its 70 W limit the GPU lowers its clocks.
+2. *The combined test ran on a Gaussian fallback and 0.7.0 did not say so.* The combined test gives each channel
+   alpha/2 = 0.005, and a conformal threshold at 0.005 needs 199 reference blocks; the run had 144. `methods_used`
+   reported the single-channel tests, which were conformal. All 11 alarms are energy-channel residuals of +2.7 to +3.0
+   SD against a Gaussian threshold of 2.64 SD.
+3. *The labels understate the load* (the note on labels before section 4): 2, 5, 10 and 20% drew 4.2, 7.2, 11.5 and
+   22.5%.
+4. *Near the power limit hidden work adds no energy; it displaces verified work.* At requested level 1 the load
+   labelled 20% changed power by -0.3 W and cut verified work by 33 units a second (35%). At levels of 0.5 and above,
+   hidden loads changed power by -0.5 to +2.4 W and removed 2 to 33 units a second. Assumption A1 (hidden energy adds
+   to verified energy) fails there. What shows instead is that the verified work done no longer explains the energy
+   and busy time observed. At low levels, with clocks free, hidden load sped the verified work up (by about 9 units a
+   second at the same requested level in four cells), so time is not additive either unless clocks are locked (run 4,
+   where it was).
+5. *hw-state: one parked block is lost in the total.* A challenge of 17 blocks that touched a single parked block took
+   about 14 ms longer than a 54 ms total with about 5 ms of jitter. About 1% of challenges touch exactly one.
+6. *hw-probe:* a platform limit. Kaggle's container runs as root and still may not change clocks.
+
+**What changed (0.8.0, amendment v0.6, written before any further run).** A calibrated curve for each channel instead
+of a straight line, and one conformal threshold on the larger channel score, with the method of the deciding test
+reported (1, 2). The hidden load measured on its own before the trial, its seconds counted as it runs (3). H1.4 read
+on a time bound that does not assume additivity, with the energy bounds reported as checks of A1 (4). Residency judged
+by the slowest block of a challenge, timed in one interleaved pass (5). A fresh seed for every hardware run: runs 1 to
+5 all used seed 1.
+
+**The same data under the link analysis (post hoc: it describes this run and decides nothing).** The analysis was
+chosen after these data were seen, on these data. `results_posthoc_link.json`:
+
+| | registered analysis (signed) | link analysis (post hoc) |
+| --- | --- | --- |
+| false alarms in 204 null blocks | 11 (5.4%) | 4 (2.0%; 95% upper bound 4.4%) |
+| threshold of the combined test | Gaussian fallback | conformal |
+| detection, labels of 5% or more | 99/102 | 102/102 (95% lower bound 97.1%) |
+| detection, labels of 2% or more | 105/145 | 143/145 (95% lower bound 95.7%) |
+| closure gap | 17.8% | 3.2% |
+| slack-inflated gap (s_max 9.6%) | 24.9% | 10.3% |
+| energy bound covers the labelled hidden energy | 100% | 93.2% |
+| outcome | UNDERPOWERED | FAIL |
+
+The post hoc outcome is FAIL twice over. The energy bound covers 93.2% of hidden blocks, under H1.4's 95%: finding 4
+in numbers, since that bound assumes additivity. And the slack-inflated gap is above 5% whatever the closure gap, because
+the probe's slack alone is 9.6%. The bounds that do not assume additivity held: energy above the least the verified
+work can cost covered the labelled hidden energy in 100% of hidden blocks, and both time bounds covered an approximate
+truth (the busy time each label added on an idle GPU, since this run did not count hidden seconds) in 162 of 162.
+
+**What runs 4 and 5 show.** On two more T4s: the pipeline runs unattended for ten hours and its evidence verifies;
+interleaving removes calibration drift; a straight-line energy model does not hold on a power-limited GPU with free
+clocks, and the registered analysis failed its own false-alarm rule because of it; energy closure is blind to hidden
+work on a GPU at its power limit, where the time channel and the displaced verified work carry the signal; and the
+efficiency slack measured on a T4 (10 to 13%) alone exceeds the 5% the outcome rule allows, so on this GPU the
+registered outcome is FAIL however good the detector. None of it is evidence about H100s, independent metering or the registered
+thresholds. The prospective test of amendment v0.6 is the next run.

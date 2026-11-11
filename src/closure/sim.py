@@ -123,5 +123,8 @@ class SimSource:
                        + c.busy_abs * c.dt * rng.standard_normal(L), 0, None)
         t = self.clock + np.arange(L) * c.dt
         self.clock += L * c.dt
+        clean_busy = busy
         E, busy, hid = apply_hidden(c, spec, u, E, busy, dyn, t)
-        return {"X": X, "E": E, "busy": busy, "hidden_j": hid, "t0": t, "u": u}
+        # ground truth for the analysis to be checked against, never an input to it: the load level, and the busy
+        # seconds the hidden load added
+        return {"X": X, "E": E, "busy": busy, "hidden_j": hid, "t0": t, "u": u, "level": u, "hidden_s": busy - clean_busy}

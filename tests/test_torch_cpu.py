@@ -173,3 +173,46 @@ def test_load_generator_counts_units_as_they_finish():
         assert first > 0 and load.pop_units()[0] > 0                 # no slot-sized lumps: every pop finds work
     finally:
         load.stop()
+
+
+def test_hidden_load_runs_at_the_duty_asked_for_even_below_one_gemm_a_slot():
+    """Hidden GEMMs are paid for from a running credit, so a duty smaller than one GEMM per slot is met on average
+    instead of being rounded up to one GEMM in every slot, and the seconds it really ran are counted."""
+    from closure.hw.workloads import TorchLoad
+    load = TorchLoad([0], dim=256, mem_elems=1 << 12, slot_s=0.02, device="cpu")
+    try:
+        one = load._time_unit("cpu", 256, 1 << 12)
+        assert load.pop_hidden_s() == 0.0
+        for duty in (0.05, 0.3):
+            load.state = {"level": 0.0, "hid_duty": duty, "hid_gpus": frozenset([0])}
+            time.sleep(0.2)
+            load.pop_hidden_s()
+            t0 = time.perf_counter()
+            time.sleep(1.5)
+            ran, wall = load.pop_hidden_s(), time.perf_counter() - t0
+            assert 0.5 * duty < ran / wall < 1.6 * duty + one / wall, (duty, ran / wall)
+        # under full verified load the hidden load still takes its share of the wall time (the credit is topped up by
+        # the clock, not by the slot), and it is the verified work that gives way
+        load.state = {"level": 1.0, "hid_duty": 0.0, "hid_gpus": frozenset()}
+        time.sleep(0.2)
+        load.pop_units()
+        time.sleep(1.0)
+        alone = load.pop_units()[0]
+        load.state = {"level": 1.0, "hid_duty": 0.5, "hid_gpus": frozenset([0])}
+        time.sleep(0.2)
+        load.pop_hidden_s(), load.pop_units()
+        t0 = time.perf_counter()
+        time.sleep(1.5)
+        ran, wall, units = load.pop_hidden_s(), time.perf_counter() - t0, load.pop_units()[0]
+        assert 0.4 < ran / wall < 0.65, ran / wall                      # a per-slot credit would give a third
+        assert 0.25 * alone < units / wall < 0.75 * alone, (units / wall, alone)
+        load.state = {"level": 0.0, "hid_duty": 0.0, "hid_gpus": frozenset()}
+        time.sleep(0.2)
+        load.pop_hidden_s()
+        time.sleep(0.3)
+        assert load.pop_hidden_s() == 0.0                               # no hidden load, nothing counted
+        load.hidden_table = [(0.1, 8.0), (0.4, 20.0)]
+        load.set_state(0.0, 3.5 / load.p_max)                           # ask for 3.5 W of hidden load
+        assert abs(load.state["hid_duty"] - 0.04375) < 1e-9
+    finally:
+        load.stop()

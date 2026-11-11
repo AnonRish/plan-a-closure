@@ -16,28 +16,38 @@ import numpy as np
 from . import __version__
 from .evidence import Chain, Signer, canonical, clean, verify_sig
 from .sim import SimConfig, SimSource
-from .trial import TrialConfig, analyze, fit_channels, run_trial
+from .trial import TrialConfig, analyze_any, calibrate, run_trial
 from .energy import EnergyFloor
 
+CLASSES = ("constant", "idle_gap", "duty", "dilute")
+# Every hardware profile since amendment v0.6: reference blocks interleaved with the audit, a balanced schedule, the
+# link analysis (link.py) and warm-up blocks. One regime, because studentised scores do the regimes' job.
+V06 = dict(n_regimes=1, alpha=0.01, classes=CLASSES, schedule="balanced", calibration="interleaved", analysis="link")
 PROFILES = {
+    # the simulator's own study (docs/SIM_STUDY.md): the straight-line analysis on a simulator that is a straight line
     "sim": dict(),
     "quick": dict(L=120, n_ref_blocks=240, n_audit_blocks=240, alpha=0.01),
-    "smoke": dict(L=30, n_ref_blocks=60, n_audit_blocks=60, n_regimes=1, alpha=0.01,
-                  classes=("constant", "idle_gap", "duty", "dilute"), intensities=(0.05, 0.2)),
+    # Tier 0's pipeline check, one hour: 100 reference blocks (a conformal threshold at alpha = 0.01 needs 99), 40
+    # null and 5 for each class at 5% and 20%. Until 0.8.0: 60 + 60 blocks of 30 s, calibrated before the audit.
+    "smoke": dict(L=20, n_ref_blocks=100, n_audit_blocks=80, intensities=(0.05, 0.2), n_per_cell=5, warmup_blocks=3,
+                  **V06),
     # CPU rehearsal against a fake NVML (tests/fakegpu): exercises the hardware code path in about a minute; refused on a GPU
-    "rehearsal": dict(dt=0.5, L=2, n_ref_blocks=40, n_audit_blocks=12, n_regimes=1, alpha=0.01,
-                      classes=("constant", "idle_gap"), intensities=(0.2,)),
-    "hw-short": dict(L=120, n_ref_blocks=180, n_audit_blocks=180, n_regimes=2, alpha=0.01,
-                     classes=("constant", "idle_gap", "duty", "dilute"), intensities=(0.01, 0.02, 0.05, 0.10, 0.20)),
-    "hw-full": dict(L=120, n_ref_blocks=360, n_audit_blocks=720, n_regimes=3, alpha=0.01,
-                    classes=("constant", "idle_gap", "duty", "dilute")),
+    "rehearsal": dict(dt=0.5, L=2, n_ref_blocks=40, n_audit_blocks=12, intensities=(0.2,), n_per_cell=3,
+                      warmup_blocks=2, **{**V06, "classes": ("constant", "idle_gap")}),
+    # Tier 0 where a session cannot be trusted for 12 hours (free Colab): under 4 hours, and still 204 null blocks, so
+    # H1.2 can be decided; 150 reference blocks; 6 blocks of 30 s for every class x intensity (18 per class at 5% or
+    # more, so H1.3 primary is decided per class). Blocks half the long profile's, so it resolves about 1.4 times less.
+    "medium": dict(L=30, n_ref_blocks=150, n_audit_blocks=300, intensities=(0.02, 0.05, 0.10, 0.20), n_per_cell=6,
+                   warmup_blocks=5, **V06),
+    # Tier 1 (registered). Since v0.6 interleaved, balanced and analysed with the link model like the shakedowns.
+    "hw-short": dict(L=120, n_ref_blocks=180, n_audit_blocks=180, intensities=(0.01, 0.02, 0.05, 0.10, 0.20),
+                     n_per_cell=4, warmup_blocks=5, **V06),
+    "hw-full": dict(L=120, n_ref_blocks=360, n_audit_blocks=720, n_per_cell=15, warmup_blocks=5, **V06),
     # Tier 0 where a session ends at 12 hours (Kaggle, Colab): about 9 hours, the registered analysis and decision
-    # rules at the largest scale that fits (amendment v0.5). 204 null blocks, so H1.2 can be decided; 12 blocks for
-    # every class x intensity; reference blocks interleaved with the audit; 5 warm-up blocks; one regime, so n_eff can
-    # reach 15 even with residuals as autocorrelated as run 3's busy time (rho 0.66).
-    "long": dict(L=60, n_ref_blocks=144, n_audit_blocks=396, n_regimes=1, alpha=0.01,
-                 classes=("constant", "idle_gap", "duty", "dilute"), intensities=(0.02, 0.05, 0.10, 0.20),
-                 schedule="balanced", n_per_cell=12, calibration="interleaved", warmup_blocks=5),
+    # rules at the largest scale that fits (amendments v0.5 and v0.6). 204 null blocks, so H1.2 can be decided; 12
+    # blocks for every class x intensity; 144 reference blocks; 5 warm-up blocks.
+    "long": dict(L=60, n_ref_blocks=144, n_audit_blocks=396, intensities=(0.02, 0.05, 0.10, 0.20), n_per_cell=12,
+                 warmup_blocks=5, **V06),
 }
 
 
@@ -98,10 +108,10 @@ def cmd_sim_trial(a) -> int:
     return 0
 
 
-def cmd_verify(a) -> int:
-    """Re-verify a run directory: hash chain, signature, schedule commitment, prereg and results hashes."""
+def verify_checks(out: Path) -> dict:
+    """A run directory's evidence, checked: hash chain, signature, schedule commitment, prereg and results hashes."""
     from .evidence import sha256_hex, verify_commit
-    out = Path(a.run)
+    out = Path(out)
     ok, n, head = Chain.verify(out / "chain.jsonl")
     recs = [json.loads(l)["record"] for l in open(out / "chain.jsonl", encoding="utf-8")]
     by = {r.get("phase"): r for r in recs}
@@ -121,8 +131,18 @@ def cmd_verify(a) -> int:
         pf = out / "probe.json"
         pr = json.loads(pf.read_text()) if pf.exists() else None
         checks["probe_hash_ok"] = bool(pr and verify_seal(pr) and pr.get("sha256") == pre["cfg"]["probe_sha256"])
+    return checks
+
+
+def _verified(checks: dict) -> bool:
+    return all(v for k, v in checks.items() if k != "entries")
+
+
+def cmd_verify(a) -> int:
+    """Re-verify a run directory: hash chain, signature, schedule commitment, prereg and results hashes."""
+    checks = verify_checks(Path(a.run))
     print(json.dumps(checks))
-    return 0 if all(v for k, v in checks.items() if k != "entries") else 1
+    return 0 if _verified(checks) else 1
 
 
 def cmd_selftest(a) -> int:
@@ -364,6 +384,15 @@ def _stamp_hook(path, sha):
         print(f"  ots stamp: failed: {e}", flush=True)
 
 
+def _campaign(text: str) -> dict:
+    """'NAME:i/N' -> {"id": NAME, "index": i, "size": N}: trial i of the N declared together as campaign NAME."""
+    name, _, part = str(text).rpartition(":")
+    i, _, n = part.partition("/")
+    if not name or not i.isdigit() or not n.isdigit() or not 1 <= int(i) <= int(n):
+        raise SystemExit(f"--campaign wants NAME:i/N with 1 <= i <= N, not '{text}'")
+    return {"id": name, "index": int(i), "size": int(n)}
+
+
 def cmd_hw_trial(a) -> int:
     if not (a.mock or a.confirm_hardware):
         print("refusing: pass --confirm-hardware (this runs sustained GPU load and hidden-load injections)")
@@ -392,6 +421,19 @@ def cmd_hw_trial(a) -> int:
             cfg.workload["locked_sm_mhz"] = getattr(load, "locked_mhz", None)
             if getattr(load, "lock_note", None):
                 cfg.workload["clock_lock_note"] = load.lock_note
+            # the hidden load on its own, so that "x% of capacity" is its measured power and not an estimate
+            from .hw.workloads import characterise_hidden
+            quick = dict(on_s=0.4, idle_s=0.2, settle_s=0.1, duties=(0.1, 0.4, 0.8)) if rehearsal else {}
+            solo = characterise_hidden(load, reader, n_gpu, **quick)
+            if solo["watts_per_gpu"][-1] > 0:
+                load.hidden_table = list(zip(solo["duty"], solo["watts_per_gpu"]))
+            cfg.workload["hidden_solo"] = {**solo, "used": bool(load.hidden_table)}
+            print("hidden load alone: " + ", ".join(f"duty {d:.2f} -> {w:.1f} W" for d, w in
+                                                    zip(solo["duty"], solo["watts_per_gpu"]))
+                  + ("" if load.hidden_table else " (no power above idle measured: labels fall back to the estimate)"),
+                  file=sys.stderr, flush=True)
+        if getattr(a, "campaign", None):
+            cfg.campaign = _campaign(a.campaign)
         src = HwSource(reader, load, dt=cfg.dt, n_gpu=n_gpu, p_max_w=cfg.p_max_w, seed=a.seed, **clock)
         hook = _pause_hook if a.pause_after_prereg else (_stamp_hook if getattr(a, "stamp_prereg", False) else None)
         res = run_trial(src, cfg, out, _signer(out), pause_hook=hook)
@@ -458,6 +500,10 @@ def cmd_state_sim(a) -> int:
     return 0
 
 
+STATE_ALPHA = 0.005          # hw-state's threshold quantile: half the registered 1% false-alarm allowance
+STATE_MIX = (4, 2, 1)        # calibration : honest : parked challenges, in one randomly interleaved pass
+
+
 def cmd_hw_state(a) -> int:
     """Residency test on real device memory: honest GPU-resident prover vs a prover that parks part of the
     stream in host DRAM. Reports whether tier timing separates beyond jitter at this block size.
@@ -465,7 +511,25 @@ def cmd_hw_state(a) -> int:
     Two things can let a parked block through: a challenge that samples no parked block (pure combinatorics, fixed by
     the number of blocks per challenge) and a challenge that touches one but is not slow enough (the physics). The
     challenge size is chosen so the first stays under 0.1%; the old default of 8 blocks could not reach the
-    registered 99% (docs/DEVIATIONS.md section 3). The result reports the two separately."""
+    registered 99% (docs/DEVIATIONS.md section 3). For the second, since amendment v0.6:
+
+      - each block of a challenge is timed on its own and the challenge is judged by its slowest block, so one
+        swapped-in block stands against one block's time and not against the jitter of all of them (the total-time
+        result is still reported);
+      - all challenges run back to back in one pass, in random order: for every parked-prover challenge (--trials),
+        two honest ones that are judged and four honest ones that set the threshold. The device is then in one
+        steady state throughout, and the threshold's honest challenges are exchangeable with the judged honest ones
+        by design, so the conformal threshold holds its false-alarm level whatever the timing distribution. Until
+        0.8.0 the three kinds ran one after another with the verifier's two-second recomputation between challenges,
+        so every challenge started on an idle GPU;
+      - the verifier recomputes the digest itself afterwards, on every --verify-every-th challenge: on 64 MB blocks
+        that recomputation is most of the cost and says nothing about timing (the prover computes every digest).
+
+    H2.1 asks for 1,000 honest challenges; the default gives 2,000. The threshold is the conformal quantile at
+    --threshold-alpha (0.005, half the registered 1% allowance) of the threshold-setting challenges. A run with far
+    fewer challenges than the default cannot hold a 1% rule to two decimal places: the mock and rehearsal runs, which
+    check the pipeline and not the statistics, pass a much smaller value."""
+    import random
     from . import state as S
     bb = a.block_mb << 20
     a.k_given = bool(a.k)
@@ -479,25 +543,59 @@ def cmd_hw_state(a) -> int:
         parked = S.TorchProver(a.device, bb, park_frac=a.park_frac, seed=2)
     S.fill(v, honest)
     S.fill(v, parked)
-    cal = [S.run_challenge(v, honest, a.k, 1e9)["elapsed_s"] for _ in range(a.trials)]
-    thr = S.calibrate_time_threshold(cal, 0.001)
-    h = [S.run_challenge(v, honest, a.k, thr) for _ in range(a.trials)]
-    p = [S.run_challenge(v, parked, a.k, thr) for _ in range(a.trials)]
-    fa = float(np.mean([not r["passed"] for r in h]))
-    det = float(np.mean([not r["passed"] for r in p]))
+    n = int(a.trials)
+    kinds = [kind for kind, x in zip(("calibration", "honest", "parked"), STATE_MIX) for _ in range(x * n)]
+    random.SystemRandom().shuffle(kinds)
+    for _ in range(max(2, min(20, n // 10))):         # warm-up, not recorded: kernels chosen, clocks and allocator settled
+        S.timed_challenge(v, honest, a.k)
+        S.timed_challenge(v, parked, a.k)
+    recs = {"calibration": [], "honest": [], "parked": []}
+    import gc
+    gc.collect()
+    gc.disable()                                      # no collector pause inside a timed block
+    try:
+        for kind in kinds:
+            recs[kind].append(S.timed_challenge(v, parked if kind == "parked" else honest, a.k))
+    finally:
+        gc.enable()
+    cal, h, p = recs["calibration"], recs["honest"], recs["parked"]
+    alpha = float(a.threshold_alpha)
+    thr_block = S.calibrate_time_threshold([r["slowest_block_s"] for r in cal], alpha)
+    thr_total = S.calibrate_time_threshold([r["elapsed_s"] for r in cal], alpha)
+    every = max(1, int(a.verify_every))
+    checked = {kind: [S.digest_matches(v, r) for r in rs[::every]] for kind, rs in recs.items()}
+    wrong = sum(not ok for oks in checked.values() for ok in oks)
+
+    def slow(r):
+        return r["slowest_block_s"] > thr_block
+
+    fa, det = float(np.mean([slow(r) for r in h])), float(np.mean([slow(r) for r in p]))
     parked_set = parked.parked()
-    touched = [r for r in p if any(i in parked_set for i in r["idx"])]
+    hits = [sum(i in parked_set for i in r["idx"]) for r in p]
+    touched = [r for r, m in zip(p, hits) if m > 0]
+    single = [r for r, m in zip(p, hits) if m == 1]
     out = {"status": "MOCK" if a.mock else "HARDWARE", "device": a.device, "block_mb": a.block_mb, "k": a.k,
            "k_chosen": "given" if a.k_given else f"for {a.sampling_assurance:.1%} sampling detection",
-           "blocks": a.blocks, "trials": a.trials, "park_frac": a.park_frac, "parked_blocks": len(parked_set),
-           "sampling_limit": S.sampling_limit(a.blocks, len(parked_set), a.k), "time_threshold_s": thr,
-           "honest_median_s": float(np.median([r["elapsed_s"] for r in h])),
-           "parked_median_s": float(np.median([r["elapsed_s"] for r in p])),
+           "blocks": a.blocks, "trials": n, "park_frac": a.park_frac, "parked_blocks": len(parked_set),
+           "challenges": {"calibration": len(cal), "honest": len(h), "parked": len(p),
+                          "order": "one pass, interleaved at random, back to back"},
+           "sampling_limit": S.sampling_limit(a.blocks, len(parked_set), a.k),
+           "statistic": "slowest block of each challenge", "threshold_alpha": alpha,
+           "block_time_threshold_s": thr_block,
+           "honest_median_slowest_block_s": float(np.median([r["slowest_block_s"] for r in h])),
+           "parked_median_slowest_block_s": float(np.median([r["slowest_block_s"] for r in p])),
            "honest_false_alarm": fa, "parked_detection": det,
            "challenges_touching_parked": len(touched),
-           "detected_when_touching_parked": (float(np.mean([not r["passed"] for r in touched])) if touched else None),
-           "digest_ok_honest": all(r["digest_ok"] for r in h),
-           "pass": fa <= 0.01 and det >= 0.99}
+           "detected_when_touching_parked": (float(np.mean([slow(r) for r in touched])) if touched else None),
+           "touching_one_parked_block": {"n": len(single), "detected": int(sum(slow(r) for r in single))},
+           "total_time": {"threshold_s": thr_total,
+                          "honest_median_s": float(np.median([r["elapsed_s"] for r in h])),
+                          "parked_median_s": float(np.median([r["elapsed_s"] for r in p])),
+                          "honest_false_alarm": float(np.mean([r["elapsed_s"] > thr_total for r in h])),
+                          "parked_detection": float(np.mean([r["elapsed_s"] > thr_total for r in p]))},
+           "digests_verified": sum(len(oks) for oks in checked.values()), "digests_wrong": wrong,
+           "digest_ok_honest": all(checked["calibration"] + checked["honest"]),
+           "pass": fa <= 0.01 and det >= 0.99 and wrong == 0}
     print(json.dumps(clean(out), indent=2))
     return 0 if out["pass"] else 1
 
@@ -517,6 +615,113 @@ def cmd_criteria(a) -> int:
     alpha = float(json.loads((run / "prereg.json").read_text())["cfg"]["alpha"])
     ev = evaluate(res, alpha)
     print(json.dumps(clean(ev), indent=2) if a.json else "\n".join(summary_lines(ev)))
+    return 0
+
+
+def cmd_physics(a) -> int:
+    """What the GPU did in a finished trial, by requested load level, and what each hidden load did to it (physics.py)."""
+    from .physics import report, summary_lines
+    try:
+        rep = report(a.run)
+    except (OSError, KeyError, ValueError) as e:
+        print(f"refusing: {e}")
+        return 2
+    print(json.dumps(clean(rep), indent=2) if a.json else "\n".join(summary_lines(rep)))
+    return 0
+
+
+def cmd_reanalyze(a) -> int:
+    """Apply an analysis to a finished trial's raw data. With the analysis the trial pre-registered, this reproduces
+    results.json. With another it is a post hoc reading: labelled as one, written beside the signed results and never
+    over them, and deciding nothing (the analysis was chosen after the data were seen)."""
+    from dataclasses import replace
+    from .criteria import evaluate, summary_lines
+    run = Path(a.run)
+    cfg, ref, aud, sched = _load_run(run)
+    analysis = a.analysis or cfg.analysis
+    post_hoc = analysis != cfg.analysis
+    cfg2 = replace(cfg, analysis=analysis)
+    if post_hoc:
+        cfg2.status = (f"{cfg.status} | POST HOC: the '{analysis}' analysis, applied after the data were seen "
+                       f"(pre-registered: '{cfg.analysis}')")
+    res = analyze_any(cfg2, calibrate(ref, cfg2), aud, sched, EnergyFloor(cfg.e_floor_j_per_flop, cfg.e_floor_source))
+    res["reanalysis"] = {"pre_registered_analysis": cfg.analysis, "analysis": analysis, "post_hoc": post_hoc,
+                         "package": __version__}
+    out = Path(a.out) if a.out else run / (f"results_posthoc_{analysis}.json" if post_hoc else "results_reanalysis.json")
+    out.write_text(json.dumps(clean(res), indent=2, sort_keys=True))
+    print(f"{'POST HOC reading' if post_hoc else 'reanalysis'} ({analysis}) written to {out}")
+    print("\n".join(summary_lines(evaluate(res, cfg.alpha))))
+    return 0
+
+
+def cmd_pool(a) -> int:
+    """Read several trials of one design as one: block counts are pooled, every trial keeps its own calibration,
+    schedule, commitments and chain. A campaign declared beforehand (`hw-trial --campaign NAME:i/N`) must be pooled
+    whole; anything else is labelled a post hoc pooling."""
+    from dataclasses import replace
+    from .criteria import evaluate, summary_lines
+    from .trial import summarise
+    loaded, seen = [], {}
+    for r in map(Path, a.runs):
+        try:                                    # a pooled reading rests on every trial's evidence: check it first
+            checks = verify_checks(r)
+        except (OSError, ValueError, KeyError) as e:
+            print(f"refusing: {r} is not a complete trial folder ({type(e).__name__}: {e})")
+            return 2
+        if not _verified(checks):
+            print(f"refusing: {r} fails `closure verify` ({', '.join(k for k, v in checks.items() if not v)})")
+            return 2
+        pre = json.loads((r / "prereg.json").read_text())
+        if pre["schedule_commitment"] in seen:  # the same trial twice would count its blocks twice
+            print(f"refusing: {r} and {seen[pre['schedule_commitment']]} are the same trial (one schedule commitment)")
+            return 2
+        seen[pre["schedule_commitment"]] = r
+        res = json.loads((r / a.results).read_text())
+        if "blocks" not in res:
+            print(f"refusing: {r / a.results} has no block table (results from before 0.8.0). `closure reanalyze --run "
+                  f"{r}` writes one; pass its file name with --results")
+            return 2
+        loaded.append((r, _load_cfg(r), res))
+    cfgs = [c for _, c, _ in loaded]
+    design = {(c.L, c.dt, c.n_ref_blocks, c.n_audit_blocks, c.alpha, tuple(c.classes), tuple(c.intensities),
+               c.schedule, c.n_per_cell, c.calibration, c.n_gpu, r.get("analysis", "linear"))
+              for (_, c, r) in loaded}
+    if len(design) != 1:
+        print("refusing: these trials do not share one design (block length, block counts, alpha, classes, intensities, "
+              "schedule, calibration, analysis)")
+        return 2
+    camp = [c.campaign for c in cfgs]
+    declared = (all(camp) and len({(x["id"], x["size"]) for x in camp}) == 1
+                and len({x["index"] for x in camp}) == len(camp))
+    complete = bool(declared and len(camp) == camp[0]["size"])
+    if declared and not complete and not a.allow_partial:
+        print(f"refusing: campaign '{camp[0]['id']}' declared {camp[0]['size']} trials and {len(camp)} were given. Pool "
+              "them all, or pass --allow-partial (the reading is then labelled post hoc)")
+        return 2
+    keys = [k for k in loaded[0][2]["blocks"] if all(k in r["blocks"] for _, _, r in loaded)]
+    table = {k: [x for _, _, r in loaded for x in r["blocks"][k]] for k in keys}
+    slacks = [c.slack_s_max for c in cfgs]
+    label = (f"POOLED (campaign '{camp[0]['id']}', {len(camp)} of {camp[0]['size']} trials)" if complete else
+             f"POOLED POST HOC ({len(loaded)} trials not declared together beforehand, or not all of them)")
+    cfg = replace(cfgs[0], status=f"{label}: {loaded[0][2].get('status', cfgs[0].status)}",
+                  slack_s_max=None if any(x is None for x in slacks) else max(slacks),
+                  slack_source="the largest s_max among the pooled trials' probes")
+    floor = min(cfgs, key=lambda c: c.e_floor_j_per_flop)
+    res = summarise(cfg, table, EnergyFloor(floor.e_floor_j_per_flop, floor.e_floor_source))
+    res.update({"analysis": loaded[0][2].get("analysis", "linear"), "blocks": table,
+                "normality_p": {ch: [p for _, _, r in loaded for p in r["normality_p"][ch]] for ch in ("energy", "busy")},
+                "calibration_n_eff": {ch: [n for _, _, r in loaded for n in r["calibration_n_eff"][ch]]
+                                      for ch in ("energy", "busy")},
+                "methods_used": {k: sorted({m for _, _, r in loaded for m in r["methods_used"].get(k, [])})
+                                 for k in ("energy", "busy", "combined")},
+                "pooling": {"declared_beforehand": bool(declared), "complete": complete, "trials": [
+                    {"run": str(r), "campaign": c.campaign, "seed": c.seed,
+                     "schedule_commitment": json.loads((r / "prereg.json").read_text())["schedule_commitment"],
+                     "results_file": a.results, "false_alarms": x["false_positive"]["combined"],
+                     "outcome": evaluate(x, c.alpha)["outcome"]} for r, c, x in loaded]}})
+    Path(a.out).write_text(json.dumps(clean(res), indent=2, sort_keys=True))
+    print(f"{label}; written to {a.out}")
+    print("\n".join(summary_lines(evaluate(res, cfg.alpha))))
     return 0
 
 
@@ -774,11 +979,26 @@ def cmd_tier0(a) -> int:
     """Run the Tier 0 pilot end to end without keyboard input; see tier0.py and docs/OPERATOR_TIER0.md."""
     from . import tier0
     if not (a.mock or a.confirm_hardware):
-        print("refusing: pass --confirm-hardware (about 2 h on one GPU, or about 10.5 h with --trial-profile long: clock "
-              "locking, power-limit changes, sustained load and hidden-load injection; clocks and limit are restored "
-              "afterwards) or --mock to rehearse without a GPU")
+        print("refusing: pass --confirm-hardware (about 2 h on one GPU, about 5 h with --trial-profile medium, about "
+              "10.5 h with long: clock locking, power-limit changes, sustained load and hidden-load injection; clocks "
+              "and limit are restored afterwards) or --mock to rehearse without a GPU")
         return 2
-    return tier0.run(Path(a.out), gpu=a.gpu, mock=a.mock, run_tests=not a.skip_tests, profile=a.trial_profile)
+    return tier0.run(Path(a.out), gpu=a.gpu, mock=a.mock, run_tests=not a.skip_tests, profile=a.trial_profile,
+                     campaign=a.campaign, seed=a.seed)
+
+
+def cmd_unpack(a) -> int:
+    """Extract a returned tier0 bundle safely (tier0.unpack) and say where its trial is, for verify and reanalyze."""
+    from . import tier0
+    try:
+        root = tier0.unpack(a.bundle, a.out, a.sha256)
+    except (ValueError, OSError) as e:
+        print(f"refusing: {e}")
+        return 2
+    print(f"unpacked to {root}")
+    for t in sorted(root.glob("T1-*")):
+        print(f"trial folder: {t}   (closure verify {t}; closure criteria --run {t}; closure reanalyze --run {t})")
+    return 0
 
 
 def cmd_hw_restore(a) -> int:
@@ -817,15 +1037,28 @@ def cmd_dcbus_decimate(a) -> int:
     return 0
 
 
+def _load_cfg(run: Path) -> TrialConfig:
+    cfgd = json.loads((run / "prereg.json").read_text())["cfg"]
+    for k in ("intensities", "classes"):
+        cfgd[k] = tuple(cfgd[k])
+    return TrialConfig(**{f.name: cfgd[f.name] for f in fields(TrialConfig) if f.name in cfgd})
+
+
+def _load_run(run: Path):
+    """(cfg, reference windows, audit windows, schedule) of a finished trial folder, as the trial itself had them."""
+    z = np.load(run / "raw.npz")
+    cfg = _load_cfg(run)
+    keys = ("X", "E", "B", "t0", "hid", "lev", "hs")
+    ref = {k: z[f"ref_{k}"] for k in keys if f"ref_{k}" in z.files}
+    aud = {k: z[f"aud_{k}"] for k in keys if f"aud_{k}" in z.files}
+    return cfg, ref, aud, json.loads((run / "schedule_reveal.json").read_text())["schedule"]
+
+
 def cmd_dcbus(a) -> int:
     from . import dcbus
     run = Path(a.run)
-    z = np.load(run / "raw.npz")
-    pre = json.loads((run / "prereg.json").read_text())
-    cfgd = pre["cfg"]
-    for k in ("intensities", "classes"):
-        cfgd[k] = tuple(cfgd[k])
-    cfg = TrialConfig(**{f.name: cfgd[f.name] for f in fields(TrialConfig) if f.name in cfgd})
+    cfg, ref, aud, sched = _load_run(run)
+    z = {"ref_E": ref["E"].copy(), "ref_t0": ref["t0"]}
     t, p = dcbus.load_csv(a.csv, scale=a.scale, ts_unit=a.ts_unit)
     nvml_mean_w = float(np.sum(z["ref_E"]) / (len(z["ref_E"]) * cfg.dt))
     meter = dcbus.check_absolute_power(t, p, ref_mean_w=nvml_mean_w)
@@ -839,14 +1072,11 @@ def cmd_dcbus(a) -> int:
     if offs is None:
         offs = dcbus.align_offset(z["ref_t0"], z["ref_E"], t, p, dt=cfg.dt)
     print(f"clock offset applied: {offs:.3f} s")
-    ref = {k: z[f"ref_{k}"] for k in ("X", "E", "B", "t0", "hid")}
-    aud = {k: z[f"aud_{k}"] for k in ("X", "E", "B", "t0", "hid")}
     ref["E"] = dcbus.window_energy(t, p, ref["t0"] + offs, cfg.dt)
     aud["E"] = dcbus.window_energy(t, p, aud["t0"] + offs, cfg.dt)
     ref["X"][:, 0] = cfg.dt
     aud["X"][:, 0] = cfg.dt
-    calE, calB = fit_channels(ref, cfg)
-    sched = json.loads((run / "schedule_reveal.json").read_text())["schedule"]
+    cal = calibrate(ref, cfg)
     ratio = float(np.sum(ref["E"]) / np.sum(z["ref_E"]))
     if not 0.5 <= ratio <= 2.0:
         meter["warnings"].append(f"bus energy is {ratio:.2f} x the NVML energy over the reference run: check units (--scale), the "
@@ -854,7 +1084,7 @@ def cmd_dcbus(a) -> int:
         print("METER CHECK:", meter["warnings"][-1])
     cfg.status = ("HARDWARE+DCBUS (independent meter)" if meter["ok"]
                   else "HARDWARE+DCBUS (METER UNVERIFIED: not an absolute-power channel)")
-    res = analyze(cfg, calE, calB, aud, sched, EnergyFloor(cfg.e_floor_j_per_flop, cfg.e_floor_source))
+    res = analyze_any(cfg, cal, aud, sched, EnergyFloor(cfg.e_floor_j_per_flop, cfg.e_floor_source))
     res["meter_check"] = {**meter, "bus_to_nvml_energy_ratio": ratio}
     (run / "results_dcbus.json").write_text(json.dumps(clean(res), indent=2, sort_keys=True))
     _print_headline(res)
@@ -889,6 +1119,9 @@ def main(argv=None) -> int:
             s.add_argument("--probe", default=None, help="sealed probe.json from `closure hw-probe` (energy floor + slack)")
             s.add_argument("--stamp-prereg", action="store_true",
                            help="non-interactive: `ots stamp` prereg.json if available and log its hash, then continue")
+            s.add_argument("--campaign", default=None, metavar="NAME:i/N",
+                           help="this trial is number i of the N trials declared together as campaign NAME "
+                                "(`closure pool` reads them as one)")
         s.set_defaults(f=fn)
     s = sp.add_parser("hw-probe"); s.add_argument("--out", default="probe.json"); s.add_argument("--gpu", type=int, default=0)
     s.add_argument("--dim", type=int, default=None,
@@ -907,12 +1140,31 @@ def main(argv=None) -> int:
     s.add_argument("--run", required=True); s.set_defaults(f=cmd_drift)
     s = sp.add_parser("criteria", help="the pre-registered T1 decision rules (H1.1 to H1.4) read off a trial folder")
     s.add_argument("--run", required=True); s.add_argument("--json", action="store_true"); s.set_defaults(f=cmd_criteria)
+    s = sp.add_parser("physics", help="what the GPU did in a finished trial, by load level, and what hidden load did to it")
+    s.add_argument("--run", required=True); s.add_argument("--json", action="store_true"); s.set_defaults(f=cmd_physics)
+    s = sp.add_parser("reanalyze", help="apply an analysis to a finished trial's raw data; another analysis than the "
+                                        "pre-registered one gives a labelled post hoc reading")
+    s.add_argument("--run", required=True); s.add_argument("--analysis", choices=("linear", "link"), default=None)
+    s.add_argument("--out", default=None); s.set_defaults(f=cmd_reanalyze)
+    s = sp.add_parser("pool", help="read several trials of one design as one (a campaign declared with --campaign)")
+    s.add_argument("--runs", nargs="+", required=True); s.add_argument("--out", default="pooled.json")
+    s.add_argument("--results", default="results.json", help="the results file to pool in each trial folder")
+    s.add_argument("--allow-partial", action="store_true"); s.set_defaults(f=cmd_pool)
     s = sp.add_parser("hw-state"); s.add_argument("--device", default="cuda:0"); s.add_argument("--blocks", type=int, default=32)
     s.add_argument("--block-mb", type=int, default=64)
     s.add_argument("--k", type=int, default=None, help="blocks per challenge; default: enough that sampling alone "
                    "touches a parked block with probability --sampling-assurance (17 of 32 at 25%% parked)")
     s.add_argument("--sampling-assurance", type=float, default=0.999)
-    s.add_argument("--trials", type=int, default=200); s.add_argument("--park-frac", type=float, default=0.25)
+    s.add_argument("--trials", type=int, default=1000,
+                   help="challenges to the parked prover; with them, interleaved at random, twice as many honest ones "
+                        "that are judged (H2.1 asks for 1,000) and four times as many that set the threshold")
+    s.add_argument("--park-frac", type=float, default=0.25)
+    s.add_argument("--threshold-alpha", type=float, default=STATE_ALPHA,
+                   help="quantile of the threshold-setting challenges used as the threshold (default 0.005: half the "
+                        "registered 1%% false-alarm allowance)")
+    s.add_argument("--verify-every", type=int, default=50,
+                   help="afterwards the verifier recomputes the digest itself for every n-th challenge of each kind "
+                        "(the prover computes all of them)")
     s.add_argument("--mock", action="store_true"); s.add_argument("--mock-slow-bw", type=float, default=2e9)
     s.set_defaults(f=cmd_hw_state)
     s = sp.add_parser("cadence-check", help="defence in depth: is there a training cadence in a power trace?")
@@ -953,10 +1205,20 @@ def main(argv=None) -> int:
     s.add_argument("--out", default="runs/tier0"); s.add_argument("--gpu", type=int, default=0)
     s.add_argument("--mock", action="store_true"); s.add_argument("--confirm-hardware", action="store_true")
     s.add_argument("--skip-tests", action="store_true", help="skip the unit tests at the start")
-    s.add_argument("--trial-profile", choices=("smoke", "long"), default="smoke",
-                   help="smoke: a 1 h trial that checks the pipeline (the default); long: about 9 h, enough to decide "
-                        "the registered rules H1.1 to H1.4 (fits a 12-hour Kaggle or Colab session)")
+    s.add_argument("--trial-profile", choices=("smoke", "medium", "long"), default="smoke",
+                   help="smoke: a 1 h trial that checks the pipeline (the default); medium: under 4 h, the smallest "
+                        "that can decide the registered rules H1.1 to H1.4 (a free Colab session); long: about 9 h, "
+                        "the same rules with blocks twice as long (a 12-hour Kaggle session)")
+    s.add_argument("--campaign", default=None, metavar="NAME:i/N",
+                   help="this run's trial is number i of N declared together (two GPUs of one session, say); "
+                        "`closure pool` then reads them as one")
+    s.add_argument("--seed", type=int, default=None,
+                   help="trial seed (load sequence and schedule); default: drawn fresh on hardware, 1 with --mock")
     s.set_defaults(f=cmd_tier0)
+    s = sp.add_parser("unpack", help="extract a returned tier0 bundle safely, to verify or re-analyse it")
+    s.add_argument("bundle"); s.add_argument("--out", required=True, help="a new or empty folder")
+    s.add_argument("--sha256", default=None, help="refuse the bundle unless its SHA-256 is this")
+    s.set_defaults(f=cmd_unpack)
     s = sp.add_parser("claims"); s.add_argument("--all", action="store_true"); s.add_argument("--strict", action="store_true"); s.set_defaults(f=cmd_claims)
     s = sp.add_parser("coverage"); s.add_argument("--write", default=None); s.set_defaults(f=cmd_coverage)
     s = sp.add_parser("retrofit"); s.add_argument("--us-racks", type=int, default=200_000); s.add_argument("--cn-racks", type=int, default=100_000)

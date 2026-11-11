@@ -1,6 +1,7 @@
 # Tier 0 pilot: guide for the cluster operator
 
-This page is for whoever runs plan-a-closure on a host cluster. Tier 0 is one GPU for about two hours of exclusive time.
+This page is for whoever runs plan-a-closure on a host cluster. Tier 0 is one GPU for about two hours of exclusive time
+(five with the medium trial, ten and a half with the long one).
 The whole pilot is one command. It needs no meeting and never waits for keyboard input. It leaves one file to send back.
 
 ## What it does
@@ -9,13 +10,13 @@ The whole pilot is one command. It needs no meeting and never waits for keyboard
 
 | step | what it checks | time on hardware |
 | --- | --- | --- |
-| unit tests | the package works on this host | about 2 min |
+| unit tests | the package works on this host | 2 to 15 min |
 | `selftest` | estimators, signature and commitments, end to end on simulated data | under 1 min |
 | `preflight` | NVML, the GPU energy counter, torch with CUDA, clock sync; warnings for root, MIG, persistence mode, other processes, int8 and fp8 support and free memory | seconds |
 | `hw-selftest` | the GPU's energy tracks the verified work (r2 > 0.9) and the load levels do different work; sizes the unit of work to the GPU and passes it on to `hw-probe` and `hw-trial` | about 3 min |
 | `hw-probe` | efficiency slack over clock caps, power caps, precisions (tf32, fp16, int8, fp8) and activation patterns; the lowest joules per FLOP | about 40 min |
-| `hw-state` | device memory holds the verifier's data; blocks moved to host memory are caught by timing | a few minutes |
-| `hw-trial` | 30 min reference and a 30 min blind audit with synthetic hidden load injected on the same GPU (`--trial-profile long`: reference blocks interleaved with a balanced blind audit, enough to read the registered decision rules) | about 1 h (long: about 9 h) |
+| `hw-state` | device memory holds the verifier's data; blocks moved to host memory are caught by the time of a challenge's slowest block (7,000 challenges in one pass) | about 13 min |
+| `hw-trial` | the hidden load measured on its own (3.5 min), then reference blocks interleaved with a balanced blind audit, synthetic hidden load injected on the same GPU on a schedule committed beforehand. `smoke` (default) checks the pipeline; `--trial-profile medium` and `long` can decide the registered rules H1.1 to H1.4 | about 1 h (medium: 3.8 h, long: about 9 h) |
 | `verify` | hash chain, Ed25519 signature, schedule commitment, pre-registration, results and probe hashes | seconds |
 | `hw-restore` | always runs last, even after a failure or a signal: SM clocks unlocked, power limit set back to what it was | seconds |
 
@@ -68,7 +69,7 @@ any audit data exist; otherwise its hash is logged and kept in the signed chain.
 
 - `runs/tier0/tier0_bundle.tar.gz`: every log, the probe, the trial's evidence and `SUMMARY.md`.
 - **Do not send `signing_key.bin`.** It is the run's private key and is deliberately left out of the bundle. Keep it or
-  delete it. The public key is in `T1-smoke/signature.json` (`T1-long/` for the long trial).
+  delete it. The public key is in `T1-smoke/signature.json` (`T1-medium/` or `T1-long/` for those trials).
 - If an independent power meter logged during the trial, export it as `timestamp_s,power_w` and run
   `closure dcbus-analyze --run runs/tier0/T1-smoke --csv bus.csv`. Send `results_dcbus.json` as well. The meter must be
   DC-coupled and report absolute watts; an AC-coupled probe cannot give energy and the command refuses it.
@@ -98,22 +99,28 @@ residency timing and the blind smoke trial on a real device.
 
 - **Colab:** open `notebooks/tier0_colab.ipynb` in Google Colab
   ([direct link](https://colab.research.google.com/github/AnonRish/plan-a-closure/blob/main/notebooks/tier0_colab.ipynb)),
-  choose a T4 runtime and use Runtime > Run all (about 2 hours 20 minutes; keep the tab open). One cell runs Tier 0
-  and the mock training run, then saves the results to Google Drive (if you allow it in the first cell) and downloads
-  them, so a session dropped after the run cannot lose them.
-- **Kaggle, for the long trial:** `notebooks/tier0_kaggle.ipynb` runs `closure tier0 --trial-profile long` (about
-  10.5 hours) as a committed run, which goes on with the browser closed. In a new Kaggle notebook, File > Import
-  Notebook with the link
+  choose a T4 runtime and use Runtime > Run all (about 5 hours with the default medium trial; keep the tab open and
+  the computer awake). One cell runs Tier 0 and the mock training run, then saves the results to Google Drive (if you
+  allow it in the first cell) and downloads them, so a session dropped after the run cannot lose them. Colab lets the
+  run lock the GPU's clocks, so this is the run with clocks held still. `PROFILE = "smoke"` in the run cell gives the
+  2 hour 20 minute pipeline check instead.
+- **Kaggle, for two long trials read together:** `notebooks/tier0_kaggle.ipynb` runs `closure tier0 --trial-profile
+  long` on each of the session's two T4s at once (about 10.5 hours) as a committed run, which goes on with the browser
+  closed. The two trials are declared one campaign before either has data (`--campaign`), and `closure pool` reads them
+  together when both finish: 408 null blocks instead of 204. In a new Kaggle notebook, File > Import Notebook with
+  the link
   [github.com/AnonRish/plan-a-closure/blob/main/notebooks/tier0_kaggle.ipynb](https://github.com/AnonRish/plan-a-closure/blob/main/notebooks/tier0_kaggle.ipynb);
   set Accelerator to GPU T4 x2 (the P100 has no NVML energy counter) and Internet on (Kaggle asks for a
   phone-verified account for both), check that at least 11 GPU hours of the weekly quota are left, then Save Version >
-  Save & Run All (Commit). The run happens outside `/kaggle/working`; only the bundle, `SUMMARY.md` and `drill.json` are
-  copied there, so they are saved with the version and the private key is not. If the run is still going 11 hours 20
-  minutes into the session it is stopped cleanly, so the summary and the bundle of every finished step are saved
-  before Kaggle's 12-hour limit (a trial stopped this way keeps its finished blocks in `raw_partial.npz`, published but
-  not analysed). A free Colab session is not reliable for this long.
+  Save & Run All (Commit). The runs happen outside `/kaggle/working`; only each GPU's bundle and `SUMMARY.md`, the
+  pooled reading (`pooled.json`, `CAMPAIGN.md`) and `drill.json` are copied there, so they are saved with the version
+  and the private keys are not. Anything still running 11 hours 20 minutes into the session is stopped cleanly, so
+  the summary and the bundle of every finished step are saved before Kaggle's 12-hour limit (a trial stopped this way
+  keeps its finished blocks in `raw_partial.npz`, published but not analysed, and the campaign is then not pooled).
+  Kaggle's container does not allow clock changes, so these trials run with clocks free and the probe measures
+  fewer stack variants than H1.6 asks for; both are reported. A free Colab session is not reliable for this long.
 - **A cloud VM with one GPU and a root shell:** the commands under "Run it" above, unchanged (add
-  `--trial-profile long` for the long trial).
+  `--trial-profile medium` or `long`).
 
 Such a run is an engineering shakedown on a non-target device: inside a VM, without an independent meter (assumption A6
 does not hold), and usually without clock or power control. It is not the registered trial. Record it in
@@ -141,6 +148,21 @@ alarms. `SUMMARY.md` then reads the decision rules H1.1 to H1.4 off the results 
 folder>`), says which ones the data decide, and gives the pooled detection rate at hidden fractions of at least 5% with
 its 95% lower bound. That bound reaches 95% once about 60 such blocks are all detected; the long trial has about 100.
 It is still a shakedown reading: NVML only, so assumption A6 does not hold.
+
+**What runs 4 and 5 changed (0.8.0, amendment v0.6).** Run 5 was the first long trial and the registered analysis
+failed its own false-alarm rule on it: 11 false alarms in 204 null blocks, all at one load level where the GPU drew
+more than a straight line predicts ([DEVIATIONS.md](DEVIATIONS.md) section 5). Since 0.8.0 every trial profile
+interleaves its calibration, fits a calibrated curve for each channel instead of a straight line and uses one conformal
+threshold (`src/closure/link.py`); the hidden load is measured on its own before the trial, so a label of x% is a load
+that draws x% of capacity; the seconds it ran are counted, and H1.4 is read on a time bound that does not assume hidden
+energy adds to verified energy; `hw-state` judges a challenge by its slowest block; and every hardware run draws its own
+seed. `SUMMARY.md` gains a table of what the GPU did at each load level (`closure physics --run <trial folder>`).
+
+**Reading a finished run again.** `closure unpack <bundle> --out <new folder>` extracts a returned bundle safely
+(plain files only; an optional `--sha256` must match). On its trial folder: `closure verify`, `closure criteria --run`,
+`closure physics --run`, and `closure reanalyze --run`, which reproduces the registered analysis from `raw.npz`, or
+with `--analysis` applies another one and labels the result POST HOC. `closure pool --runs <trial folders>` reads the
+trials of a declared campaign together and refuses an incomplete one.
 
 ## What it does not claim
 

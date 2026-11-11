@@ -15,7 +15,7 @@ import numpy as np
 
 from .residual import nnls
 
-SHIFT_FLAG, SPREAD_FLAG = 0.5, 1.5   # about three standard errors for 30 clean blocks, so chance rarely trips them
+SHIFT_FLAG, SPREAD_FLAG = 0.5, 1.5   # fixed flags; the report gives the shift's standard error to read them against
 
 
 def _idle_w(X, E, H):
@@ -39,10 +39,16 @@ def report(run_dir) -> dict:
     z = np.load(run / "raw.npz")
     Xr, Er, Hr = z["ref_X"], z["ref_E"], z["ref_hid"]
     Xa, Ea, Ha = z["aud_X"], z["aud_E"], z["aud_hid"]
-    th = nnls(Xr, Er)                                        # one model over the calibration windows
-    rb = (Er - Xr @ th)[: (len(Er) // L) * L].reshape(-1, L).sum(1)
     n_a = (len(Ea) // L) * L
-    ra = (Ea - Xa @ th)[:n_a].reshape(-1, L).sum(1)
+    if cfg.get("analysis") == "link":                        # the run's own model: a calibrated curve (link.py)
+        from .link import Curve
+        curve = Curve.fit(Xr, Er)
+        rb = (Er - curve.predict(Xr))[: (len(Er) // L) * L].reshape(-1, L).sum(1)
+        ra = (Ea - curve.predict(Xa))[:n_a].reshape(-1, L).sum(1)
+    else:
+        th = nnls(Xr, Er)                                    # one straight line over the calibration windows
+        rb = (Er - Xr @ th)[: (len(Er) // L) * L].reshape(-1, L).sum(1)
+        ra = (Ea - Xa @ th)[:n_a].reshape(-1, L).sum(1)
     clean = Ha[:n_a].reshape(-1, L).sum(1) == 0
     sd = float(rb.std()) if rb.size > 1 else float("nan")
     third = rb.size // 3                                      # reference blocks are in time order
@@ -58,11 +64,13 @@ def report(run_dir) -> dict:
     if clean.sum() >= 5 and sd > 0:
         a = out["audit_without_hidden_energy"]
         out["mean_shift_in_calibration_sds"] = a["block_residual_mean_j"] / sd
+        out["mean_shift_standard_error"] = float(np.sqrt(1.0 / clean.sum() + 1.0 / rb.size))
         out["spread_ratio"] = a["block_residual_sd_j"] / sd
         out["drift_suspected"] = bool(abs(out["mean_shift_in_calibration_sds"]) > SHIFT_FLAG
                                       or out["spread_ratio"] > SPREAD_FLAG)
     else:
         out["mean_shift_in_calibration_sds"] = out["spread_ratio"] = out["drift_suspected"] = None
+        out["mean_shift_standard_error"] = None
     return out
 
 
@@ -72,7 +80,8 @@ def summary_lines(rep: dict) -> list:
     if rep.get("drift_suspected") is None:
         return [f"- too few audit blocks without hidden energy ({a['blocks']}) to compare with calibration"]
     lines = [f"- audit blocks without hidden energy ({a['blocks']}) against calibration ({c['blocks']}): mean shift "
-             f"{rep['mean_shift_in_calibration_sds']:+.2f} calibration SDs, spread {rep['spread_ratio']:.2f}x; "
+             f"{rep['mean_shift_in_calibration_sds']:+.2f} calibration SDs (standard error "
+             f"{rep.get('mean_shift_standard_error') or float('nan'):.2f}), spread {rep['spread_ratio']:.2f}x; "
              f"drift suspected: {rep['drift_suspected']} (flags at {SHIFT_FLAG} SD and {SPREAD_FLAG}x)"]
     if c["idle_power_w"] is not None and a["idle_power_w"] is not None:
         lines.append(f"- idle power {c['idle_power_w']:.1f} W during calibration, {a['idle_power_w']:.1f} W during audit")

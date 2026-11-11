@@ -87,6 +87,12 @@ class Prover:
         n_slow = sum(1 for i in idx if i in self.slow)
         return total, self.tier.time(len(idx) - n_slow, n_slow, self.bb, self.rng)
 
+    def answer_blocks(self, idx, K: np.ndarray):
+        """The same answer with one elapsed time per block, in the order asked (see run_challenge)."""
+        total = sum(digest(self.store.get(i, bytes(self.bb)), K) for i in idx) % (1 << 64)
+        return total, [self.tier.time(0 if i in self.slow else 1, 1 if i in self.slow else 0, self.bb, self.rng)
+                       for i in idx]
+
     def parked(self) -> set:
         """Blocks kept in the slow tier (known to the test harness, never to the verifier)."""
         return set(self.slow)
@@ -130,11 +136,40 @@ def calibrate_time_threshold(honest_times, alpha: float) -> float:
     return float(t.mean() + t_upper(alpha, n - 1) * t.std(ddof=1) * np.sqrt(1 + 1 / n))
 
 
-def run_challenge(verifier: Verifier, prover, k: int, t_thr: float) -> dict:
+def run_challenge(verifier: Verifier, prover, k: int, t_thr: float, block_thr: float = None,
+                  check_digest: bool = True) -> dict:
+    """One challenge of k blocks. With block_thr, the blocks are answered and timed one by one and the challenge is
+    slow if its slowest block is slower than block_thr: one swapped-in block then stands against one block's time, not
+    against the jitter of all k (amendment v0.6; on Kaggle a challenge that touched a single parked block added 14 ms
+    to a 54 ms total with 5 ms of jitter and slipped under the total-time threshold, docs/DEVIATIONS.md section 5).
+    Without block_thr, the total time against t_thr, as before. check_digest=False skips the verifier's own recomputation
+    (most of a challenge's cost on 64 MB blocks) when only timing is being measured; digest_ok is then None."""
     idx, dkey = verifier.new_challenge(k)
-    d, t = prover.answer(idx, verifier.digest_key(dkey))
-    ok_d = d == verifier.expected(idx, dkey)
-    return {"digest_ok": ok_d, "time_ok": t <= t_thr, "elapsed_s": t, "passed": ok_d and t <= t_thr, "idx": list(idx)}
+    K = verifier.digest_key(dkey)
+    if block_thr is None:
+        d, t = prover.answer(idx, K)
+        slowest, time_ok = None, t <= t_thr
+    else:
+        d, ts = prover.answer_blocks(idx, K)
+        t, slowest = float(sum(ts)), float(max(ts))
+        time_ok = slowest <= block_thr
+    ok_d = (d == verifier.expected(idx, dkey)) if check_digest else None
+    return {"digest_ok": ok_d, "time_ok": time_ok, "elapsed_s": t, "slowest_block_s": slowest,
+            "passed": ok_d is not False and time_ok, "idx": list(idx)}
+
+
+def timed_challenge(verifier: Verifier, prover, k: int) -> dict:
+    """One challenge of k blocks, answered and timed block by block. Nothing is judged or recomputed here, so many
+    can run back to back with the device in one steady state: `closure hw-state` judges them afterwards against
+    thresholds from honest challenges interleaved among them, and recomputes a sample of the digests (digest_matches)."""
+    idx, dkey = verifier.new_challenge(k)
+    d, ts = prover.answer_blocks(idx, verifier.digest_key(dkey))
+    return {"idx": list(idx), "dkey": dkey, "digest": d, "elapsed_s": float(sum(ts)), "slowest_block_s": float(max(ts))}
+
+
+def digest_matches(verifier: Verifier, rec: dict) -> bool:
+    """The verifier's own recomputation of a timed challenge's digest (most of a challenge's cost on 64 MB blocks)."""
+    return rec["digest"] == verifier.expected(rec["idx"], rec["dkey"])
 
 
 def challenge_size(n_blocks: int, park_frac: float, assurance: float = 0.999) -> int:
@@ -177,17 +212,24 @@ class TorchProver:
         dev = str(self.torch.device(self.device))
         return {i for i, b in self.blocks.items() if str(b.device) != dev}
 
-    def answer(self, idx, K: np.ndarray):
+    def answer_blocks(self, idx, K: np.ndarray):
+        """(digest, seconds per block): each block is fetched if parked, digested and synchronised on its own."""
         torch = self.torch
         Kt = torch.from_numpy(K.view(np.int32).copy()).to(self.device)
         if str(self.device).startswith("cuda"):
             torch.cuda.synchronize(self.device)
-        t0, total = time.perf_counter(), 0
+        total, ts = 0, []
         for i in idx:
+            t1 = time.perf_counter()
             b = self.blocks[i]
             if str(b.device) != str(torch.device(self.device)):
                 b = b.to(self.device)                    # swap-in of a parked block
             w = b.view(torch.int32).reshape(-1, Kt.numel())
             s = (torch.bitwise_xor(w, Kt).to(torch.int64) & 0xFFFFFFFF).sum()
             total += int(s.item())                       # .item() synchronises: elapsed includes device work
-        return total % (1 << 64), time.perf_counter() - t0
+            ts.append(time.perf_counter() - t1)
+        return total % (1 << 64), ts
+
+    def answer(self, idx, K: np.ndarray):
+        d, ts = self.answer_blocks(idx, K)
+        return d, float(sum(ts))

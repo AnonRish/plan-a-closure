@@ -9,13 +9,22 @@ hardware, never waits for keyboard input, and leaves one bundle to send back. St
   hw-selftest   does energy track verified work on this GPU (r2 > 0.9), and do the load levels do different work?
                 its unit of work, sized to the GPU, is passed on to hw-probe and hw-trial (stops the run on failure)
   hw-probe      efficiency slack over clocks, caps, precisions and operands; the energy floor, int8 and fp8 included
-  hw-state      device-memory residency: blocks parked in host memory are caught by time (challenge size
-                chosen so sampling alone touches a parked block 99.9% of the time)
-  hw-trial      T1 with SM clocks locked at the highest clock the probe saw held at full load, the probe bound into
-                the pre-registration, prereg.json stamped with `ots` if installed before any audit data exist.
-                --trial-profile smoke (the default): 30 min reference, then a 30 min blind audit with hidden-load
-                injection. --trial-profile long: about 9 h, reference blocks interleaved with a balanced blind audit,
-                enough to decide the registered rules H1.1 to H1.4 (fits a 12-hour Kaggle or Colab session)
+  hw-state      device-memory residency: blocks parked in host memory are caught by the time of the slowest block
+                of a challenge; 1,000 parked-prover and 2,000 honest challenges in one interleaved pass (challenge
+                size chosen so sampling alone touches a parked block 99.9% of the time)
+  hw-trial      T1 with SM clocks locked at the highest clock the probe saw held at full load (where the machine
+                allows it), the probe bound into the pre-registration, the hidden load measured on its own first so
+                that its labels are its measured power, prereg.json stamped with `ots` if installed before any trial
+                data exist, a fresh random seed. Both profiles interleave reference blocks with a balanced blind audit
+                and use the link analysis (amendment v0.6).
+                --trial-profile smoke (the default): one hour, 100 reference and 80 audit blocks of 20 s; it checks
+                the pipeline and cannot decide the false-alarm rule (40 null blocks; the rule needs 200).
+                --trial-profile medium: under 4 h, 150 reference and 300 audit blocks of 30 s (204 of them null):
+                the smallest trial that can decide the registered rules H1.1 to H1.4, for a session that cannot be
+                trusted for twelve hours (free Colab).
+                --trial-profile long: about 9 h, 144 reference and 396 audit blocks of 60 s; the same rules with
+                blocks twice as long (fits a 12-hour Kaggle session). --campaign NAME:i/N declares the trial one of
+                N to be read together (`closure pool`), before any of them has data.
   verify        hash chain, signature, schedule commitment, prereg, results and probe hashes
 
 Each step's exact command, output, exit status and duration go to OUT/logs/. OUT/SUMMARY.md collects the headline
@@ -42,7 +51,8 @@ from . import __version__
 
 PRIVATE_KEY = "signing_key.bin"
 BUNDLE = "tier0_bundle.tar.gz"
-TRIALS = {"smoke": "smoke trial with blind hidden-load injection",
+TRIALS = {"smoke": "smoke trial (about 1 h): interleaved calibration, balanced blind hidden-load schedule",
+          "medium": "medium trial (under 4 h): interleaved calibration, balanced blind hidden-load schedule",
           "long": "long trial (about 9 h): interleaved calibration, balanced blind hidden-load schedule"}
 
 
@@ -122,6 +132,13 @@ def _read(p: Path):
         return None
 
 
+def _ran(results: list) -> str:
+    """Every step ran, but a step that ran can still have reported a failed check (a non-critical step's exit 1)."""
+    bad = [r["key"] for r in results if not r["skipped"] and r["exit"] not in (0, None)]
+    return "every step ran" + (f"; {len(bad)} reported a failed check ({', '.join(bad)}): see its section below"
+                               if bad else "")
+
+
 def _interrupted(run: Path):
     """The chain's record of a trial stopped before its data were complete (trial.py keeps raw_partial.npz), or None."""
     try:
@@ -137,7 +154,8 @@ def _fmt(x, spec=".4f") -> str:
     return format(x, spec) if isinstance(x, (int, float)) and not isinstance(x, bool) else str(x)
 
 
-def plan(out: Path, gpu: int, mock: bool, run_tests: bool, rehearsal: bool = False, profile: str = "smoke") -> list:
+def plan(out: Path, gpu: int, mock: bool, run_tests: bool, rehearsal: bool = False, profile: str = "smoke",
+         campaign: str = None, seed: int = 1) -> list:
     """(key, title, argv, stops_the_run_on_failure). hw-trial gets --probe at run time if the probe wrote a file.
     rehearsal: the hardware steps on CPU torch against a fake NVML and nvidia-smi (tests), with small sizes."""
     py = sys.executable
@@ -148,7 +166,11 @@ def plan(out: Path, gpu: int, mock: bool, run_tests: bool, rehearsal: bool = Fal
     tests = Path(__file__).resolve().parents[2] / "tests"
     if (run_tests and tests.is_dir() and importlib.util.find_spec("pytest") is not None
             and not os.environ.get("CLOSURE_TIER0_INNER")):
-        steps.append(("unit-tests", "unit tests", [py, "-m", "pytest", "-q", "-p", "no:cacheprovider", str(tests)], True))
+        # test_runs_on_record.py re-reads the published bundles under results/: it checks the repository's records,
+        # which a run on this machine does not depend on, so it is left to CI and a rounding difference in it cannot
+        # stop a ten-hour run
+        steps.append(("unit-tests", "unit tests", [py, "-m", "pytest", "-q", "-p", "no:cacheprovider",
+                                                   f"--ignore={tests / 'test_runs_on_record.py'}", str(tests)], True))
     steps += [
         ("selftest", "simulated end-to-end self-test", cli + ["selftest"], True),
         ("preflight", "NVML, energy counter, torch, clock sync, which physical GPU",
@@ -161,11 +183,14 @@ def plan(out: Path, gpu: int, mock: bool, run_tests: bool, rehearsal: bool = Fal
         ("hw-state", "device-memory residency",           # mock: the small, fast configuration tests/test_cli.py uses
          cli + ["hw-state", "--device", "cpu" if small else f"cuda:{gpu}"]
          + (["--mock"] if mock else [])
-         + (["--block-mb", "1", "--blocks", "32", "--k", "16", "--trials", "60", "--park-frac", "0.3"] if mock or small
-            else []), False),
+         # a mock or rehearsal run checks the pipeline, not the statistics: 24 of 32 blocks per challenge, so none
+         # can miss every parked block, and a threshold far out, so 60 challenges cannot fail a 1% rule by luck
+         + (["--block-mb", "1", "--blocks", "32", "--k", "24", "--trials", "60", "--park-frac", "0.3",
+             "--verify-every", "5", "--threshold-alpha", "1e-6"] if mock or small else []), False),
         ("hw-trial", TRIALS[profile],
          cli + ["hw-trial", "--profile", "rehearsal" if small else profile, "--gpus", str(gpu), "--out",
-                str(out / trial_dir(profile)), "--stamp-prereg"] + hw, True),
+                str(out / trial_dir(profile)), "--stamp-prereg", "--seed", str(seed)] + hw
+         + (["--campaign", campaign] if campaign else []), True),
         ("verify", "evidence chain, signature, commitments", cli + ["verify", str(out / trial_dir(profile))], True),
     ]
     return steps
@@ -186,14 +211,26 @@ def _gpu_at_start(gpu: int, echo):
         return None, None
 
 
-def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, echo=print, profile: str = "smoke") -> int:
+def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, echo=print, profile: str = "smoke",
+        campaign: str = None, seed: int = None) -> int:
     from .hw.gpu import STOP_SIGNALS
+    if echo is print:                   # a line at a time, also when the output is a file someone is watching
+        def echo(*a):
+            print(*a, flush=True)
     if profile not in TRIALS:
         raise ValueError(f"unknown trial profile '{profile}' ({', '.join(TRIALS)})")
     out = Path(out)
     if out.exists() and any(out.iterdir()):
         echo(f"refusing: {out} is not empty; choose a new --out so that no earlier run is mixed into this one")
         return 2
+    camp = None
+    if campaign:                        # a malformed NAME:i/N is refused here, not an hour in when hw-trial reads it
+        from .cli import _campaign
+        try:
+            camp = _campaign(campaign)
+        except SystemExit as e:
+            echo(f"refusing: {e}")
+            return 2
     logs = out / "logs"
     logs.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "CLOSURE_TIER0_INNER": "1", "PYTHONUNBUFFERED": "1"}
@@ -201,7 +238,13 @@ def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, ech
     echo(f"plan-a-closure {__version__} ({provenance()}) tier0 ({'MOCK: fake hardware' if mock else 'HARDWARE'}, "
          f"{profile} trial) -> {out}")
     target, start_w = (None, None) if mock else _gpu_at_start(gpu, echo)
-    steps = plan(out, gpu, mock, run_tests, rehearsal=bool(target is not None and target.rehearsal), profile=profile)
+    if seed is None:                    # a hardware run draws its own: until 0.8.0 every run used seed 1, so runs 1
+        # to 5 all followed one load sequence and (per profile) one hidden-load schedule. Mock runs stay repeatable:
+        # seed 1, or the trial's number in its campaign, so that a mock campaign's trials differ as real ones do.
+        seed = (camp["index"] if camp else 1) if mock else 1 + int.from_bytes(os.urandom(4), "big") % (2 ** 31 - 2)
+    echo(f"trial seed {seed} (the load sequence and the committed schedule follow from it; recorded in prereg.json)")
+    steps = plan(out, gpu, mock, run_tests, rehearsal=bool(target is not None and target.rehearsal), profile=profile,
+                 campaign=campaign, seed=seed)
     if not mock:                                      # always last, even after a failure or a signal: the GPU as found
         steps.append(("hw-restore", "clocks unlocked, power limit as found",   # every step runs as this same user
                       [sys.executable, "-m", "closure.cli", "hw-restore", "--gpu", str(gpu), "--same-user"]
@@ -301,7 +344,7 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
          + ("MOCK (fake hardware: a rehearsal, no physical claim)" if mock else
             "REHEARSAL (CPU torch against a fake NVML: no physical claim)" if rehearsal else "HARDWARE"),
          f"- started {started}, finished {_now()}; host {platform.platform()}, Python {platform.python_version()}",
-         "- outcome: " + ("every step ran" if not stopped else
+         "- outcome: " + (_ran(results) if not stopped else
                           f"stopped by {stopped}; later steps were skipped, except restoring the GPU"
                           if str(stopped).startswith("signal") else
                           f"stopped after `{stopped}` failed; later steps were skipped"),
@@ -334,13 +377,24 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
     if st:
         L += ["", "## Device-memory residency (T2 pilot)", "",
               f"- pass = {st.get('pass')}: honest false alarm {_fmt(st.get('honest_false_alarm'))}, parked-block detection "
-              f"{_fmt(st.get('parked_detection'))} (block {st.get('block_mb')} MB, k = {st.get('k')})"]
+              f"{_fmt(st.get('parked_detection'))} (block {st.get('block_mb')} MB, k = {st.get('k')}, judged by "
+              f"{st.get('statistic', 'total time')})"]
+        ch, one, tt = st.get("challenges") or {}, st.get("touching_one_parked_block") or {}, st.get("total_time") or {}
+        if ch:
+            L.append(f"- {ch.get('honest')} honest and {ch.get('parked')} parked-prover challenges, judged against a "
+                     f"threshold from {ch.get('calibration')} more honest ones ({ch.get('order')}); challenges that "
+                     f"touched exactly one parked block: {one.get('detected')}/{one.get('n')} caught; digests "
+                     f"recomputed by the verifier: {st.get('digests_verified')}, wrong: {st.get('digests_wrong')}")
+        if tt:
+            L.append(f"- by total time, the statistic until 0.8.0: false alarm {_fmt(tt.get('honest_false_alarm'))}, "
+                     f"detection {_fmt(tt.get('parked_detection'))}; slowest block {_fmt(1e3 * st['honest_median_slowest_block_s'], '.1f')} "
+                     f"ms honest against {_fmt(1e3 * st['parked_median_slowest_block_s'], '.1f')} ms parked (medians)")
     res = _read(out / trial / "results.json")
     pre = _read(out / trial / "prereg.json") or {}
     stop = None if res else _interrupted(out / trial)
     if stop:
         b = stop.get("blocks") or {}
-        L += ["", "## Smoke trial (T1)" if trial == trial_dir("smoke") else "## Long trial (T1)", "",
+        L += ["", f"## {trial[3:].capitalize()} trial (T1)", "",
               f"- stopped before its data were complete ({stop.get('reason')}): {b.get('ref', 0)} reference and "
               f"{b.get('aud', 0)} audit blocks finished. They are kept in `{trial}/raw_partial.npz`, with the schedule "
               "revealed, and not analysed: stopping early is not part of the pre-registered design."]
@@ -348,16 +402,31 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
         fp = (res.get("false_positive") or {}).get("combined") or {}
         sl = res.get("slack") or {}
         smoke = trial == trial_dir("smoke")
-        L += ["", "## Smoke trial (T1)" if smoke else "## Long trial (T1)", "",
+        L += ["", f"## {trial[3:].capitalize()} trial (T1)", "",
               f"- status: {res.get('status')}",
               f"- false positives {fp.get('k')}/{fp.get('n')} (95% upper {_fmt(fp.get('cp95_upper'))})",
               f"- closure gap {_fmt(res.get('closure_gap_fraction'))} of capacity energy; slack-inflated gap "
               f"{_fmt(sl.get('slack_inflated_gap_fraction'))}",
               "- the smoke profile checks the pipeline; the registered numbers come from the Tier 1 run (`hw-full`)"
               if smoke else
-              "- the long profile reads the registered decision rules at shakedown scale (below); the registered numbers "
-              "come from the Tier 1 run (`hw-full`)"]
+              f"- the {trial[3:]} profile reads the registered decision rules at shakedown scale (below); the registered "
+              "numbers come from the Tier 1 run (`hw-full`)"]
         wl = (pre.get("cfg") or {}).get("workload") or {}
+        lk = res.get("link") or {}
+        if lk:
+            L.append(f"- analysis: link (a calibrated curve for each channel, one conformal threshold) over "
+                     f"{lk.get('reference_blocks')} reference blocks; block residual SD {_fmt(lk['block_residual_sd']['energy'], '.1f')} J "
+                     f"and {_fmt(lk['block_residual_sd']['busy'], '.3f')} s; partial-load slack "
+                     f"{_fmt(lk.get('partial_load_slack'), '.3f')}")
+        solo = wl.get("hidden_solo") or {}
+        if solo.get("duty"):
+            L.append("- hidden load alone, before the trial (its labels are read off this): "
+                     + ", ".join(f"duty {d:.2f}: {w:.1f} W" for d, w in zip(solo["duty"], solo["watts_per_gpu"]))
+                     + ("" if solo.get("used") else " (not used: no power above idle)"))
+        camp = (pre.get("cfg") or {}).get("campaign")
+        if camp:
+            L.append(f"- trial {camp['index']} of {camp['size']} in campaign `{camp['id']}`: read them together with "
+                     "`closure pool`")
         if wl:
             L.append(f"- SM clocks: {'locked at ' + str(wl['locked_sm_mhz']) + ' MHz' if wl.get('locked_sm_mhz') else 'not locked'}"
                      + (f" ({wl['clock_lock_note']})" if wl.get("clock_lock_note") else ""))
@@ -373,6 +442,12 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
             L += rule_lines(evaluate(res, float((pre.get("cfg") or {}).get("alpha", 0.01))))
         except (KeyError, TypeError, ValueError) as e:
             L.append(f"- decision rules unavailable ({type(e).__name__}: {e})")
+        try:
+            from .physics import report as physics_report, summary_lines as physics_lines
+            L += ["", "## What the GPU did, by requested load level (a diagnostic, not a criterion)", ""]
+            L += physics_lines(physics_report(out / trial))
+        except (OSError, KeyError, ValueError) as e:
+            L.append(f"- not available ({type(e).__name__}: {e})")
     ver = _json_in(_step_output(out, results, "verify"))
     if ver:
         L += ["", "## Verification", "", "- " + ", ".join(f"{k}: {v}" for k, v in ver.items())]
@@ -383,6 +458,36 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
           "- If an independent power meter logged during the trial, export it as `timestamp_s,power_w` and run "
           f"`closure dcbus-analyze --run {out / trial} --csv bus.csv`, then send `results_dcbus.json` as well."]
     return "\n".join(L) + "\n"
+
+
+def unpack(tgz, dest, sha256: str = None) -> Path:
+    """Extract a bundle someone sent back into dest (new or empty) and return the run folder inside it. A bundle is
+    data from another machine: it is refused if its hash is not the one given, or if any member is not a plain file
+    or folder under the bundle's one top folder (no links, devices, absolute paths or '..'); nothing in it is run."""
+    import shutil
+    tgz, dest = Path(tgz), Path(dest)
+    if sha256 and hashlib.sha256(tgz.read_bytes()).hexdigest() != str(sha256).lower():
+        raise ValueError(f"{tgz} is not the bundle with sha256 {sha256}")
+    dest.mkdir(parents=True, exist_ok=True)
+    if any(dest.iterdir()):
+        raise ValueError(f"{dest} is not empty")
+    with tarfile.open(tgz) as tf:
+        members = tf.getmembers()
+        tops = {Path(m.name).parts[0] for m in members if Path(m.name).parts}
+        for m in members:
+            parts = Path(m.name).parts
+            if (len(tops) != 1 or not parts or not (m.isfile() or m.isdir()) or Path(m.name).is_absolute()
+                    or ".." in parts or "\\" in m.name):
+                raise ValueError(f"{tgz}: refusing member '{m.name}': a bundle holds plain files under one folder")
+        for m in members:
+            target = dest.joinpath(*Path(m.name).parts)
+            if m.isdir():
+                target.mkdir(parents=True, exist_ok=True)
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with tf.extractfile(m) as src, open(target, "wb") as fh:
+                shutil.copyfileobj(src, fh)
+    return dest / tops.pop()
 
 
 def bundle(out: Path):

@@ -62,7 +62,22 @@ def test_long_profile_has_enough_null_blocks_for_h1_2_and_twelve_per_cell():
     assert set(Counter((x["kind"], x["frac"]) for x in s if x).values()) == {12}
     blocks = cfg.warmup_blocks + cfg.n_ref_blocks + cfg.n_audit_blocks
     assert 8.5 <= blocks * cfg.L * cfg.dt / 3600 <= 9.5                              # fits a 12-hour session
-    assert PROFILES["hw-full"].get("calibration", "sequential") == "sequential"       # Tier 1 is unchanged
+    for name in ("smoke", "medium", "long", "hw-short", "hw-full", "rehearsal"):       # v0.6: every hardware profile
+        p = PROFILES[name]
+        assert (p["calibration"], p["schedule"], p["analysis"]) == ("interleaved", "balanced", "link")
+        assert name == "rehearsal" or p["n_ref_blocks"] >= 99                         # a conformal threshold at 0.01
+
+
+def test_medium_profile_is_the_smallest_that_can_decide_the_rules_and_fits_a_colab_session():
+    cfg = _cfg("medium", 1, "SIMULATED")
+    s = make_schedule(cfg, np.random.default_rng(1))
+    assert s.count(None) == 204 >= 200                                               # H1.2 needs 200 null blocks
+    cells = Counter((x["kind"], x["frac"]) for x in s if x)
+    assert set(cells.values()) == {6} and len(cells) == 16
+    for kind in cfg.classes:                                                         # H1.3 primary, per class: 8 or more
+        assert sum(n for (k, f), n in cells.items() if k == kind and f >= 0.05) == 18
+    blocks = cfg.warmup_blocks + cfg.n_ref_blocks + cfg.n_audit_blocks
+    assert blocks * cfg.L * cfg.dt / 3600 < 4.0 and cfg.n_ref_blocks >= 99
 
 
 def test_interleaved_order_puts_one_reference_block_in_each_stretch():
@@ -117,7 +132,8 @@ def test_busy_figure_is_a_fraction_of_capacity_time_not_energy(tmp_path):
     from closure import residual as R
     from closure.trial import collect, fit_channels
     calE, calB = fit_channels(collect(SimSource(SimConfig(), seed=6), cfg, cfg.n_ref_blocks), cfg)
-    assert md["busy"][0] == pytest.approx(R.min_detectable(calB, 0, cfg.alpha, cfg.beta) / (cfg.n_gpu * cfg.L * cfg.dt))
+    # busy time is the mean utilisation over the GPUs times the seconds, so a block holds at most L x dt of it
+    assert md["busy"][0] == pytest.approx(R.min_detectable(calB, 0, cfg.alpha, cfg.beta) / (cfg.L * cfg.dt))
     assert md["energy"][0] == pytest.approx(
         R.min_detectable(calE, 0, cfg.alpha, cfg.beta) / (cfg.n_gpu * cfg.p_max_w * cfg.L * cfg.dt))
 

@@ -26,10 +26,28 @@ def test_hwsource_runs_the_same_pipeline_on_fake_hardware(tmp_path):
 
 def test_hidden_load_raises_measured_energy_on_fake_hardware():
     fh, src = _src(2)
+    src.force_level = 0.3                                             # room to spare: the hidden load simply adds
     base = src.run_block(60, None)["E"].mean()
     fh2, src2 = _src(2)
+    src2.force_level = 0.3
     hid = src2.run_block(60, HiddenSpec("constant", 0.2))["E"].mean()
     assert hid - base > 0.15 * 5600                                   # ~20% of the 5.6 kW cap, W per 1 s window
+
+
+def test_a_full_fake_gpu_gives_way_to_hidden_load_and_reports_the_ground_truth():
+    """When verified and hidden work do not fit in the second, the verified work is what gives way: fewer units, the
+    same busy time. The block also carries the truth the bounds are checked against (never a regressor)."""
+    fh, src = _src(3)
+    src.force_level = 1.0
+    full = src.run_block(30, None)
+    fh2, src2 = _src(3)
+    src2.force_level = 1.0
+    both = src2.run_block(30, HiddenSpec("constant", 0.2))
+    assert both["X"][:, 1].mean() < 0.85 * full["X"][:, 1].mean()                    # verified units displaced
+    assert abs(both["busy"].mean() - full["busy"].mean()) < 0.02                      # still as busy as it can be
+    assert (both["level"] == 1.0).all() and full["hidden_s"].sum() == 0
+    hb = 0.2 * 5600 / 4640
+    assert both["hidden_s"].mean() == pytest.approx(FakeHardware.SENSOR_FULL * hb, rel=1e-6)
 
 
 def test_slack_class_is_refused_on_real_hardware_paths():

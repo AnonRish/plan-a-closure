@@ -1,5 +1,78 @@
 # Changelog
 
+## 0.8.0
+
+Runs 4 and 5, what they showed, and the design that answers them. Pre-registration amendment v0.6, written before any
+further run. Run 5 was the first long trial, and the registered analysis failed its own false-alarm rule on it (11
+false alarms in 204 null blocks). Both runs are published in full (`docs/DEVIATIONS.md` sections 4 and 5,
+`results/`).
+
+**What the runs showed**
+
+- A straight line from verified work to energy does not hold on a power-limited GPU with free clocks: all 11 false
+  alarms were at one load level, where the GPU drew 4 to 5 W more than the line.
+- 0.7.0's combined test had fallen back to a Gaussian threshold (a conformal one at alpha/2 needs 199 reference
+  blocks; the run had 144) while `methods_used` reported "conformal".
+- Hidden-load labels understated the load by a factor of 1.1 to 2.2 in runs 4 and 5: the "2%" load drew 4.2%.
+- At the power limit hidden work adds no energy; it displaces verified work (-0.3 W and -35% verified work for a load
+  that draws 16 W alone). Energy closure's additivity assumption (A1) fails there.
+- The residency test missed 5 of 200 parked provers: one parked block is lost in the total time of 17.
+
+**The analysis (amendment v0.6)**
+
+- **Link analysis** (`link.py`, `cfg.analysis = "link"`): a monotone piecewise-linear curve from the verified work
+  rate to each channel, studentised block scores cross-fitted over the reference blocks, and one conformal threshold
+  on the larger channel score. `methods_used.combined` reports the method of the test that decides. The straight-line
+  analysis stays as `linear`, so earlier runs reproduce.
+- **H1.1** under the link analysis: the threshold is conformal (at least 99 reference blocks at alpha = 0.01).
+  Jarque-Bera is reported, not required.
+- **H1.4** is read on time: busy time above the least the verified work can take must cover the seconds the hidden
+  load ran, which the load generator now counts. The calibrated time bound and the energy bounds are reported as
+  checks of A1.
+- **Every hardware profile** is interleaved, balanced, analysed with the link model, with warm-up blocks: `smoke`
+  (now 100 reference and 80 audit blocks of 20 s), the new **`medium`** (3.8 h, 204 null blocks: the smallest trial
+  that can decide H1.1 to H1.4), `long`, `hw-short`, `hw-full`.
+
+**The experiment**
+
+- **The hidden load is measured on its own before the trial** (`characterise_hidden`), each duty between two idle
+  readings, and a label is run at the duty whose measured power it names. Hidden GEMMs are paid from a wall-clock
+  credit, so the load takes its share of the GPU's time at any verified load. `raw.npz` records the counted hidden
+  seconds (`hs`) and the requested load level (`lev`) for every window.
+- **Residency (`hw-state`)**: each block timed, a challenge judged by its slowest block; 1,000 parked-prover, 2,000
+  judged honest and 4,000 threshold-setting challenges in one pass in random order, back to back; digests recomputed
+  by the verifier afterwards on a sample. The registered criteria are unchanged.
+- **A fresh random seed for every hardware run** (`--seed` to set it). Runs 1 to 5 all used seed 1.
+- **Campaigns**: `closure tier0 --campaign NAME:i/N` declares a trial one of N before any has data; `closure pool`
+  verifies each trial, refuses duplicates and incomplete campaigns, and reads the pooled blocks. Anything pooled
+  another way is labelled POST HOC.
+
+**Notebooks**
+
+- **Kaggle** (`notebooks/tier0_kaggle.ipynb`): a long trial on each of the session's two T4s at once, declared one
+  campaign, pooled at the end (408 null blocks); the console of both relayed; one mock training run; only the
+  deliverables saved.
+- **Colab** (`notebooks/tier0_colab.ipynb`): the `medium` trial by default (about 5 hours in all), the smoke trial
+  with `PROFILE = "smoke"`; the pre-registration is stamped with OpenTimestamps.
+- In both, a failed unit test no longer costs the session: the log of the failed attempt is saved with the results,
+  the run starts again without the unit tests, and the output says so.
+
+**Reading a run again**
+
+- `closure reanalyze --run` reproduces the registered analysis from `raw.npz`; with `--analysis` it applies another
+  and labels the result POST HOC. `closure physics --run` tabulates work, power and busy time by requested load level
+  and what each hidden load did to them (also in `SUMMARY.md`). `closure unpack` extracts a returned bundle safely.
+- `results/reread.py` regenerates every number quoted for runs 4 and 5 from their bundles, and
+  `tests/test_runs_on_record.py` checks them (left out of `closure tier0`'s own unit-test step).
+- `SUMMARY.md` says how many steps reported a failed check instead of "every step ran" alone, and shows the trial's
+  seed, campaign, the hidden load's measured power and the residency test's single-parked-block count.
+
+**Fixes**
+
+- The busy-time capacity of a block is `L x dt` (mean utilisation over the GPUs); 0.7.0 used `n_gpu x L x dt`, right
+  only for one GPU.
+- The fake hardware used in mock runs lets verified work give way to hidden work on a full GPU, as the real ones do.
+
 ## 0.7.0
 
 A long trial that can decide the registered rules, for GPUs whose sessions end at 12 hours. Pre-registration amendment

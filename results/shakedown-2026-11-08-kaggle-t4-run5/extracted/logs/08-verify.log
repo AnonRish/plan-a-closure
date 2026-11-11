@@ -1,0 +1,3 @@
+$ /usr/bin/python3 -m closure.cli verify /tmp/plan-a-closure-runs/tier0-20261108-210349/T1-long
+
+{"chain_ok": true, "entries": 4, "signature_ok": true, "schedule_commitment_ok": true, "order_commitment_ok": true, "prereg_hash_ok": true, "results_hash_ok": true, "probe_hash_ok": true}
