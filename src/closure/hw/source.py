@@ -14,28 +14,40 @@ class FakeHardware:
     def __init__(self, cfg: SimConfig = None, seed: int = 0):
         self.cfg, self.rng = cfg or SimConfig(), np.random.default_rng(seed)
         self.t, self.E, self.level, self.hid_w, self.drift = 1_700_000_000.0, 0.0, 0.0, 0.0, 0.0
-        self.units = np.zeros(3)
+        self.units, self.hid_s = np.zeros(3), 0.0
 
     def now(self):
         return self.t
 
+    def _shares(self):
+        """(verified level actually run, hidden busy share): hidden work takes the time it takes, and when the two do
+        not fit in the second the verified work is what gives way, as on the real GPUs (docs/DEVIATIONS.md section 5)."""
+        hb = min(1.0, self.hid_w / self.cfg.dyn_max_w)
+        return min(self.level, 1.0 - hb), hb
+
+    SENSOR_FULL = 0.95                  # what the utilisation counter reads when the GPU never rests; under 1, so its
+                                        # noise is not clipped away at the top (a real counter reads about 0.99)
+
     def sleep(self, s):
         c, r = self.cfg, self.rng
-        pre, dec, stp = (c.prefill_rate * self.level * s, c.decode_rate * self.level * s, c.step_rate * self.level * s)
+        level, hb = self._shares()
+        pre, dec, stp = (c.prefill_rate * level * s, c.decode_rate * level * s, c.step_rate * level * s)
         a = np.exp(-s / c.drift_tau_s)
         self.drift = a * self.drift + c.drift_sd_w * np.sqrt(1 - a * a) * r.standard_normal()
         dyn = (pre * c.prefill_j + dec * c.decode_j + stp * c.step_j) * (1 + c.noise_rel * r.standard_normal())
         e = c.idle_cluster_w * s + dyn + self.drift * s + self.hid_w * s
         self.E += max(0.0, e) * (1 + c.meter_rel * r.standard_normal())
         self.units += np.array([pre, dec, stp]) * (1 + 0.01 * r.standard_normal())
+        self.hid_s += self.SENSOR_FULL * hb * s          # in the counter's own units, like the busy channel
         self.t += s
 
     def energy_j(self):
         return self.E
 
     def util(self):
-        c = self.cfg
-        return float(np.clip(self.level + self.hid_w / c.dyn_max_w + c.busy_abs * self.rng.standard_normal(), 0, 1))
+        level, hb = self._shares()
+        # relative noise: an idle GPU reads exactly 0, as a real counter does, so nothing is clipped away at either end
+        return float(np.clip(self.SENSOR_FULL * (level + hb) * (1 + self.cfg.busy_abs * self.rng.standard_normal()), 0, 1))
 
     def set_state(self, level, hidden_frac=0.0, spec=None):
         self.level, self.hid_w = float(level), hidden_frac * self.cfg.cap_w
@@ -43,6 +55,10 @@ class FakeHardware:
     def pop_units(self):
         u, self.units = self.units.copy(), np.zeros(3)
         return float(u[0]), float(u[1]), float(u[2])
+
+    def pop_hidden_s(self):
+        h, self.hid_s = self.hid_s, 0.0
+        return float(h)
 
 
 class HwSource:
@@ -70,6 +86,7 @@ class HwSource:
 
     def run_block(self, L: int, spec=None) -> dict:
         X, E, busy, hid, t0 = np.zeros((L, 4)), np.zeros(L), np.zeros(L), np.zeros(L), np.zeros(L)
+        lev, hs, counts_hidden = np.zeros(L), np.zeros(L), hasattr(self.load, "pop_hidden_s")
         cap = self.n_gpu * self.p_max
         for w in range(L):
             if self.force_level is not None:
@@ -94,4 +111,10 @@ class HwSource:
             dur = te - ts
             X[w] = [dur, pre, dec, stp]
             E[w], busy[w], hid[w], t0[w] = e1 - e0, float(np.mean(utils)) * dur, hf * cap * dur, ts
-        return {"X": X, "E": E, "busy": busy, "hidden_j": hid, "t0": t0}
+            lev[w] = level
+            if counts_hidden:
+                hs[w] = self.load.pop_hidden_s()
+        out = {"X": X, "E": E, "busy": busy, "hidden_j": hid, "t0": t0, "level": lev}
+        if counts_hidden:               # ground truth: the seconds the hidden load really ran, in the busy channel's
+            out["hidden_s"] = hs        # units (a mean over the GPUs)
+        return out

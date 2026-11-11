@@ -1,0 +1,10 @@
+$ /usr/bin/python3 -m closure.cli hw-trial --profile long --gpus 0 --out /tmp/plan-a-closure-runs/tier0-20261108-210349/T1-long --stamp-prereg --confirm-hardware --dim 4096 --mem-elems 268435456 --probe /tmp/plan-a-closure-runs/tier0-20261108-210349/probe.json
+
+GPU: cuda:0 = NVML index 0 (GPU-763d3d8a-9a65-f850-f842-f031f5c4a972), matched by uuid
+unit of work: 4096x4096 float16 GEMM + 268435456-element pass, 7.7 ms against a 100 ms slot (size given); power limit 70 W, idle 32.0 W per GPU
+note: signing_key.bin in the run directory is the PRIVATE signing key: never publish it (.gitignore excludes it; a hand-made zip would not)
+PRE-REGISTRATION WRITTEN: /tmp/plan-a-closure-runs/tier0-20261108-210349/T1-long/prereg.json
+  sha256(canonical) = 92c97cd36d546db29f98458f5486715da073c95b66b77193396deb865ab541d1
+  ots stamp: ok
+status=HARDWARE (NVML energy counter; spoofable)  FPR=11/204 (95% upper 0.0877)  closure_gap=0.1778279410038923  coverage=1.0
+slack_inflated_gap=0.2485  (s_max=0.0963; measured by hw-probe (HARDWARE-PROBE (NVML energy counter; spoofable)), sha256 53b5268b296ef60d)

@@ -1,0 +1,124 @@
+{
+  "bundle_sha256": "dd7e99973459c74557a4fc5707ebef6f16f54d937bfac564c31a6f300d710a1f",
+  "trial": "T1-long",
+  "levels": "load levels regenerated from the trial's seed (recorded since 0.8.0) and checked against the work done",
+  "registered_analysis_from_the_raw_data": {
+    "keys_identical_to_the_signed_results": [
+      "assumptions",
+      "bound",
+      "calibration_n_eff",
+      "closure_gap_fraction",
+      "detection_at_or_above_fraction",
+      "detection_combined",
+      "f95_by_class",
+      "f95_pooled_hidden_fraction",
+      "hidden_compute_at_gap_per_week",
+      "min_detectable_fraction_per_regime",
+      "n_blocks",
+      "normality_p",
+      "slack",
+      "status"
+    ],
+    "keys_that_differ": [
+      "false_positive",
+      "methods_used"
+    ],
+    "false_alarms": {
+      "cp95_upper": 0.08767485166305988,
+      "k": 11,
+      "n": 204,
+      "rate": 0.05392156862745098
+    },
+    "false_alarms_by_most_common_requested_level": {
+      "0": [
+        0,
+        24
+      ],
+      "0.1": [
+        0,
+        18
+      ],
+      "0.2": [
+        0,
+        31
+      ],
+      "0.3": [
+        0,
+        26
+      ],
+      "0.5": [
+        11,
+        22
+      ],
+      "0.7": [
+        0,
+        24
+      ],
+      "0.9": [
+        0,
+        27
+      ],
+      "1": [
+        0,
+        32
+      ]
+    },
+    "threshold_method_of_the_combined_test": [
+      "gaussian"
+    ],
+    "outcome": "UNDERPOWERED",
+    "why": "H1.1 fails, so no false-alarm claim is made"
+  },
+  "link_analysis_post_hoc": {
+    "status": "HARDWARE (NVML energy counter; spoofable) | POST HOC: the 'link' analysis, applied after the data were seen (pre-registered: 'linear')",
+    "threshold_method": [
+      "conformal"
+    ],
+    "reference_blocks": 144,
+    "false_alarms": {
+      "cp95_upper": 0.04430576566855127,
+      "k": 4,
+      "n": 204,
+      "rate": 0.0196078431372549
+    },
+    "false_alarms_energy_alone": 2,
+    "false_alarms_busy_alone": 2,
+    "detection_at_5_percent_or_more": {
+      "cp95_lower": 0.9710571804170725,
+      "k": 102,
+      "n": 102,
+      "rate": 1.0
+    },
+    "detection_at_2_percent_or_more": {
+      "cp95_lower": 0.9572194550934388,
+      "k": 143,
+      "n": 145,
+      "rate": 0.9862068965517241
+    },
+    "closure_gap_fraction": 0.03162277660168379,
+    "slack_inflated_gap_fraction": 0.10279764806651122,
+    "block_residual_sd": {
+      "busy": 0.7103892487876117,
+      "energy": 33.3764996173479
+    },
+    "partial_load_slack": 0.10672654226658751,
+    "energy_bound_coverage_against_the_labels": 0.9320987654320988,
+    "energy_floor_bound_coverage_against_the_labels": 1.0,
+    "H1.1": true,
+    "H1.2": true,
+    "H1.4": false,
+    "H1.4_basis": "energy",
+    "outcome": "FAIL",
+    "why": "the hidden-energy bound covers 93.2% of hidden blocks, under 95%"
+  },
+  "bounds_against_an_approximate_truth_post_hoc": {
+    "hidden_blocks_with_a_label_seen_on_an_idle_gpu": 162,
+    "time_bound_calibrated_coverage": 1.0,
+    "time_bound_floor_coverage": 1.0,
+    "time_bound_calibrated_median_bound_over_truth": 1.8250918617218796,
+    "time_bound_floor_median_bound_over_truth": 2.094916813478417,
+    "energy_bound_calibrated_coverage_of_solo_energy": 0.8950617283950617,
+    "energy_bound_floor_coverage_of_solo_energy": 0.9938271604938271,
+    "truth": "busy share and watts each label added on an otherwise idle GPU in this run, times the seconds the load was on; approximate, because the run did not count hidden seconds"
+  }
+}

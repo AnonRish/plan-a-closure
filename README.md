@@ -7,23 +7,29 @@
 Every joule, packet byte and byte of memory on an enrolled cluster must be *explained* by verified work.
 What is left over (the residual) upper-bounds hidden compute, hidden exfiltration and hidden persistent state.
 
-> **Status: v0.7.0, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
-> (296 tests, `pytest`, plus 22 that run the torch code on CPU where torch is installed, 10 of them rehearsing the
+> **Status: v0.8.0, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
+> (327 tests, `pytest`, plus 23 that run the torch code on CPU where torch is installed, 10 of them rehearsing the
 > whole GPU path against a fake NVML and nvidia-smi). The 13 vendored repositories
 > under `external/` add their own suites (2,708 tests passed here, `closure external test`). **No physical claim is
-> demonstrated yet.** Three shakedown runs on Colab T4s (8 November 2026, NVML only) are in
-> [docs/DEVIATIONS.md](docs/DEVIATIONS.md): the first stopped at `hw-selftest` (a unit of work sized for an H100, fixed
-> in 0.5.5); the second and third went through every step. Run 3 had energy tracking verified work at r2 = 0.94 and
-> the probe measuring slack and the energy floor, and found two problems fixed in 0.6.1: the residency test's challenge
-> size, and an energy model that drifted on an unlocked GPU. Each claim is decided by the pre-registered trial in
-> [docs/PREREGISTRATION.md](docs/PREREGISTRATION.md) on instrumented hardware (Amodo's Side Channel Cloud, the
-> Verifiable Compute Foundation cluster). A report whose status says `SIMULATED` validates the estimators only. The
-> one-GPU pilot is one unattended command, `closure tier0` ([operator guide](docs/OPERATOR_TIER0.md)).
+> demonstrated yet.** Five shakedown runs on Colab and Kaggle T4s (8 and 9 November 2026, NVML only) are in
+> [docs/DEVIATIONS.md](docs/DEVIATIONS.md), each published whatever it showed. The first stopped at `hw-selftest` (a
+> unit of work sized for an H100). Run 4 was the first with no failing step. Run 5 was the first nine-hour trial,
+> large enough to read the pre-registered decision rules, and **the registered analysis failed its own false-alarm
+> rule on it**: 11 false alarms in 204 clean blocks against a 3% limit. Its raw data showed why: a straight-line
+> energy model on a power-limited GPU, a threshold that had silently fallen back to a Gaussian, hidden-load labels
+> that understated the load, and a physical finding: at the power limit, hidden work adds no energy and displaces
+> verified work instead, so energy accounting alone is blind there. Amendment v0.6 of
+> [docs/PREREGISTRATION.md](docs/PREREGISTRATION.md) answers each point and was written before any further run; the
+> same data read under it are labelled post hoc and decide nothing. Each claim is decided by the pre-registered trial
+> on instrumented hardware (Amodo's Side Channel Cloud, the Verifiable Compute Foundation cluster). A report whose
+> status says `SIMULATED` validates the estimators only. The one-GPU pilot is one unattended command, `closure tier0`
+> ([operator guide](docs/OPERATOR_TIER0.md)).
 > Without an H100, [notebooks/tier0_colab.ipynb](notebooks/tier0_colab.ipynb)
 > ([open in Colab](https://colab.research.google.com/github/AnonRish/plan-a-closure/blob/main/notebooks/tier0_colab.ipynb))
 > runs the same pilot on a free Colab GPU as a labelled shakedown (no independent meter, so not the registered trial),
-> and [notebooks/tier0_kaggle.ipynb](notebooks/tier0_kaggle.ipynb) runs it with a nine-hour trial on Kaggle, large
-> enough to read the pre-registered decision rules H1.1 to H1.4 (`closure criteria`).
+> and [notebooks/tier0_kaggle.ipynb](notebooks/tier0_kaggle.ipynb) runs a nine-hour trial on each of a Kaggle session's
+> two GPUs, declared one campaign beforehand and read together (`closure pool`): large enough to read the
+> pre-registered decision rules H1.1 to H1.4 (`closure criteria`).
 
 ## The gap this targets
 
@@ -196,7 +202,7 @@ covered. `gemm_audit.py` is a design-time screen, not the physical audit the pap
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"                # Python 3.10 or newer
-pytest                                  # 296 tests (318 with torch installed)
+pytest                                  # 327 tests (350 with torch installed)
 closure selftest                        # end-to-end simulated trial, PASS/FAIL
 closure tier0 --mock --out runs/tier0   # the whole one-GPU pilot on fake hardware: logs, SUMMARY.md, bundle
 closure redteam                         # gateway sampling + recomputation against substituted models (toy model)
@@ -208,6 +214,8 @@ closure sim-trial --out runs/sim        # writes results.md, chain.jsonl, signat
 closure verify runs/sim                 # chain, signature, commitment, prereg and results hashes
 closure criteria --run runs/sim         # the pre-registered decision rules H1.1 to H1.4, read off the run
 closure sim-trial --profile long --out runs/long   # the long design: interleaved calibration, balanced schedule
+closure physics --run runs/long         # work, power and busy time by load level, and what hidden load did to them
+closure reanalyze --run runs/long --analysis linear   # another analysis on the same raw data, labelled POST HOC
 closure hw-probe --mock --out runs/probe.json                  # efficiency slack and energy floor on a fake rig
 closure sim-trial --out runs/sim2 --probe runs/probe.json      # binds the probe into the pre-registration and the report
 python scripts/sim_study.py 10          # the 10-seed simulation study (docs/SIM_STUDY.md)
@@ -228,11 +236,18 @@ run without the private key. The torch code itself (the probe rig with its activ
 load generator, the residency prover and the reproducibility check) runs on CPU torch 2.15 in `tests/test_torch_cpu.py`,
 which checks its API use, dtypes and shapes; int8 ran through `torch._int_mm` and fp8 through `torch._scaled_mm` there.
 
-**Hardware-gated (not yet demonstrated).** NVML energy-counter quality; DC-bus clock alignment; energy-model fit and
-residual noise on a real H200; the closure gap; the J/FLOP floor and the efficiency slack (`hw-probe` on a device:
-CUDA timing, clock locking and power capping are untested); `TorchLoad`, `TorchProver` and `TorchRig` on a GPU;
-HBM-versus-host timing separation; TAP capture; the independent meter; the gateway, hashing tap and canaries on real
-network hardware; the cadence detector on real telemetry.
+**Run on real GPUs as shakedowns (five runs on T4s in cloud VMs, NVML only; [docs/DEVIATIONS.md](docs/DEVIATIONS.md)).**
+The whole pilot runs unattended for up to ten hours, restores the GPU, and its evidence verifies. `TorchLoad`,
+`TorchProver` and `TorchRig` run on a GPU; clock locking and power capping work where the platform allows them (Colab
+does, Kaggle's container does not); energy tracks verified work (r2 = 0.97); device-versus-host memory separates by
+time (200/200 in run 4, 195/200 in run 5 under a statistic since replaced); the mock training run was stopped by its
+meter inside the budget. The straight-line analysis failed its false-alarm rule on the one run large enough to decide
+it. None of this is a claim: there is no independent meter, and a T4 is not the target device.
+
+**Hardware-gated (not yet demonstrated).** Everything the registered trial decides: the false-alarm rate and the
+closure gap under amendment v0.6, bound validity, the J/FLOP floor and the efficiency slack on an H100 or H200;
+DC-bus clock alignment and the independent meter; TAP capture; the gateway, hashing tap and canaries on real network
+hardware; the cadence detector on real telemetry.
 
 **Speculative.** That any of this is accepted as a Plan A completeness argument. Acceptance is earned by
 pre-registered, adversarial, independently replicated hardware results, and is not something this repository can
@@ -262,8 +277,8 @@ verifier never sees it until analysis. Use `--pause-after-prereg` to timestamp `
 
 ## Layout
 
-`src/closure/`: closure core (`conformal.py` `residual.py` `energy.py` `sim.py` `trial.py` `compose.py` `traffic.py`
-`state.py` `evidence.py` `dcbus.py` `tier0.py` `cli.py`), Plan A modules (`claims.py` `ledger.py` `retrofit.py` `assurance.py` `repro.py`
+`src/closure/`: closure core (`conformal.py` `residual.py` `link.py` `energy.py` `sim.py` `trial.py` `criteria.py`
+`drift.py` `physics.py` `compose.py` `traffic.py` `state.py` `evidence.py` `dcbus.py` `tier0.py` `cli.py`), Plan A modules (`claims.py` `ledger.py` `retrofit.py` `assurance.py` `repro.py`
 `gateway.py` `taphash.py` `tapwatch.py` `cadence.py` `metrics.py` `frontier.py`
 `approval.py` `captrade.py` `coverage.py` `external.py`), `hw/` (`nvml.py` `workloads.py` `source.py` `probe.py` `gpu.py`) and `pause/` (`thresholds.py`
 `treaty_ledger.py` `census.py` `inference_only.py` `gemm_audit.py` `fab.py` `whitelist.py` `registry.py` `supply_chain.py` `transition.py`

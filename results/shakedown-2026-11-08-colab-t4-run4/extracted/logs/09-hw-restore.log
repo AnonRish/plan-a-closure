@@ -1,0 +1,6 @@
+$ /usr/bin/python3 -m closure.cli hw-restore --gpu 0 --same-user --power-limit-w 70
+
+GPU: cuda:0 = NVML index 0 (GPU-ac10dccd-afd7-f442-142a-32b6abd56400), matched by uuid
+power limit -> 70 W (given)
+ok    nvidia-smi -i GPU-ac10dccd-afd7-f442-142a-32b6abd56400 -rgc
+ok    nvidia-smi -i GPU-ac10dccd-afd7-f442-142a-32b6abd56400 -pl 70

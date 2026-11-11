@@ -17,6 +17,9 @@ from .evidence import Chain, Signer, array_digest, canonical, clean, commit, sha
 from .sim import FEATURES, HiddenSpec
 
 MIN_N_EFF = 15.0  # below this many effective independent calibration blocks per regime, flag UNDERPOWERED
+ANALYSES = {"linear": "closure.trial.analyze (alpha/2 Bonferroni for combined)",
+            "link": "closure.trial.analyze_link (link.py: calibrated curves, studentised scores, one conformal "
+                    "threshold on the larger channel score at alpha)"}
 
 ASSUMPTIONS = [
     "A1 additivity: hidden work adds energy/busy-time on top of verified work (no free lunch from sharing).",
@@ -61,6 +64,11 @@ class TrialConfig:
     # blocks alike (assumption A2 by design), at the cost of a wider null distribution.
     calibration: str = "sequential"
     warmup_blocks: int = 0                    # run first and kept in raw.npz, never analysed: the GPU warms up
+    # "linear": each channel a straight line in the verified work, thresholds Gaussian unless many blocks, the two
+    # channels combined at alpha/2 each (the analysis until amendment v0.6; kept so earlier runs reproduce).
+    # "link": a calibrated monotone curve per channel, studentised scores and one conformal threshold (link.py).
+    analysis: str = "linear"
+    campaign: dict | None = None              # {"id", "index", "size"}: one of several trials declared together
 
 
 def _src_sha256() -> str:
@@ -118,26 +126,41 @@ def make_order(cfg: TrialConfig, rng) -> list:
 
 
 _KEYS = ("X", "E", "B", "t0", "hid")
+# Ground truth a source may report with each block: the load level it was asked for, and the seconds its hidden load
+# actually ran. Kept in raw.npz to check the bounds against; never a regressor and never in the evidence digest.
+_TRUTH = (("lev", "level"), ("hs", "hidden_s"))
+
+
+def _new_parts() -> dict:
+    return {k: [] for k in _KEYS + tuple(k for k, _ in _TRUTH)}
 
 
 def _add(parts: dict, b: dict) -> None:
     parts["X"].append(b["X"]); parts["E"].append(b["E"]); parts["B"].append(b["busy"])
     parts["t0"].append(b["t0"]); parts["hid"].append(b["hidden_j"])
+    for k, src in _TRUTH:
+        if src in b and k in parts:
+            parts[k].append(np.asarray(b[src], float))
+
+
+def _stack(parts: dict) -> dict:
+    n = len(parts["E"])
+    return {k: np.concatenate(v) for k, v in parts.items() if len(v) == n}
 
 
 def collect(source, cfg: TrialConfig, n_blocks: int, schedule=None, parts=None) -> dict:
     """n_blocks blocks; `parts` (lists per field) keeps the finished blocks if the run is interrupted."""
-    parts = {k: [] for k in _KEYS} if parts is None else parts
+    parts = _new_parts() if parts is None else parts
     for i in range(n_blocks):
         spec = HiddenSpec.from_dict(schedule[i]) if schedule is not None else None
         _add(parts, source.run_block(cfg.L, spec))
-    return {k: np.concatenate(v) for k, v in parts.items()}
+    return _stack(parts)
 
 
 def collect_interleaved(source, cfg: TrialConfig, order: list, schedule: list, ref=None, aud=None):
     """Reference and audit blocks in the committed order; returns (reference, audit), each in time order."""
-    ref = {k: [] for k in _KEYS} if ref is None else ref
-    aud = {k: [] for k in _KEYS} if aud is None else aud
+    ref = _new_parts() if ref is None else ref
+    aud = _new_parts() if aud is None else aud
     j = 0
     for is_ref in order:
         if is_ref:
@@ -145,13 +168,34 @@ def collect_interleaved(source, cfg: TrialConfig, order: list, schedule: list, r
         else:
             _add(aud, source.run_block(cfg.L, HiddenSpec.from_dict(schedule[j])))
             j += 1
-    return ({k: np.concatenate(v) for k, v in ref.items()}, {k: np.concatenate(v) for k, v in aud.items()})
+    return _stack(ref), _stack(aud)
 
 
 def fit_channels(ref: dict, cfg: TrialConfig):
+    """The straight-line calibration (the registered analysis until amendment v0.6)."""
     kw = dict(L=cfg.L, n_regimes=cfg.n_regimes, seed=cfg.seed, names=FEATURES)
     return (R.fit(ref["X"], ref["E"], channel="energy_j", unit="J", **kw),
             R.fit(ref["X"], ref["B"], channel="busy_s", unit="s", **kw))
+
+
+def fit_link(ref: dict, cfg: TrialConfig):
+    """The link calibration (amendment v0.6; link.py)."""
+    from . import link
+    return link.calibrate(ref["X"], {"energy": ref["E"], "busy": ref["B"]}, cfg.L, seed=cfg.seed,
+                          exchangeable_by_design=cfg.calibration == "interleaved")
+
+
+def calibrate(ref: dict, cfg: TrialConfig):
+    """The calibration cfg.analysis calls for: (energy, busy) straight-line calibrations, or a link calibration."""
+    if cfg.analysis == "link":
+        return fit_link(ref, cfg)
+    if cfg.analysis != "linear":
+        raise ValueError(f"unknown analysis '{cfg.analysis}' (linear or link)")
+    return fit_channels(ref, cfg)
+
+
+def calibration_record(cal) -> dict:
+    return {"energy": cal[0].to_dict(), "busy": cal[1].to_dict()} if isinstance(cal, tuple) else cal.to_dict()
 
 
 def _pooled_f95(hf, det, min_n=8):
@@ -173,22 +217,79 @@ def _pooled_f95(hf, det, min_n=8):
     return None
 
 
-def analyze(cfg: TrialConfig, calE, calB, aud: dict, schedule: list, floor: EnergyFloor) -> dict:
-    L = cfg.L
-    B = len(aud["E"]) // L
+def _score_linear(cfg: TrialConfig, calE, calB, aud: dict) -> dict:
     a, a2 = cfg.alpha, cfg.alpha / 2
     rE, rB = R.audit(calE, aud["X"], aud["E"], a), R.audit(calB, aud["X"], aud["B"], a)
     rE2, rB2 = R.audit(calE, aud["X"], aud["E"], a2), R.audit(calB, aud["X"], aud["B"], a2)
-    flag = {"energy": rE.flagged, "busy": rB.flagged, "combined": rE2.flagged | rB2.flagged}
+    # energy against the block's capacity energy, busy time against the block's length: busy time is the mean
+    # utilisation over the GPUs times the seconds, so a block cannot hold more than L x dt of it. Until 0.7.0 both were
+    # divided by the energy, which understated the busy figure by a factor of p_max (docs/DEVIATIONS.md section 3);
+    # 0.7.0 divided by n_gpu x L x dt, right only for one GPU.
+    cap, cap_s = block_capacity_j(cfg.n_gpu, cfg.p_max_w, cfg.L, cfg.dt), cfg.L * cfg.dt
+    return {"analysis": "linear",
+            "flag": {"energy": rE.flagged, "busy": rB.flagged, "combined": rE2.flagged | rB2.flagged},
+            "ub_energy": rE.hidden_ub, "ub_busy": rB.hidden_ub, "pred_energy": rE.pred,
+            "md": {"energy": [R.min_detectable(calE, r, a, cfg.beta) / cap for r in range(calE.n_regimes)],
+                   "busy": [R.min_detectable(calB, r, a, cfg.beta) / cap_s for r in range(calB.n_regimes)]},
+            "normality_p": {"energy": calE.normal_p.tolist(), "busy": calB.normal_p.tolist()},
+            "n_eff": {"energy": calE.n_eff.tolist(), "busy": calB.n_eff.tolist(),
+                      "rho_energy": calE.rho, "rho_busy": calB.rho,
+                      "underpowered": bool(min(calE.n_eff.min(), calB.n_eff.min()) < MIN_N_EFF)},
+            # "combined" is each channel at alpha/2; until 0.8.0 only the single-channel methods were reported, which
+            # hid a Gaussian fallback behind "conformal" (docs/DEVIATIONS.md section 5)
+            "methods": {"energy": rE.method, "busy": rB.method, "combined": sorted(set(rE2.method + rB2.method))},
+            "extra": {}}
+
+
+def _score_link(cfg: TrialConfig, cal, aud: dict) -> dict:
+    from . import link
+    a = link.audit(cal, aud["X"], {"energy": aud["E"], "busy": aud["B"]}, cfg.alpha)
+    cap, cap_s = block_capacity_j(cfg.n_gpu, cfg.p_max_w, cfg.L, cfg.dt), cfg.L * cfg.dt
+    return {"analysis": "link", "flag": a["flag"], "ub_energy": a["ub"]["energy"], "ub_busy": a["ub"]["busy"],
+            "ub_floor": a["ub_floor"], "pred_energy": a["pred_energy"],
+            "md": {"energy": [link.min_detectable(cal, "energy", cfg.alpha, cfg.beta) / cap],
+                   "busy": [link.min_detectable(cal, "busy", cfg.alpha, cfg.beta) / cap_s]},
+            "normality_p": {"energy": [cal.energy.normal_p], "busy": [cal.busy.normal_p]},
+            "n_eff": {"energy": [cal.n_eff], "busy": [cal.n_eff], "rho_energy": cal.energy.rho, "rho_busy": cal.busy.rho,
+                      "underpowered": bool(cal.n_eff < MIN_N_EFF)},
+            "methods": {k: [v] for k, v in a["method"].items()},
+            "extra": {"link": {"reference_blocks": int(len(cal.score)), "n_eff": cal.n_eff,
+                               "exchangeable_by_design": cal.exchangeable_by_design,
+                               "thresholds": {k: float(v) for k, v in a["threshold"].items()},
+                               "block_residual_sd": {c.name: float(np.std(c.S, ddof=1)) for c in cal.channels},
+                               "partial_load_slack": cal.energy.curve.partial_load_slack()}}}
+
+
+def block_table(cfg: TrialConfig, sc: dict, aud: dict, schedule: list) -> dict:
+    """One row per audit block: what was scheduled, what the analysis said, and the ground truth the source reported."""
+    L = cfg.L
+    B = len(aud["E"]) // L
     hid = aud["hid"][: B * L].reshape(B, L).sum(1)
-    cap = block_capacity_j(cfg.n_gpu, cfg.p_max_w, L, cfg.dt)
-    hf = hid / cap
-    kinds = np.array([("none" if s is None else s["kind"]) for s in schedule[:B]])
-    fracs = np.array([(0.0 if s is None else s["frac"]) for s in schedule[:B]])
+    t = {"kind": [("none" if s is None else s["kind"]) for s in schedule[:B]],
+         "frac": [(0.0 if s is None else float(s["frac"])) for s in schedule[:B]],
+         "hidden_j": hid, "hidden_fraction": hid / block_capacity_j(cfg.n_gpu, cfg.p_max_w, L, cfg.dt),
+         "flag_energy": sc["flag"]["energy"], "flag_busy": sc["flag"]["busy"], "flag_combined": sc["flag"]["combined"],
+         "ub_energy_j": sc["ub_energy"], "ub_busy_s": sc["ub_busy"], "pred_energy_j": sc["pred_energy"]}
+    if "ub_floor" in sc:
+        t["ub_energy_floor_j"], t["ub_busy_floor_s"] = sc["ub_floor"]["energy"], sc["ub_floor"]["busy"]
+    if "hs" in aud:
+        t["hidden_busy_s"] = aud["hs"][: B * L].reshape(B, L).sum(1)
+    return {k: (v.tolist() if isinstance(v, np.ndarray) else list(v)) for k, v in t.items()}
+
+
+def summarise(cfg: TrialConfig, table: dict, floor: EnergyFloor) -> dict:
+    """Rates, f95, the closure gap and bound coverage from a block table (one trial's, or several pooled)."""
+    kinds, fracs = np.array(table["kind"]), np.array(table["frac"], float)
+    hid, hf = np.array(table["hidden_j"], float), np.array(table["hidden_fraction"], float)
+    flag = {ch: np.array(table[f"flag_{ch}"], bool) for ch in ("energy", "busy", "combined")}
+    B = len(kinds)
+    cap = block_capacity_j(cfg.n_gpu, cfg.p_max_w, cfg.L, cfg.dt)
     null = kinds == "none"
-    k_fp, n_null = int(flag["combined"][null].sum()), int(null.sum())
+    n_null = int(null.sum())
     fpr = {ch: {"k": int(f[null].sum()), "n": n_null, "rate": float(f[null].mean()) if n_null else None,
                 "cp95_upper": cp_upper(int(f[null].sum()), n_null)} for ch, f in flag.items()}
+    idle = (kinds != "none") & (hid <= 0)                 # scheduled, but the hidden load never came on: null in fact
+    fpr["scheduled_but_never_active"] = {"k": int(flag["combined"][idle].sum()), "n": int(idle.sum())}
     det, f95 = {}, {}
     for cl in cfg.classes:
         det[cl], rates = {}, []
@@ -216,51 +317,79 @@ def analyze(cfg: TrialConfig, calE, calB, aud: dict, schedule: list, floor: Ener
             k, n = int(flag["combined"][m].sum()), int(m.sum())
             row[cl] = {"k": k, "n": n, "rate": (k / n if n else None), "cp95_lower": cp_lower(k, n) if n else None}
         at_least[str(thr)] = row
-    cover_ns = (rE.hidden_ub >= hid)[ns]
+    ubE = np.array(table["ub_energy_j"], float)
+    cover_ns = (ubE >= hid)[ns]
     sl = (kinds == "slack") & (hid > 0)
-    cover_sl = (rE.hidden_ub >= hid)[sl]
-    tight = (rE.hidden_ub[ns] / np.maximum(hid[ns], 1e-9))[cover_ns] if ns.any() else np.array([])
+    cover_sl = (ubE >= hid)[sl]
+    tight = (ubE[ns] / np.maximum(hid[ns], 1e-9))[cover_ns] if ns.any() else np.array([])
+    bound = {"coverage_nonslack": float(cover_ns.mean()) if len(cover_ns) else None,
+             "coverage_slack_expected_to_fail": float(cover_sl.mean()) if len(cover_sl) else None,
+             "median_tightness_ratio": float(np.median(tight)) if len(tight) else None}
+    if "ub_energy_floor_j" in table and ns.any():        # energy above the least the verified work can cost
+        bound["coverage_floor_bound"] = float((np.array(table["ub_energy_floor_j"], float) >= hid)[ns].mean())
+    if "hidden_busy_s" in table and table.get("ub_busy_s") is not None:
+        # the time bound against the seconds the hidden load really ran (counted by the load generator itself)
+        hs, ubB = np.array(table["hidden_busy_s"], float), np.array(table["ub_busy_s"], float)
+        nt = ns & (hs > 0)
+        ct = (ubB >= hs)[nt]
+        tt = (ubB[nt] / np.maximum(hs[nt], 1e-12))[ct] if nt.any() else np.array([])
+        bound["time"] = {"n": int(nt.sum()), "coverage_nonslack": float(ct.mean()) if len(ct) else None,
+                         "median_tightness_ratio": float(np.median(tt)) if len(tt) else None}
+        if "ub_busy_floor_s" in table:                  # the same check for the bound that does not lean on A1
+            cf = (np.array(table["ub_busy_floor_s"], float) >= hs)[nt]
+            bound["time"]["coverage_floor_bound"] = float(cf.mean()) if len(cf) else None
     gap = pooled["combined"]
     week_j = (gap if gap is not None else float("nan")) * cfg.n_gpu * cfg.p_max_w * 7 * 86400
     flop = hidden_flop_bound(week_j, floor) if gap is not None else None
-    pred_frac = float(np.mean(rE.pred) / cap)
+    pred_frac = float(np.mean(np.array(table["pred_energy_j"], float)) / cap) if B else None
     s_max = cfg.slack_s_max
     slack = {"s_max": s_max, "source": cfg.slack_source, "mean_predicted_fraction_of_capacity": pred_frac,
              "slack_inflated_gap_fraction": (gap + s_max * pred_frac) if (gap is not None and s_max is not None) else None}
-    # energy against the block's capacity energy, busy time against its capacity time (GPU-seconds); until 0.7.0 both
-    # were divided by the energy, which understated the busy figure by a factor of p_max (docs/DEVIATIONS.md section 3)
-    cap_s = cfg.n_gpu * L * cfg.dt
-    md = {"energy": [R.min_detectable(calE, r, a, cfg.beta) / cap for r in range(calE.n_regimes)],
-          "busy": [R.min_detectable(calB, r, a, cfg.beta) / cap_s for r in range(calB.n_regimes)]}
     return {
         "status": cfg.status,
         "n_blocks": {"audit": int(B), "null": n_null, "hidden_nonslack": int(ns.sum()), "hidden_slack": int(sl.sum()),
-                     "hidden_zero_energy_skipped": int(((kinds != "none") & (hid <= 0)).sum())},
+                     "hidden_zero_energy_skipped": int(idle.sum())},
         "false_positive": fpr,
         "detection_combined": det,
         "detection_at_or_above_fraction": at_least,
         "f95_by_class": f95,
         "f95_pooled_hidden_fraction": pooled,
         "closure_gap_fraction": gap,
-        "min_detectable_fraction_per_regime": md,
-        "bound": {"coverage_nonslack": float(cover_ns.mean()) if len(cover_ns) else None,
-                  "coverage_slack_expected_to_fail": float(cover_sl.mean()) if len(cover_sl) else None,
-                  "median_tightness_ratio": float(np.median(tight)) if len(tight) else None},
+        "bound": bound,
         "slack": slack,
         "hidden_compute_at_gap_per_week": {"flop": flop, "h100_hours": (h100_hours(flop) if flop else None),
                                            "energy_floor_j_per_flop": floor.j_per_flop,
                                            "energy_floor_source": floor.source},
-        "normality_p": {"energy": calE.normal_p.tolist(), "busy": calB.normal_p.tolist()},
-        "calibration_n_eff": {"energy": calE.n_eff.tolist(), "busy": calB.n_eff.tolist(),
-                              "rho_energy": calE.rho, "rho_busy": calB.rho,
-                              "underpowered": bool(min(calE.n_eff.min(), calB.n_eff.min()) < MIN_N_EFF)},
-        "methods_used": {"energy": rE.method, "busy": rB.method},
-        "assumptions": ASSUMPTIONS,
     }
 
 
+def _report(cfg: TrialConfig, sc: dict, aud: dict, schedule: list, floor: EnergyFloor) -> dict:
+    table = block_table(cfg, sc, aud, schedule)
+    res = summarise(cfg, table, floor)
+    res.update({"analysis": sc["analysis"], "min_detectable_fraction_per_regime": sc["md"],
+                "normality_p": sc["normality_p"], "calibration_n_eff": sc["n_eff"], "methods_used": sc["methods"],
+                "assumptions": ASSUMPTIONS, "blocks": table, **sc["extra"]})
+    return res
+
+
+def analyze(cfg: TrialConfig, calE, calB, aud: dict, schedule: list, floor: EnergyFloor) -> dict:
+    """The straight-line analysis: each channel linear in the verified work, combined at alpha/2 each."""
+    return _report(cfg, _score_linear(cfg, calE, calB, aud), aud, schedule, floor)
+
+
+def analyze_link(cfg: TrialConfig, cal, aud: dict, schedule: list, floor: EnergyFloor) -> dict:
+    """The link analysis (amendment v0.6): calibrated curves, studentised scores, one conformal threshold."""
+    return _report(cfg, _score_link(cfg, cal, aud), aud, schedule, floor)
+
+
+def analyze_any(cfg: TrialConfig, cal, aud: dict, schedule: list, floor: EnergyFloor) -> dict:
+    return analyze(cfg, cal[0], cal[1], aud, schedule, floor) if isinstance(cal, tuple) else \
+        analyze_link(cfg, cal, aud, schedule, floor)
+
+
 def _digest(d: dict) -> dict:
-    return {k: array_digest(v) for k, v in d.items() if k != "hid"}
+    """The evidence: what the verifier would see. Ground truth (hidden energy, level, hidden seconds) is left out."""
+    return {k: array_digest(v) for k, v in d.items() if k in ("X", "E", "B", "t0")}
 
 
 def _save_partial(out: Path, acc: dict, chain: Chain, err: BaseException, reveal) -> None:
@@ -271,7 +400,7 @@ def _save_partial(out: Path, acc: dict, chain: Chain, err: BaseException, reveal
         return
     if reveal and not (out / "schedule_reveal.json").exists():
         (out / "schedule_reveal.json").write_text(json.dumps(reveal))
-    full = {name: {k: np.concatenate(v) for k, v in d.items()} for name, d in acc.items() if d["E"]}
+    full = {name: _stack(d) for name, d in acc.items() if d["E"]}
     if full:
         np.savez_compressed(out / "raw_partial.npz", **{f"{n}_{k}": v for n, d in full.items() for k, v in d.items()})
     chain.append({"phase": "interrupted", "reason": f"{type(err).__name__}: {err}",
@@ -289,7 +418,7 @@ def run_trial(source, cfg: TrialConfig, out_dir, signer: Signer = None, schedule
     interleaved = cfg.calibration == "interleaved"
     chain = Chain(out / "chain.jsonl")
     rng = np.random.default_rng(cfg.seed + 7919)
-    acc = {name: {k: [] for k in _KEYS} for name in ("warm", "ref", "aud")}     # finished blocks, kept if stopped
+    acc = {name: _new_parts() for name in ("warm", "ref", "aud")}               # finished blocks, kept if stopped
     state = {"reveal": None}
     try:
         return _run(source, cfg, out, signer, schedule, floor, pause_hook, interleaved, chain, rng, acc, state)
@@ -304,16 +433,16 @@ def run_trial(source, cfg: TrialConfig, out_dir, signer: Signer = None, schedule
 def _run(source, cfg, out, signer, schedule, floor, pause_hook, interleaved, chain, rng, acc, state) -> dict:
     warm = None
 
-    def calibrate(ref):
-        calE, calB = fit_channels(ref, cfg)
+    def fit(ref):
+        cal = calibrate(ref, cfg)
         chain.append({"phase": "calibration", "cfg": asdict(cfg), "ref_digest": _digest(ref),
-                      "energy": calE.to_dict(), "busy": calB.to_dict()})
-        return calE, calB
+                      **calibration_record(cal)})
+        return cal
 
     if not interleaved:                 # calibrate first: the model is fixed before the schedule is committed
         warm = collect(source, cfg, cfg.warmup_blocks, parts=acc["warm"]) if cfg.warmup_blocks else None
         ref = collect(source, cfg, cfg.n_ref_blocks, parts=acc["ref"])
-        calE, calB = calibrate(ref)
+        cal = fit(ref)
     schedule = schedule if schedule is not None else make_schedule(cfg, rng)
     order = make_order(cfg, rng) if interleaved else None
     cm, om = commit(schedule), (commit(order) if interleaved else None)
@@ -322,7 +451,7 @@ def _run(source, cfg, out, signer, schedule, floor, pause_hook, interleaved, cha
         reveal.update(order=order, order_nonce=om["nonce"])
     state["reveal"] = reveal
     prereg = {"cfg": asdict(cfg), "code": _code_version(), "schedule_commitment": cm["commitment"],
-              "assumptions": ASSUMPTIONS, "analysis": "closure.trial.analyze (alpha/2 Bonferroni for combined)"}
+              "assumptions": ASSUMPTIONS, "analysis": ANALYSES[cfg.analysis]}
     if interleaved:                     # nothing has been measured yet; the reference positions are committed too
         prereg["order_commitment"] = om["commitment"]
     else:
@@ -346,8 +475,8 @@ def _run(source, cfg, out, signer, schedule, floor, pause_hook, interleaved, cha
     np.savez_compressed(out / "raw.npz", **{f"ref_{k}": v for k, v in ref.items()}, **{f"aud_{k}": v for k, v in aud.items()},
                         **({f"warm_{k}": v for k, v in warm.items()} if warm else {}))
     if interleaved:
-        calE, calB = calibrate(ref)
-    res = analyze(cfg, calE, calB, aud, schedule, floor)
+        cal = fit(ref)
+    res = analyze_any(cfg, cal, aud, schedule, floor)
     (out / "results.json").write_text(json.dumps(clean(res), indent=2, sort_keys=True))
     head = chain.append({"phase": "results", "results_sha256": sha256_hex(canonical(res))})
     if signer:

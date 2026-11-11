@@ -1,0 +1,74 @@
+$ /usr/bin/python3 -m closure.cli hw-selftest --gpus 0
+
+GPU: cuda:0 = NVML index 0 (GPU-763d3d8a-9a65-f850-f842-f031f5c4a972), matched by uuid
+unit of work: 4096x4096 float16 GEMM + 268435456-element pass, 9.3 ms against a 100 ms slot; power limit 70 W, idle 31.3 W per GPU
+{
+  "windows": 150,
+  "r2": 0.9690977801899809,
+  "residual_sd_j": 2.443492896656187,
+  "idle_power_w": 31.352896434878385,
+  "theta": {
+    "duration_s": 31.15368486258056,
+    "prefill_units": 0.3990619343810965,
+    "decode_units": 0.0,
+    "steps": 0.0
+  },
+  "per_level": {
+    "0": {
+      "windows": 30,
+      "units_per_window": 0.0,
+      "power_w": 31.352896434878385
+    },
+    "0.25": {
+      "windows": 30,
+      "units_per_window": 30.1,
+      "power_w": 41.85558313351127
+    },
+    "0.5": {
+      "windows": 30,
+      "units_per_window": 70.2,
+      "power_w": 62.14848049195781
+    },
+    "0.75": {
+      "windows": 30,
+      "units_per_window": 82.9,
+      "power_w": 63.899464331493355
+    },
+    "1": {
+      "windows": 30,
+      "units_per_window": 89.7,
+      "power_w": 65.17798140757063
+    }
+  },
+  "work_ratio_25_to_100": 0.3355629877369008,
+  "levels_distinct": true,
+  "pass": true,
+  "gpus": [
+    "cuda:0 = NVML index 0 (GPU-763d3d8a-9a65-f850-f842-f031f5c4a972), matched by uuid"
+  ],
+  "unit": {
+    "dim": 4096,
+    "mem_elems": 268435456,
+    "dtype": "float16",
+    "unit_s": 0.00925166199999694,
+    "slot_s": 0.1,
+    "budget_s": 0.020000000000000004,
+    "fits_slot": true,
+    "auto_sized": true,
+    "tried": [
+      {
+        "dim": 8192,
+        "mem_elems": 536870912,
+        "unit_s": 0.05970608899997387
+      },
+      {
+        "dim": 4096,
+        "mem_elems": 268435456,
+        "unit_s": 0.00925166199999694
+      }
+    ]
+  },
+  "power_limit_w": 70.0,
+  "idle_w_measured_at_start": 31.326325221621925,
+  "locked_sm_mhz": null
+}

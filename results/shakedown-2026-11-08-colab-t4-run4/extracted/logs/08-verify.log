@@ -1,0 +1,3 @@
+$ /usr/bin/python3 -m closure.cli verify /content/plan-a-closure/runs/tier0-20261108-231346/T1-smoke
+
+{"chain_ok": true, "entries": 4, "signature_ok": true, "schedule_commitment_ok": true, "prereg_hash_ok": true, "results_hash_ok": true, "probe_hash_ok": true}

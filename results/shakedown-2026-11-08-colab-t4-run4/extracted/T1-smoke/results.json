@@ -1,0 +1,226 @@
+{
+  "assumptions": [
+    "A1 additivity: hidden work adds energy/busy-time on top of verified work (no free lunch from sharing).",
+    "A2 exchangeability: calibration and audit blocks come from the same regime mix (same stack, clocks, cooling, firmware).",
+    "A3 approximate normality of block residual sums, checked by the Jarque-Bera diagnostic stored with the calibration.",
+    "A4 no efficiency slack: the adversary is no more energy-efficient than the calibration reference (the 'slack' class tests this and is expected to evade).",
+    "A5 the verified-work features are trustworthy (they come from the tap/recompute evidence, not from the prover).",
+    "A6 the power meter is independent of the prover (DC-bus instrument); NVML-only runs are labelled as spoofable."
+  ],
+  "bound": {
+    "coverage_nonslack": 1.0,
+    "coverage_slack_expected_to_fail": null,
+    "median_tightness_ratio": 2.1209301613031064
+  },
+  "calibration_n_eff": {
+    "busy": [
+      7.426570848887084
+    ],
+    "energy": [
+      12.36264940967056
+    ],
+    "rho_busy": 0.7797138203711671,
+    "rho_energy": 0.6583140747188172,
+    "underpowered": true
+  },
+  "closure_gap_fraction": 0.31622776601683794,
+  "detection_at_or_above_fraction": {
+    "0.02": {
+      "constant": {
+        "cp95_lower": 0.7168711644368821,
+        "k": 9,
+        "n": 9,
+        "rate": 1.0
+      },
+      "dilute": {
+        "cp95_lower": 0.6518363448688387,
+        "k": 7,
+        "n": 7,
+        "rate": 1.0
+      },
+      "duty": {
+        "cp95_lower": 0.5492802716530605,
+        "k": 5,
+        "n": 5,
+        "rate": 1.0
+      },
+      "idle_gap": {
+        "cp95_lower": 0.5492802716530605,
+        "k": 5,
+        "n": 5,
+        "rate": 1.0
+      },
+      "pooled_nonslack": {
+        "cp95_lower": 0.891169644239219,
+        "k": 26,
+        "n": 26,
+        "rate": 1.0
+      }
+    },
+    "0.05": {
+      "constant": {
+        "cp95_lower": 0.7168711644368821,
+        "k": 9,
+        "n": 9,
+        "rate": 1.0
+      },
+      "dilute": {
+        "cp95_lower": 0.6518363448688387,
+        "k": 7,
+        "n": 7,
+        "rate": 1.0
+      },
+      "duty": {
+        "cp95_lower": 0.3684031498640392,
+        "k": 3,
+        "n": 3,
+        "rate": 1.0
+      },
+      "idle_gap": {
+        "cp95_lower": 0.5492802716530605,
+        "k": 5,
+        "n": 5,
+        "rate": 1.0
+      },
+      "pooled_nonslack": {
+        "cp95_lower": 0.8826538438450502,
+        "k": 24,
+        "n": 24,
+        "rate": 1.0
+      }
+    }
+  },
+  "detection_combined": {
+    "constant": {
+      "0.05": {
+        "cp95_lower": 0.4728708045015857,
+        "k": 4,
+        "n": 4,
+        "rate": 1.0
+      },
+      "0.2": {
+        "cp95_lower": 0.5492802716530605,
+        "k": 5,
+        "n": 5,
+        "rate": 1.0
+      }
+    },
+    "dilute": {
+      "0.05": {
+        "cp95_lower": null,
+        "k": 0,
+        "n": 0,
+        "rate": null
+      },
+      "0.2": {
+        "cp95_lower": 0.6518363448688387,
+        "k": 7,
+        "n": 7,
+        "rate": 1.0
+      }
+    },
+    "duty": {
+      "0.05": {
+        "cp95_lower": 0.07644039141232906,
+        "k": 2,
+        "n": 5,
+        "rate": 0.4
+      },
+      "0.2": {
+        "cp95_lower": 0.3684031498640392,
+        "k": 3,
+        "n": 3,
+        "rate": 1.0
+      }
+    },
+    "idle_gap": {
+      "0.05": {
+        "cp95_lower": 0.0,
+        "k": 0,
+        "n": 1,
+        "rate": 0.0
+      },
+      "0.2": {
+        "cp95_lower": 0.5492802716530605,
+        "k": 5,
+        "n": 5,
+        "rate": 1.0
+      }
+    }
+  },
+  "f95_by_class": {
+    "constant": null,
+    "dilute": null,
+    "duty": null,
+    "idle_gap": null
+  },
+  "f95_pooled_hidden_fraction": {
+    "busy": 0.31622776601683794,
+    "combined": 0.31622776601683794,
+    "energy": 0.31622776601683794
+  },
+  "false_positive": {
+    "busy": {
+      "cp95_upper": 0.12212338890652319,
+      "k": 0,
+      "n": 23,
+      "rate": 0.0
+    },
+    "combined": {
+      "cp95_upper": 0.12212338890652319,
+      "k": 0,
+      "n": 23,
+      "rate": 0.0
+    },
+    "energy": {
+      "cp95_upper": 0.12212338890652319,
+      "k": 0,
+      "n": 23,
+      "rate": 0.0
+    }
+  },
+  "hidden_compute_at_gap_per_week": {
+    "energy_floor_j_per_flop": 1.962675301666048e-12,
+    "energy_floor_source": "measured by hw-probe (HARDWARE-PROBE (NVML energy counter; spoofable)), sha256 d7d186395d77c29c",
+    "flop": 6.8212091377134e+18,
+    "h100_hours": 1.9158547179287158
+  },
+  "methods_used": {
+    "busy": [
+      "gaussian"
+    ],
+    "energy": [
+      "gaussian"
+    ]
+  },
+  "min_detectable_fraction_per_regime": {
+    "busy": [
+      0.14011851023581118
+    ],
+    "energy": [
+      0.0879604633039685
+    ]
+  },
+  "n_blocks": {
+    "audit": 60,
+    "hidden_nonslack": 30,
+    "hidden_slack": 0,
+    "hidden_zero_energy_skipped": 7,
+    "null": 23
+  },
+  "normality_p": {
+    "busy": [
+      0.16644376498670127
+    ],
+    "energy": [
+      0.07775366760162977
+    ]
+  },
+  "slack": {
+    "mean_predicted_fraction_of_capacity": 0.639857351765953,
+    "s_max": 0.1255294780073002,
+    "slack_inflated_gap_fraction": 0.3965487253831515,
+    "source": "measured by hw-probe (HARDWARE-PROBE (NVML energy counter; spoofable)), sha256 d7d186395d77c29c"
+  },
+  "status": "HARDWARE (NVML energy counter; spoofable)"
+}

@@ -1,0 +1,23 @@
+$ /usr/bin/python3 -m closure.cli hw-state --device cuda:0
+
+{
+  "status": "HARDWARE",
+  "device": "cuda:0",
+  "block_mb": 64,
+  "k": 17,
+  "k_chosen": "for 99.9% sampling detection",
+  "blocks": 32,
+  "trials": 200,
+  "park_frac": 0.25,
+  "parked_blocks": 8,
+  "sampling_limit": 0.9993882091212458,
+  "time_threshold_s": 0.06660009375763042,
+  "honest_median_s": 0.054589539500284445,
+  "parked_median_s": 0.11980041000015262,
+  "honest_false_alarm": 0.0,
+  "parked_detection": 1.0,
+  "challenges_touching_parked": 200,
+  "detected_when_touching_parked": 1.0,
+  "digest_ok_honest": true,
+  "pass": true
+}

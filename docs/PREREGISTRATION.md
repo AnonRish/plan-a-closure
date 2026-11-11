@@ -1,4 +1,4 @@
-# Pre-registration v0.5 (freeze and timestamp BEFORE any audit data exist)
+# Pre-registration v0.6 (freeze and timestamp BEFORE any audit data exist)
 
 Freeze procedure: commit this file and the analysis code; timestamp this file (`ots stamp docs/PREREGISTRATION.md`); run
 `closure hw-probe` first (section 3, H1.6 and H1.7); record the git commit and a hash of the package source in the run's
@@ -59,12 +59,119 @@ f95 rules already use. The busy-time `min_detectable_fraction_per_regime` is now
 (c) The Tier 1 profiles (`hw-short`, `hw-full`) are unchanged and still calibrate before the audit. Whether Tier 1
 adopts interleaved calibration will be decided by amendment, before any Tier 1 data exist, from the long shakedowns.
 
+v0.6 (10 November 2026), made before any registered (Tier 1) data existed and before any run under it, after
+shakedown runs 4 and 5 ([DEVIATIONS.md](DEVIATIONS.md) sections 4 and 5). Run 5 was the first run large enough to read
+the decision rules, and the registered analysis failed H1.2 on it: 11 false alarms in 204 null blocks. Its raw data
+show why. The model was a straight line and the GPU is not one; the combined threshold had silently fallen back to a
+Gaussian; the hidden-load labels understated the load by a factor of 1.1 to 2.2; and near the power limit hidden work
+displaced verified work instead of adding energy, so assumption A1 failed for energy exactly where the GPU was busiest.
+Everything below was fixed before the next run. The link analysis applied to run 5's data is a post hoc reading and is
+labelled so wherever it appears; the runs under this amendment are its test, and they are published whatever they show.
+
+(a) *The link analysis replaces the straight line* (`src/closure/link.py`; `cfg.analysis` = `link` in `prereg.json`).
+For each channel (energy, busy time): a work index per window, the non-negative least-squares prediction from the work
+features alone; a monotone piecewise-linear curve of the index per second, with 20 equal segments from zero to the
+99.5th percentile of the reference windows, slopes fitted by non-negative least squares with a pull of 0.001 of the
+data's weight between neighbouring slopes; a residual variance for each segment (pooled where a segment has fewer than
+30 reference windows). A block's channel score is its residual sum divided by the spread those variances predict for
+its windows. Reference blocks are scored five-fold cross-fitted, audit blocks by the curve fitted on every reference
+block. The combined score is the larger of the two channel scores, each divided by its standard deviation over the
+reference blocks, and a block is detected when its combined score exceeds the conformal quantile at `alpha` of the
+reference blocks' combined scores. One threshold at `alpha` replaces two at `alpha`/2. With fewer than `1/alpha - 1`
+effective reference blocks the threshold is Student's t and reported as such. Only verified quantities enter the curve
+(work and durations): nothing the device reports about itself is a regressor. The straight-line analysis stays in the
+code as `linear`, so that earlier runs reproduce.
+
+(b) *H1.1 under the link analysis*: the combined threshold is conformal, which needs at least `1/alpha - 1` effective
+reference blocks (99 at `alpha` = 0.01; with interleaved calibration every reference block counts, otherwise blocks are
+discounted for autocorrelation). Jarque-Bera is reported and no longer decides. Reason: a conformal threshold assumes
+no distribution, so normality is not what makes it valid, and run 5 showed the other half: 0.7.0 reported "conformal"
+for the single-channel tests while the combined test, the one the rules use, ran on a Gaussian fallback, because a
+conformal threshold at `alpha`/2 = 0.005 needs 199 reference blocks. `methods_used.combined` now reports the method of
+the test that decides. The level of a cross-fitted conformal threshold is close to `alpha` and not proven equal to it
+(`link.py` says how close and why); H1.2 is its check on every run.
+
+(c) *Every hardware profile has the long profile's design*: reference blocks interleaved with a balanced blind audit,
+positions and schedule committed beforehand, warm-up blocks, the link analysis, one regime. This settles v0.5 (c):
+Tier 1 adopts interleaved calibration. `smoke`: `L` = 20, 100 reference and 80 audit blocks after 3 warm-up blocks (one
+hour), 5 blocks for each class at 5% and 20%, 40 null. `medium` (new): `L` = 30, 150 reference and 300 audit blocks
+after 5 warm-up blocks (3.8 hours), 6 blocks for each class at 2, 5, 10 and 20%, 204 null: the smallest trial that can
+decide H1.1 to H1.4, for sessions that cannot be trusted for twelve hours. `long`: as in v0.5. `hw-short`: `L` = 120,
+180 + 180 blocks, 4 blocks for each class at 1, 2, 5, 10 and 20%, 100 null. `hw-full`: `L` = 120, 360 + 720 blocks, 15
+blocks for each class at 0.5, 1, 2, 5, 10 and 20%, 360 null. One regime, because the curve now carries what the regimes
+approximated: how the channel depends on load. Reason for changing the smoke trial: run 4's had 60 reference blocks,
+too few for a conformal threshold, and still calibrated before its audit (+0.60 SD of drift between the two).
+
+(d) *The hidden load means what its label says.* Before the trial the load generator runs the hidden load alone at
+duties of 2, 5, 10, 20, 40 and 80%, each for 20 s between two 8 s idle readings, and records the power each drew
+(`cfg.workload.hidden_solo`). A label of x% of capacity is then run at the duty whose measured solo power is x% of
+capacity. Hidden GEMMs are paid for from a running credit of wall-clock time, so the load takes its duty of the GPU's
+time whatever the verified load is doing; when both do not fit, the verified work gives way. The generator counts the
+seconds its hidden work ran, per window, in `raw.npz` (`hs`, in the busy channel's units) beside the load level it asked
+for (`lev`). **Hidden fraction** stays hidden energy over capacity, with hidden energy now the load's measured solo
+energy. Reason: until 0.8.0 the duty was computed from the power limit less idle power, and each slot ran whole GEMMs
+until that time was used up. Both can miss. With clocks locked high the bursts drew 73 W per unit of duty against the
+41 W assumed (run 4); and whole GEMMs overshot each slot by up to one GEMM, 5 to 7 ms of a 100 ms slot, which doubled
+the smallest load (run 5). The loads labelled 2, 5, 10 and 20% drew 4.2, 7.2, 11.5 and 22.5% in run 5, and the 5 and
+20% labels drew 11 and 37% in run 4. (In run 3 they drew 4.9 and 21%, close to their labels.)
+
+(e) *H1.4 is read on time, against counted seconds.* For each hidden block the **floor time bound** is the busy time
+observed, less the least busy time the verified work can take (its work index times the curve's smallest average
+slope, plus the zero-work level), plus a margin (the lower conformal quantile of the reference scores times the
+largest spread anywhere on the curve). H1.4 holds when it is at least the counted hidden seconds in 95% of non-slack
+hidden blocks. Reported beside it, as checks of assumption A1 and not as criteria: the calibrated time bound, and the
+calibrated and floor energy bounds against the hidden load's solo energy. Reason: the energy bound assumes hidden
+energy adds to verified energy. On a GPU near its power limit it does not: in run 5, at full load, the load labelled
+20% changed power by -0.3 W and cut verified work by 35%. The floor bound needs no such assumption: whatever the hidden
+work did to the GPU's operating point, the verified work cannot have taken less than its least. The time channel
+rests on the device's own utilisation counter, as the energy channel rests on its energy counter (assumption A6); a
+DC-bus trace fast enough to show duty would measure it independently. A run that did not count hidden seconds (every
+run before 0.8.0) is read on the energy bound as before.
+
+(f) *T2 is judged by the slowest block and timed in one pass* (`closure hw-state`). Each block of a challenge is timed
+on its own, and a challenge fails when its slowest block exceeds the threshold. For every parked-prover challenge (1,000
+by default) there are two honest challenges that are judged (2,000; H2.1 asks for 1,000) and four that set the threshold
+(4,000), all in one pass in random order, back to back. The threshold is the conformal quantile at 0.005 of the
+threshold-setting challenges. The verifier recomputes digests afterwards, for every 50th challenge of each kind, and
+any wrong digest fails the step. The criteria are unchanged (H2.1 false alarms at most 1%, H2.3 detection at least 99%).
+Reason: in run 5 a challenge that touched one parked block took about 14 ms longer than a 54 ms total whose jitter was
+about 5 ms, and 5 of 200 slipped under the total-time threshold (97.5%); one block set against one block's time is a
+far larger effect. The three kinds had also run one after another, with the verifier's two-second recomputation between
+challenges, so every challenge started on an idle GPU.
+
+(g) *Campaigns.* `closure tier0 --campaign NAME:i/N` (and `hw-trial`) declares, in `prereg.json` and before any data
+exist, that the trial is number i of N to be read together: N GPUs of one session, or N sessions. `closure pool` reads
+a declared campaign whole: every trial must pass `closure verify`, share one design, and appear once; the block tables
+are pooled and H1.1 to H1.4 applied to the pool, with H1.1 holding when every trial's threshold is conformal. Each
+trial keeps its own calibration. A campaign with a trial missing is refused, and anything pooled another way is
+labelled POST HOC. Reason: one 12-hour session holds 204 null blocks per GPU, and two GPUs give 408.
+
+(h) *Seeds.* A hardware run draws a fresh random seed and records it (`cfg.seed`). Reason: runs 1 to 5 all used seed
+1, so every run of a profile followed one load sequence and one hidden-load schedule.
+
+(i) *Reporting only.* `closure reanalyze` applies an analysis to a finished trial's raw data: the pre-registered one
+reproduces `results.json`; any other is written to a separate file and labelled POST HOC. `closure physics` tabulates
+work, power and busy time by requested load level and what each hidden load did to them (in `SUMMARY.md` too).
+`false_positive.scheduled_but_never_active` counts audit blocks whose scheduled load never came on (an `idle_gap` load
+in a block that was never idle): they are neither null nor hidden, as before.
+
+Unchanged: `alpha`; H1.2 (at least 200 null blocks, at most 3 x `alpha`); H1.3 and its thresholds; H1.5 to H1.7; the
+classes; the threat model; the overall outcome rule.
+
+Expected under this amendment, stated before the runs. On a T4 the overall outcome will still be FAIL: the probe's
+`s_max` (0.10 to 0.13) puts the slack-inflated gap above 5% whatever the closure gap is. With labels that are now
+honest, H1.3's stretch level (2%) will probably fail at blocks of 60 s or less, because what passed as 2% in run 5 was
+4.2%. The calibrated energy bound will probably cover less than 95% near the power limit. If H1.2 fails again, the link
+analysis is wrong on this hardware and that is the result.
+
 ## 1. Definitions
 
 - **Window** `dt`=1 s. **Block** `L` windows. **Cluster capacity** per block = `n_gpu × p_max × L × dt`, where `p_max`
   is the GPU's power limit read from NVML at run time and recorded in `prereg.json` (700 W on an H100 or H200 SXM).
-- **Hidden fraction** = hidden energy in a block / cluster capacity energy of that block.
-- **Detected** = the combined test (energy OR busy-time, each at alpha/2) flags the block.
+- **Hidden fraction** = hidden energy in a block / cluster capacity energy of that block. On hardware, hidden energy is
+  the hidden load's measured solo power times the time it was on (v0.6 (d)).
+- **Detected** = the combined test flags the block. Link analysis (v0.6): the larger of the two channel scores exceeds
+  one threshold at alpha. Straight-line analysis (until v0.6): energy OR busy-time, each at alpha/2.
 - **f95** = smallest log-binned hidden fraction from which every populated bin is detected >= 95%.
 - **Closure gap** = pooled f95 over non-slack classes (combined channels).
 - **Slack-inflated gap** = closure gap + `s_max × (mean predicted block energy / block capacity)`, where `s_max`
@@ -91,18 +198,18 @@ the independent meter, hardware modification, physical access, attacks on the ve
 
 Design. Verified load: synthetic GEMM + memory-bound passes at levels {0, .1, .2, .3, .5, .7, .9, 1.0} (T1a), then a
 served model with tap-derived token counts (T1b). Profile `hw-full`: 360 reference blocks, 720 audit blocks,
-`L`=120 windows, `alpha`=0.01, 3 regimes (36 h at 1 s windows); `hw-short` for a first pass (12 h); `long` for Tier 0
-shakedowns on 12-hour sessions (9 h, amendment v0.5). NVML run first, then
+`L`=120 windows, `alpha`=0.01 (36 h at 1 s windows; one regime, interleaved, since v0.6 (c)); `hw-short` for a first
+pass (12 h); `long` (9 h, v0.5), `medium` (3.8 h, v0.6) and `smoke` (1 h) for Tier 0 shakedowns. NVML run first, then
 re-analysis with the DC-bus meter on the **same** run (`dcbus-analyze`). The independent channel must be absolute power in
 watts, DC-coupled and calibrated: an AC-coupled current probe has no DC response and cannot give energy, and `dcbus-analyze`
 rejects such traces (a forced run is labelled METER UNVERIFIED and does not support H1.5).
 
 | id | hypothesis | decision rule |
 | --- | --- | --- |
-| H1.1 | calibration is valid | per regime: Jarque-Bera p >= 0.01 and `n_eff` >= 15; otherwise the run is reported UNDERPOWERED and no false-alarm claim is made |
+| H1.1 | calibration is valid | link analysis (v0.6 (b)): the combined threshold is conformal, which needs at least `1/alpha - 1` effective reference blocks. Straight-line analysis: per regime, Jarque-Bera p >= 0.01 and `n_eff` >= 15. Otherwise the run is reported UNDERPOWERED and no false-alarm claim is made |
 | H1.2 | false alarms are controlled | on >= 200 null audit blocks, observed combined FPR <= 3 × alpha |
 | H1.3 | sensitivity | non-slack classes: detection >= 95% at hidden fraction >= 5% (primary) or 2% (stretch), per class |
-| H1.4 | bound validity | `H_ub` >= measured hidden energy in >= 95% of non-slack hidden blocks (hidden energy characterised in solo runs) |
+| H1.4 | bound validity | link analysis with counted hidden seconds (v0.6 (e)): the floor time bound >= the seconds the hidden load ran in >= 95% of non-slack hidden blocks; the calibrated time bound and the energy bounds are reported as checks of A1. Otherwise: `H_ub` >= hidden energy in >= 95% of non-slack hidden blocks (hidden energy characterised in solo runs) |
 | H1.5 | independent channel | DC-bus closure gap <= 1.5 × NVML closure gap, and DC-bus FPR satisfies H1.2 |
 | H1.6 | slack | `closure hw-probe` measures `s_max` over >= 3 allowed stack variants (clock cap, power cap, precision, kernel library) and the activation patterns (operand slack, reported as `s_operand`); the sealed `probe.json` is bound into `prereg.json` before the audit; report the slack-inflated gap, `s_stack`, `s_operand` and `band_over_floor` |
 | H1.7 | physics anchor | `closure hw-probe` measures `e_floor`: the lowest *dynamic* (above-idle) J/FLOP over the swept clocks, power caps, precisions (int8 and fp8 included where the device runs them; integer operations count as FLOPs) and kernel libraries at the probe's GEMM shape (one shape per probe: bind the probe with the lowest floor and report what was swept; activation patterns never set the floor); report hidden FLOPs and H100-hours per week at the gap. An empirical floor, not a proof of a physical limit |
@@ -113,7 +220,7 @@ Otherwise **FAIL**: published in full. A FAIL with a measured gap is itself the 
 ## 4. T2: state closure
 
 Device memory and host DRAM filled with the verifier's AES-CTR stream (block >= 64 MB). Challenge `k` random blocks
-with a fresh digest key.
+with a fresh digest key. Since v0.6 (f) each block is timed and a challenge is judged by its slowest block.
 
 | id | hypothesis | decision rule |
 | --- | --- | --- |
@@ -134,8 +241,11 @@ tolerance was stated before the run.
 ## 6. Analysis plan
 
 Code frozen at the recorded commit. No optional stopping, no post-hoc removal of classes or blocks, no change of
-alpha after the schedule reveal. Clopper-Pearson 95% bounds for all rates. Combined test uses Bonferroni
-(alpha/2 per channel). Multiple classes are reported separately, never averaged into a headline.
+alpha after the schedule reveal. Clopper-Pearson 95% bounds for all rates. The combined test is one conformal
+threshold at alpha on the larger channel score (link analysis, v0.6 (a)); under the straight-line analysis it was
+Bonferroni, alpha/2 per channel. Multiple classes are reported separately, never averaged into a headline. Trials are
+read together only as a campaign declared before any of them has data (v0.6 (g)). An analysis applied after the data
+were seen is labelled POST HOC and decides nothing.
 
 ## 7. Reporting
 

@@ -1,0 +1,169 @@
+{
+  "status": "HARDWARE (NVML energy counter; spoofable)",
+  "levels_source": "load levels regenerated from the trial's seed (recorded since 0.8.0) and checked against the work done",
+  "capacity_w": 70.0,
+  "windows": {
+    "warm": 0,
+    "ref": 1800,
+    "aud": 1800
+  },
+  "by_level": [
+    {
+      "level": 0.0,
+      "windows": 450,
+      "units_per_s": 0.026631286632541506,
+      "watts": 31.557195827102987,
+      "busy_share": 0.0012467069047769803,
+      "busy_ms_per_unit": null,
+      "joules_per_unit_above_idle": null
+    },
+    {
+      "level": 0.1,
+      "windows": 77,
+      "units_per_s": 20.12171769447103,
+      "watts": 40.27724817228403,
+      "busy_share": 0.16176756317474308,
+      "busy_ms_per_unit": 8.039450986790902,
+      "joules_per_unit_above_idle": 0.4333652065686772
+    },
+    {
+      "level": 0.2,
+      "windows": 455,
+      "units_per_s": 30.07141524793029,
+      "watts": 43.5197992907145,
+      "busy_share": 0.24129630012932754,
+      "busy_ms_per_unit": 8.024108547599372,
+      "joules_per_unit_above_idle": 0.39780646720426166
+    },
+    {
+      "level": 0.3,
+      "windows": 642,
+      "units_per_s": 40.13393815374576,
+      "watts": 46.58023646954918,
+      "busy_share": 0.32206811697113974,
+      "busy_ms_per_unit": 8.024832144240513,
+      "joules_per_unit_above_idle": 0.37432261406532485
+    },
+    {
+      "level": 0.5,
+      "windows": 69,
+      "units_per_s": 66.51936223931267,
+      "watts": 57.06662826829487,
+      "busy_share": 0.5434606551685732,
+      "busy_ms_per_unit": 8.169961900918379,
+      "joules_per_unit_above_idle": 0.3834888306568266
+    },
+    {
+      "level": 0.7,
+      "windows": 256,
+      "units_per_s": 90.04114807457651,
+      "watts": 63.42711863139826,
+      "busy_share": 0.7541744572689926,
+      "busy_ms_per_unit": 8.375886729524463,
+      "joules_per_unit_above_idle": 0.35394842786654646
+    },
+    {
+      "level": 0.9,
+      "windows": 772,
+      "units_per_s": 101.02046599890053,
+      "watts": 66.05536737236486,
+      "busy_share": 0.9274244835603056,
+      "busy_ms_per_unit": 9.18056033883668,
+      "joules_per_unit_above_idle": 0.34149685614831093
+    },
+    {
+      "level": 1.0,
+      "windows": 149,
+      "units_per_s": 105.82891597419786,
+      "watts": 66.8012535471705,
+      "busy_share": 0.982420442052046,
+      "busy_ms_per_unit": 9.283100303999806,
+      "joules_per_unit_above_idle": 0.33302861883854473
+    }
+  ],
+  "hidden_load_effect": [
+    {
+      "label_fraction": 0.05,
+      "label_watts": 3.5,
+      "level": 0.0,
+      "windows": 60,
+      "units_per_s_change": -0.026631286632541506,
+      "watts_added": 7.757782584828476,
+      "busy_share_added": 0.10576959240274507
+    },
+    {
+      "label_fraction": 0.05,
+      "label_watts": 3.5,
+      "level": 0.2,
+      "windows": 60,
+      "units_per_s_change": 0.021806507543224996,
+      "watts_added": 7.963797608454186,
+      "busy_share_added": 0.1109531516650831
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 0.0,
+      "windows": 115,
+      "units_per_s_change": -0.026631286632541506,
+      "watts_added": 25.94259666341909,
+      "busy_share_added": 0.35740586582395195
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 0.2,
+      "windows": 30,
+      "units_per_s_change": 0.18372640342853686,
+      "watts_added": 19.51233318716767,
+      "busy_share_added": 0.3745675661352854
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 0.3,
+      "windows": 120,
+      "units_per_s_change": 0.04528641810428269,
+      "watts_added": 18.142759176074406,
+      "busy_share_added": 0.39460331768729434
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 0.7,
+      "windows": 65,
+      "units_per_s_change": -27.794345593887485,
+      "watts_added": 3.405213634203875,
+      "busy_share_added": 0.22900806829875442
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 1.0,
+      "windows": 30,
+      "units_per_s_change": -35.08701817863884,
+      "watts_added": -0.5854416446724713,
+      "busy_share_added": -0.002126392403295929
+    }
+  ],
+  "hidden_load_on_an_idle_gpu": [
+    {
+      "label_fraction": 0.05,
+      "label_watts": 3.5,
+      "level": 0.0,
+      "windows": 60,
+      "units_per_s_change": -0.026631286632541506,
+      "watts_added": 7.757782584828476,
+      "busy_share_added": 0.10576959240274507
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 0.0,
+      "windows": 115,
+      "units_per_s_change": -0.026631286632541506,
+      "watts_added": 25.94259666341909,
+      "busy_share_added": 0.35740586582395195
+    }
+  ]
+}

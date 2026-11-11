@@ -10,7 +10,8 @@ from types import SimpleNamespace
 import numpy as np
 
 from closure.hw import selftest as ST
-from closure.hw.workloads import MIN_DIM, measure_idle_w, native_half, size_unit
+from closure.hw.workloads import (MIN_DIM, characterise_hidden, duty_for_watts, measure_idle_w, native_half,
+                                  size_unit)
 from pathlib import Path
 
 from closure.tier0 import _trial_clock_args, _unit_args
@@ -122,3 +123,50 @@ def test_tier0_locks_the_trial_at_the_highest_clock_the_t4_held_under_its_cap(tm
     (tmp_path / "p.json").write_text(json.dumps(pr))
     assert _trial_clock_args(tmp_path / "p.json") == []                      # never on a rehearsal or mock probe
     assert _trial_clock_args(tmp_path / "missing.json") == []
+
+
+class _SoloRig:
+    """A load generator and energy counter in one, on a virtual clock: idle 30 W, hidden work at 80 W per unit duty up
+    to 10% duty and 45 W per unit duty after (not the 40 W that the power limit less idle power suggests; run 4's T4
+    drew 73 W per unit duty with clocks locked)."""
+
+    def __init__(self, idle_drift_w_per_s=0.0):
+        self.state, self.gpus, self.t, self.e = {"level": 0.0, "hid_duty": 0.0, "hid_gpus": frozenset()}, [0, 1], 0.0, 0.0
+        self.drift = idle_drift_w_per_s
+
+    def watts(self, t):
+        d = self.state["hid_duty"] if self.state["hid_gpus"] else 0.0
+        return 2 * (30.0 + self.drift * t + 80.0 * min(d, 0.1) + 45.0 * max(d - 0.1, 0.0))
+
+    def sleep(self, s):
+        self.e += self.watts(self.t + s / 2) * s            # exact for power that changes linearly
+        self.t += s
+
+    def energy_j(self):
+        return self.e
+
+
+def test_hidden_load_is_characterised_alone_and_labels_are_read_off_the_measured_curve():
+    """Until 0.8.0 a label of x% was turned into a duty by assuming the GPU draws its power limit while busy. Run 4's T4
+    drew nearly twice that in its bursts, and its "5%" hidden load drew 11% of capacity. The solo run measures the curve."""
+    rig = _SoloRig()
+    was = rig.state
+    solo = characterise_hidden(rig, rig, 2, duties=(0.05, 0.1, 0.4), on_s=5.0, idle_s=2.0, settle_s=1.0,
+                               sleep=rig.sleep, now=lambda: rig.t)
+    assert rig.state is was                                              # the load is left as it was found
+    assert solo["duty"] == [0.05, 0.1, 0.4] and np.allclose(solo["idle_w_per_gpu"], 30.0)
+    assert np.allclose(solo["watts_per_gpu"], [4.0, 8.0, 21.5])
+    table = list(zip(solo["duty"], solo["watts_per_gpu"]))
+    assert duty_for_watts(table, 0.0) == 0.0
+    assert duty_for_watts(table, 2.0) == 0.025 and duty_for_watts(table, 8.0) == 0.1          # 80 W per unit duty
+    assert abs(duty_for_watts(table, 3.5) - 0.04375) < 1e-12                                   # 5% of a 70 W GPU
+    assert abs(duty_for_watts(table, 14.75) - 0.25) < 1e-12                                    # on the second segment
+    assert abs(duty_for_watts(table, 30.5) - 0.6) < 1e-12 and duty_for_watts(table, 500.0) == 1.0   # extended, capped
+    old_estimate = 3.5 / (70.0 - 30.0)                  # what 0.7.0 would have run for the same label: twice the duty
+    assert old_estimate > 1.9 * duty_for_watts(table, 3.5)
+    # idle power that creeps up as the GPU warms (0.05 W a second here, 1.2 W over one measurement) cancels, because
+    # each duty is measured between an idle reading before it and one after
+    warm = _SoloRig(idle_drift_w_per_s=0.05)
+    solo = characterise_hidden(warm, warm, 2, duties=(0.05, 0.1, 0.4), on_s=5.0, idle_s=2.0, settle_s=1.0,
+                               sleep=warm.sleep, now=lambda: warm.t)
+    assert np.allclose(solo["watts_per_gpu"], [4.0, 8.0, 21.5], atol=1e-9)
