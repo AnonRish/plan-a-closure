@@ -137,7 +137,10 @@ def page(results: Path = HERE) -> str:
         "replacement.", "",
         "To check a row yourself: `closure verify` and `closure criteria --run` on the unpacked bundle, or "
         "`python results/reread.py results/<folder>` for everything the documents quote. "
-        "[docs/VERIFY_IT_YOURSELF.md](../docs/VERIFY_IT_YOURSELF.md) has the commands.", ""])
+        "[docs/VERIFY_IT_YOURSELF.md](../docs/VERIFY_IT_YOURSELF.md) has the commands.", "",
+        "Which settings the slack comes from, and how much of it each rule a regime could adopt (fixed clocks, a "
+        "pinned software stack, energy predicted from the data) would remove, read from the same bundles: "
+        "[SLACK_LEFT.md](SLACK_LEFT.md). It is descriptive and decides nothing.", ""])
 
 
 if __name__ == "__main__":

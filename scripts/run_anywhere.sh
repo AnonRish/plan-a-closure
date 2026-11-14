@@ -9,7 +9,7 @@
 #
 # Options for --hardware:
 #   --gpu N         which GPU, counted as CUDA counts them (default 0)
-#   --profile P     smoke (default: 2 h 20 min, checks the pipeline), medium (about 5 h) or long (about 10 h 30 min);
+#   --profile P     smoke (default: 2 h 20 min, checks the pipeline), medium (about 5 h 40 min) or long (about 11 h);
 #                   medium and long are large enough to read the pre-registered rules H1.1 to H1.4
 #   --no-sudo       never use sudo. Without root the clock and power-limit variants are dropped and noted
 #   --stamp         also install the OpenTimestamps client, so the pre-registration is timestamped on public calendars

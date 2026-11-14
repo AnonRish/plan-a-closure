@@ -63,6 +63,12 @@ jobs:
           {
             .venv/bin/python results/record.py
             echo
+            echo "## Efficiency slack left under each rule a regime could adopt (results/SLACK_LEFT.md; decides nothing)"
+            echo
+            .venv/bin/python results/slack_left.py > slack_left.md
+            sed -n '/^## 2\./,/^## 3\./p' slack_left.md | sed '$d'
+            sed -n '/^## What these numbers say/,/^## What they do not say/p' slack_left.md | sed '$d'
+            echo
             echo "## This runner, as \`closure doctor\` reads it"
             echo
             .venv/bin/python -m closure.cli doctor | sed -n '3,8p'

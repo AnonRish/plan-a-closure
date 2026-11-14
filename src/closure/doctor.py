@@ -225,8 +225,8 @@ def report(N=None, torch=None, sysfs_root="/sys", system: dict = None) -> dict:
     if can:
         verdict = (f"the pilot can run on {len(can)} GPU{'s' if len(can) != 1 else ''} here: `bash "
                    f"scripts/run_anywhere.sh --hardware --gpu {can[0]['index']}` installs what is missing, runs it and "
-                   f"bundles the result (about 2 h 20 min; with `--profile medium` about 5 h, with `--profile long` "
-                   f"about 10 h 30 min). The command underneath is `closure tier0 --confirm-hardware`")
+                   f"bundles the result (about 2 h 20 min; with `--profile medium` about 5 h 40 min, with `--profile long` "
+                   f"about 11 h). The command underneath is `closure tier0 --confirm-hardware`")
     elif unread:
         verdict = (f"NVML reads {len(unread)} GPU{'s' if len(unread) != 1 else ''} with an energy counter here, and "
                    f"PyTorch is not installed in this environment, so what CUDA can do on "

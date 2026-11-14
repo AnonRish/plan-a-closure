@@ -37,7 +37,7 @@ To run the vendored repositories' own suites as well (about 10 more minutes): `p
 
 ```bash
 bash scripts/run_anywhere.sh --check       # one minute: which steps would run on each GPU here, and why not where not
-bash scripts/run_anywhere.sh --hardware    # the pilot; --profile medium (5 h) or long (10 h 30 min) reads the decision rules
+bash scripts/run_anywhere.sh --hardware    # the pilot; --profile medium (5 h 40 min) or long (11 h) reads the decision rules
 ```
 
 It is one unattended command underneath, `closure tier0`, which logs every step and writes a bundle to send back

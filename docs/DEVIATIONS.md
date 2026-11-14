@@ -454,3 +454,31 @@ measured (8.4 to 10.8%), weighted by the trials' load, adds 6 to 8% of capacity 
 the outcome rule allows: no analysis changes that, and amendment v0.6 said so before the runs. Residency (T2) passed its registered thresholds on all three. None of it is evidence about H100s,
 independent metering or the registered thresholds. The next runs are a T4 run under amendment v0.7, to test the clock
 rule, and the registered trial on instrumented H100-class hardware.
+
+## 8. No new run: the probes of runs 3 to 8 read by rule, and amendment v0.8 (14 November 2026)
+
+**What was read.** Every probe on record holds one cell per variant and load level: the reference's power and the
+variant's at the same rate of verified work. `closure slack-left` (new) takes away the kinds of setting a regime could
+fix, one rule at a time, and reports the largest bound left. It is arithmetic on the signed cells: with nothing fixed
+it reproduces each trial's `s_max` and slack-inflated gap exactly, and a test checks that on all six bundles.
+**Post hoc, and it decides nothing**: it was read after the data were seen, and every outcome stands as registered.
+The page is [results/SLACK_LEFT.md](../results/SLACK_LEFT.md), generated from the bundles.
+
+**What it shows.**
+
+1. Two savings are measured, not just bounded: all-zero activations on the reference stack save 4.9 to 7.2% at half
+   load on every GPU, and a low clock lock saves 6.0 to 10.0% on the three where clocks could be locked.
+2. Pinning the whole stack (clocks, power limit, precision, library) leaves the data saving, and predicting energy
+   from the data leaves the stack's: either alone leaves 6.8 to 13.5%. Both together leave nothing the probe tried,
+   which is the edge of the sweep, not a measured zero.
+3. On a T4 the fp16 variant is the reference computation under another name, so its true saving is zero. With three
+   rounds the probe gave it bounds of 6.8 to 9.0%. On runs 5 to 7 that is about the size of `s_max` itself.
+4. With nothing left in the sweep, the reading would be the closure gap alone: 5.62% at best (runs 6 and 7). A PASS
+   needs the gap in the bin ending at 3.16% or lower and a slack of at most 2.4 to 3.0% at these loads.
+
+**What changed (amendment v0.8, made before any further run; nothing that decides changes).** The probe runs a
+deliberate null twin on every GPU and reports its bound `s_null`, never counted; it defaults to six rounds, and the
+pilot uses six with the `medium` and `long` profiles; every cell keeps its measured powers; and the slack-left reading
+and a round-paired bound are reported for every run from now on, declared beforehand and deciding nothing.
+`s_max`, H1.1 to H1.7 and the outcome rule are unchanged. A probe takes about twice as long: about 75 minutes on a T4
+whose clocks can be locked.

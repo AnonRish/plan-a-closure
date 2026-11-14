@@ -860,7 +860,8 @@ def cmd_hw_probe(a) -> int:
         caps, cap_src = P.pick_power_caps(rig.default_pl_w, rig.power_limits()), "0.7 and 0.5, raised to the device minimum"
     else:
         caps, cap_src = _floats(a.power_caps), "given"
-    variants = P.default_variants(clocks, caps, _strs(a.precisions), _strs(a.kernels), _strs(a.operands))
+    variants = P.default_variants(clocks, caps, _strs(a.precisions), _strs(a.kernels), _strs(a.operands),
+                                  null_twin=not a.no_null_twin)
     res = P.run_probe(rig, variants, levels=_floats(a.levels), repeats=a.repeats, rel_tol=a.rel_tol, seed=a.seed,
                       log=lambda s: print(s, file=sys.stderr))
     res["settings"].update({"clocks_mhz": [float(c) for c in clocks], "clock_source": clock_src,
@@ -875,10 +876,42 @@ def cmd_hw_probe(a) -> int:
     print(f"status={res['status']}  allowed variants={res['n_allowed_variants']} (H1.6 needs >= {P.MIN_VARIANTS})  "
           f"s_max={f(s)} (stack {f(res['s_stack'])}, operand {f(res['s_operand'])})  e_floor={f(e, '.3g')} J/FLOP  "
           f"band/floor={f(res['band_over_floor'], '.3g')}")
+    if res.get("s_null") is not None:
+        print(f"null twin: s_null={f(res['s_null'])} (the bound a setting with no effect gets with {a.repeats} repeats; "
+              f"not counted in s_max)")
     for n in res["notes"]:
         print("NOTE:", n)
     print(f"wrote {a.out} (sha256 {res['sha256']})")
     return 0 if (res["h1_6_variants_ok"] and e) else 1
+
+
+def cmd_slack_left(a) -> int:
+    """How much efficiency slack is left when a regime fixes some settings, read off a probe (slack_left.py). With a
+    trial folder, the trial's closure gap and mean load give the slack-inflated gap under each rule."""
+    from .hw.probe import verify_seal
+    from .slack_left import reading, summary_lines
+    if not (a.probe or a.run):
+        print("refusing: give --probe probe.json, or --run with a finished trial folder")
+        return 2
+    path = Path(a.probe) if a.probe else Path(a.run) / "probe.json"
+    try:
+        probe = json.loads(path.read_text())
+        res = json.loads((Path(a.run) / "results.json").read_text()) if a.run else {}
+    except (OSError, ValueError) as e:
+        print(f"refusing: {e}")
+        return 2
+    if not verify_seal(probe):
+        print(f"refusing: {path} does not match its sha256 seal")
+        return 2
+    sl = res.get("slack") or {}
+    rep = reading(probe, res.get("closure_gap_fraction"), sl.get("mean_predicted_fraction_of_capacity"))
+    rep["probe_sha256"] = probe.get("sha256")
+    if a.run:                                       # the trial must have used this probe, or its gap is beside the point
+        rep["probe_bound_to_trial"] = bool(probe.get("sha256") and str(probe["sha256"])[:16] in str(sl.get("source")))
+    print(json.dumps(clean(rep), indent=2) if a.json else "\n".join(
+        summary_lines(rep) + (["  WARNING: this trial did not use this probe; its gap and load are beside the point"]
+                              if a.run and not rep["probe_bound_to_trial"] else [])))
+    return 0
 
 
 def cmd_cadence_check(a) -> int:
@@ -1000,8 +1033,8 @@ def cmd_tier0(a) -> int:
     """Run the Tier 0 pilot end to end without keyboard input; see tier0.py and docs/OPERATOR_TIER0.md."""
     from . import tier0
     if not (a.mock or a.confirm_hardware):
-        print("refusing: pass --confirm-hardware (about 2 h on one GPU, about 5 h with --trial-profile medium, about "
-              "10.5 h with long: clock locking, power-limit changes, sustained load and hidden-load injection; clocks "
+        print("refusing: pass --confirm-hardware (about 2 h on one GPU, about 5 h 40 min with --trial-profile medium, "
+              "about 11 h with long: clock locking, power-limit changes, sustained load and hidden-load injection; clocks "
               "and limit are restored afterwards) or --mock to rehearse without a GPU")
         return 2
     return tier0.run(Path(a.out), gpu=a.gpu, mock=a.mock, run_tests=not a.skip_tests, profile=a.trial_profile,
@@ -1157,10 +1190,20 @@ def main(argv=None) -> int:
     s.add_argument("--precisions", default="tf32,fp16,int8,fp8"); s.add_argument("--kernels", default="cublaslt")
     s.add_argument("--operands", default="sparse90,lowent,zeros",
                    help="activation patterns run on the reference stack (operand slack); empty string to skip")
-    s.add_argument("--levels", default="0,0.25,0.5,0.9"); s.add_argument("--repeats", type=int, default=3)
+    s.add_argument("--levels", default="0,0.25,0.5,0.9")
+    s.add_argument("--repeats", type=int, default=6,
+                   help="rounds over every variant (amendment v0.8: 6; runs 1 to 8 used 3, which gave a setting with no "
+                        "effect a bound of 6.8 to 9.0%%)")
+    s.add_argument("--no-null-twin", action="store_true",
+                   help="skip the null twin, the reference run again under another name (its bound is s_null)")
     s.add_argument("--rel-tol", type=float, default=5e-3); s.add_argument("--seed", type=int, default=1)
     s.add_argument("--mock", action="store_true"); s.add_argument("--confirm-hardware", action="store_true")
     s.set_defaults(f=cmd_hw_probe)
+    s = sp.add_parser("slack-left", help="how much efficiency slack is left when a regime fixes clocks, the power limit, "
+                                         "the software stack or accounts for the data (descriptive; decides nothing)")
+    s.add_argument("--probe", default=None, help="a probe.json (default: the one in --run)")
+    s.add_argument("--run", default=None, help="a finished trial folder: adds its closure gap and load")
+    s.add_argument("--json", action="store_true"); s.set_defaults(f=cmd_slack_left)
     s = sp.add_parser("drift", help="did the energy model drift between calibration and audit? (a trial folder)")
     s.add_argument("--run", required=True); s.set_defaults(f=cmd_drift)
     s = sp.add_parser("criteria", help="the pre-registered T1 decision rules (H1.1 to H1.4) read off a trial folder")

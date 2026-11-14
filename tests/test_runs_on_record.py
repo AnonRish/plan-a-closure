@@ -328,3 +328,28 @@ def test_the_table_of_runs_on_record_is_current_and_says_what_the_bundles_say():
     for name, sha in SHA256.items():
         if name != "run2":
             assert sha[:16] in text, name
+
+
+def test_the_slack_left_page_is_current_and_reproduces_what_each_trial_signed(runs, capsys):
+    """results/SLACK_LEFT.md is generated (`python results/slack_left.py --write`) from the same bundles. With nothing
+    fixed the reading must give each trial's signed s_max and slack-inflated gap; the page decides nothing."""
+    import importlib.util
+    from closure.slack_left import reading
+    spec = importlib.util.spec_from_file_location("slack_left_page", RESULTS / "slack_left.py")
+    page = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(page)
+    text = page.page()
+    assert (RESULTS / "SLACK_LEFT.md").read_text(encoding="utf-8") == text, "run `python results/slack_left.py --write`"
+    assert "It decides nothing" in text and "not a measured zero" in text
+    for name in ("run3", "run4", "run5", "run6", "run7", "run8"):
+        probe = json.loads((runs[name] / "probe.json").read_text())
+        res = json.loads((runs[name] / "results.json").read_text())
+        rep = reading(probe, res["closure_gap_fraction"], res["slack"]["mean_predicted_fraction_of_capacity"])
+        none, both = rep["rules"][0], rep["rules"][-1]
+        assert rep["reproduces_s_max"] and abs(none["slack_inflated_gap"] - res["slack"]["slack_inflated_gap_fraction"]) < 1e-12
+        assert both["nothing_left_in_sweep"] and both["slack_inflated_gap"] == res["closure_gap_fraction"]
+        assert rep["null_twin"]["variant"] == "precision-fp16" and not rep["null_twin"]["deliberate"]   # a T4's fp16
+        assert (rep["kinds_not_measured"] == ["clock_cap", "power_cap"]) == (name in ("run5", "run6", "run7"))
+        capsys.readouterr()
+        assert main(["slack-left", "--run", str(runs[name])]) == 0
+        assert "WARNING" not in capsys.readouterr().out

@@ -7,7 +7,7 @@
 Every joule, packet byte and byte of memory on an enrolled cluster must be *explained* by verified work.
 What is left over (the residual) upper-bounds hidden compute, hidden exfiltration and hidden persistent state.
 
-> **Status: v0.9.0. The software is tested; the physical claim is not yet demonstrated.** Eight shakedown runs on
+> **Status: v0.10.0. The software is tested; the physical claim is not yet demonstrated.** Eight shakedown runs on
 > Tesla T4s in Colab and Kaggle sessions (8 to 12 November 2026, the GPU's own NVML counters as the only meter) are
 > published whatever they showed: [results/README.md](results/README.md) is the table, generated from the bundles, and
 > [docs/DEVIATIONS.md](docs/DEVIATIONS.md) is the account.
@@ -26,10 +26,17 @@ What is left over (the residual) upper-bounds hidden compute, hidden exfiltratio
 > - **On every T4 the pre-registered outcome is FAIL**, and was predicted to be. The probe measured an efficiency slack
 >   of 8 to 14% on these GPUs (the same verified work can cost that much less energy on another allowed setting), which
 >   at the trials' load adds 6 to 8% of capacity to the gap by itself; the outcome rule allows 5% in all.
+> - **Where that slack comes from**, read from the same bundles rule by rule ([results/SLACK_LEFT.md](results/SLACK_LEFT.md);
+>   descriptive, it decides nothing). Two savings are measured, not just bounded: all-zero activations on the
+>   reference stack save 4.9 to 7.2% at half load on every GPU, and a low clock lock 6.0 to 10.0% where clocks could
+>   be locked. Pinning the whole software stack leaves the data saving; predicting energy from the data leaves the
+>   stack's; only both together leave nothing the probe tried. In treaty terms, energy accounting needs both. And with
+>   three rounds the bound is partly noise: a setting with no effect got 6.8 to 9.0%. Amendment v0.8 adds a null twin
+>   to every probe and doubles its rounds before the next run.
 >
 > None of this is a claim about Plan A. A T4 is not the target device, NVML can be spoofed by whoever runs the machine,
 > and every run so far is the author's. Each claim is decided by the pre-registered trial on instrumented H100-class
-> hardware with an independent power meter. The software itself: 369 tests (`pytest`), plus 23 that run the torch code
+> hardware with an independent power meter. The software itself: 379 tests (`pytest`), plus 23 that run the torch code
 > on CPU where torch is installed, 10 of them rehearsing the whole GPU path against a fake NVML and nvidia-smi; the 13
 > vendored repositories under `external/` add their own suites (2,708 tests passed here, `closure external test`). A
 > report whose status says `SIMULATED` validates the estimators only.
@@ -227,7 +234,7 @@ covered. `gemm_audit.py` is a design-time screen, not the physical audit the pap
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"                # Python 3.10 or newer
-pytest                                  # 369 tests (392 with torch installed)
+pytest                                  # 379 tests (402 with torch installed)
 closure selftest                        # end-to-end simulated trial, PASS/FAIL
 closure doctor                          # what the pilot can do on this machine, and why not where not
 closure tier0 --mock --out runs/tier0   # the whole one-GPU pilot on fake hardware: logs, SUMMARY.md, bundle
@@ -245,6 +252,7 @@ closure physics --run runs/long         # work, power and busy time by load leve
 closure reanalyze --run runs/long --analysis linear   # another analysis on the same raw data, labelled POST HOC
 closure hw-probe --mock --out runs/probe.json                  # efficiency slack and energy floor on a fake rig
 closure sim-trial --out runs/sim2 --probe runs/probe.json      # binds the probe into the pre-registration and the report
+closure slack-left --run runs/sim2      # the slack left if a regime fixed clocks, the stack or the data (decides nothing)
 python scripts/sim_study.py 10          # the 10-seed simulation study (docs/SIM_STUDY.md)
 ```
 
@@ -276,7 +284,7 @@ campaign (runs 6 and 7) and failed the detection rule by one block in each of tw
 independent meter, a T4 is not the target device, and every run is the author's.
 
 **Hardware-gated (not yet demonstrated).** Everything the registered trial decides: the false-alarm rate and the
-closure gap under amendments v0.6 and v0.7, bound validity, the J/FLOP floor and the efficiency slack on an H100 or
+closure gap under amendments v0.6 to v0.8, bound validity, the J/FLOP floor and the efficiency slack on an H100 or
 H200, where no run of any kind exists yet (`closure doctor` says which steps would run on a given machine);
 DC-bus clock alignment and the independent meter; TAP capture; the gateway, hashing tap and canaries on real network
 hardware; the cadence detector on real telemetry.

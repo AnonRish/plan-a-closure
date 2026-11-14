@@ -28,6 +28,13 @@ variants probe how cheap *declared* work can be made, so they never set the ener
 largest one-sided 95% *upper* confidence saving over counted variants and levels, so noise inflates the bound rather
 than shrinking it. The reference is measured at the start and end of every round, so drift shows up in it.
 
+The null twin (amendment v0.8). One variant, ``null-twin``, runs the reference computation itself under another name.
+Its true saving is zero, so the bound it gets, ``s_null``, is the bound noise and drift alone produce at this sample
+size on this GPU. It is never counted in ``s_max``, the floor or the declared band. On the T4s on record the fp16
+variant was such a twin by accident (a T4's native half precision is fp16) and got bounds of 6.8 to 9.0% with three
+repeats, about the size of ``s_max`` itself on two of them (results/SLACK_LEFT.md). Each cell keeps its measured
+powers (``power_w``), in the order they were taken, so a later reading can pair them.
+
 Everything is written to ``probe.json`` with a sha256 seal. ``closure hw-trial --probe probe.json`` binds that hash into
 the pre-registration and the report.
 
@@ -88,7 +95,7 @@ class Unavailable(RuntimeError):
 @dataclass(frozen=True)
 class Variant:
     name: str
-    kind: str            # reference | clock_cap | power_cap | precision | kernel | operand
+    kind: str            # reference | clock_cap | power_cap | precision | kernel | operand | null (the reference again)
     value: object = None  # MHz, fraction of the default power limit, dtype name, BLAS library name, operand pattern
 
     def to_dict(self) -> dict:
@@ -96,14 +103,17 @@ class Variant:
 
 
 def default_variants(clocks=(1755, 1500, 1275, 1005, 780, 510), power_caps=(0.7, 0.5),
-                     precisions=("tf32", "fp16"), kernels=("cublaslt",), operands=()) -> list:
-    """The CLI passes DEFAULT_PRECISIONS and DEFAULT_OPERANDS; the narrower defaults here keep library callers unchanged."""
+                     precisions=("tf32", "fp16"), kernels=("cublaslt",), operands=(), null_twin: bool = False) -> list:
+    """The CLI passes DEFAULT_PRECISIONS, DEFAULT_OPERANDS and the null twin; the narrower defaults here keep library
+    callers unchanged."""
     vs = [Variant("reference", "reference")]
     vs += [Variant(f"clock-{int(c)}MHz", "clock_cap", float(c)) for c in clocks]
     vs += [Variant(f"powercap-{int(round(100 * f))}pct", "power_cap", float(f)) for f in power_caps]
     vs += [Variant(f"precision-{p}", "precision", p) for p in precisions]
     vs += [Variant(f"kernel-{k}", "kernel", k) for k in kernels]
     vs += [Variant(f"operand-{o}", "operand", o) for o in operands]
+    if null_twin:                                   # the reference computation under another name: true saving zero
+        vs.append(Variant("null-twin", "null"))
     return vs
 
 
@@ -129,9 +139,9 @@ def summarize(variants, levels, samples, rel_tol: float, alpha: float = 0.05, dr
     rows, cands, band = [], [], []
     for v in variants:
         err = max(m["rel_err"] for l in levels for m in samples[(v.name, l)])
-        cls = "reference" if v.kind == "reference" else ("operand" if v.kind == "operand" else "stack")
+        cls = v.kind if v.kind in ("reference", "operand", "null") else "stack"
         # an operand variant keeps the reference stack and numerics; its outputs differ by construction: no accuracy gate
-        allowed = cls in ("reference", "operand") or err <= ref_err + rel_tol
+        allowed = cls in ("reference", "operand", "null") or err <= ref_err + rel_tol
         idle_p = float(np.mean(power(samples[(v.name, 0.0)])))
         row = {**v.to_dict(), "class": cls, "rel_err": err, "allowed": bool(allowed), "idle_power_w": idle_p, "levels": []}
         for l in levels:
@@ -139,6 +149,7 @@ def summarize(variants, levels, samples, rel_tol: float, alpha: float = 0.05, dr
             feas = all(m["feasible"] for m in ms)
             pm, pse, n = _mean_se(power(ms))
             cell = {"level": l, "n": n, "feasible": bool(feas), "power_w_mean": pm, "power_w_se": pse,
+                    "power_w": [float(p) for p in power(ms)],          # in the order taken, one per round
                     "busy_frac": float(np.mean([m["busy_frac"] for m in ms])),
                     "sm_mhz": float(np.median([m["sm_mhz"] for m in ms]))}
             if v.kind != "reference" and feas and ref_ok[l]:
@@ -152,9 +163,9 @@ def summarize(variants, levels, samples, rel_tol: float, alpha: float = 0.05, dr
                        and (m["energy_j"] - idle_p * m["time_s"]) / m["energy_j"] >= MIN_LOAD_FRACTION]
                 if jpf:
                     cell["dynamic_j_per_flop"] = float(np.mean(jpf))
-                    if cls != "operand":                  # operand patterns probe declared work, not covert work
+                    if cls not in ("operand", "null"):    # operand patterns probe declared work, not covert work
                         cands.append((cell["dynamic_j_per_flop"], v.name, l))
-                    if allowed and feas:                  # work an operator could declare at this rate
+                    if allowed and feas and cls != "null":   # work an operator could declare at this rate
                         band.append((cell["dynamic_j_per_flop"], v.name, l))
             row["levels"].append(cell)
         rows.append(row)
@@ -168,7 +179,7 @@ def summarize(variants, levels, samples, rel_tol: float, alpha: float = 0.05, dr
         return sum(1 for r in rows if r["class"] == c and r["allowed"]
                    and any("saving_upper95" in cell for cell in r["levels"] if cell["level"] > 0))
 
-    b_stack, b_op = best_of("stack"), best_of("operand")
+    b_stack, b_op, b_null = best_of("stack"), best_of("operand"), best_of("null")
     n_allowed, n_operand = measurable("stack"), measurable("operand")
     if n_allowed < MIN_VARIANTS:
         notes.append(f"only {n_allowed} allowed variants were measurable above idle; H1.6 needs at least {MIN_VARIANTS}")
@@ -188,6 +199,9 @@ def summarize(variants, levels, samples, rel_tol: float, alpha: float = 0.05, dr
                          if best else None),
             "s_stack": (max(0.0, b_stack[0]) if b_stack else None),
             "s_operand": (max(0.0, b_op[0]) if b_op else None),
+            # the null twin's bound: what noise and drift alone give a setting with no effect (never in s_max)
+            "s_null": (max(0.0, b_null[0]) if b_null else None),
+            "s_null_at": ({"variant": b_null[1], "level": b_null[2], "saving_point": b_null[3]} if b_null else None),
             "e_floor_j_per_flop": (floor[0] if floor else None),
             "e_floor_at": ({"variant": floor[1], "level": floor[2]} if floor else None),
             "declared_band_j_per_flop": ({"lo": lo[0], "lo_at": {"variant": lo[1], "level": lo[2]},

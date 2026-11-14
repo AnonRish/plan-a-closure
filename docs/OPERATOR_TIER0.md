@@ -14,7 +14,7 @@ The whole pilot is one command. It needs no meeting and never waits for keyboard
 | `selftest` | estimators, signature and commitments, end to end on simulated data | under 1 min |
 | `preflight` | NVML, the GPU energy counter, torch with CUDA, clock sync; warnings for root, MIG, persistence mode, other processes, int8 and fp8 support and free memory | seconds |
 | `hw-selftest` | the GPU's energy tracks the verified work (r2 > 0.9) and the load levels do different work; sizes the unit of work to the GPU and passes it on to `hw-probe` and `hw-trial` | about 3 min |
-| `hw-probe` | efficiency slack over clock caps, power caps, precisions (tf32, fp16, int8, fp8) and activation patterns; the lowest joules per FLOP | about 40 min |
+| `hw-probe` | efficiency slack over clock caps, power caps, precisions (tf32, fp16, int8, fp8) and activation patterns; the lowest joules per FLOP; a null twin, the reference again under another name, whose bound shows what noise alone gives (amendment v0.8) | about 40 min with `smoke` (3 rounds); about 75 min with `medium` and `long` (6 rounds), 45 where clocks cannot be locked |
 | `hw-state` | device memory holds the verifier's data; blocks moved to host memory are caught by the time of a challenge's slowest block (7,000 challenges in one pass) | about 13 min |
 | `hw-trial` | the hidden load measured on its own (3.5 min), then reference blocks interleaved with a balanced blind audit, synthetic hidden load injected on the same GPU on a schedule committed beforehand. `smoke` (default) checks the pipeline; `--trial-profile medium` and `long` can decide the registered rules H1.1 to H1.4 | about 1 h (medium: 3.9 h, long: about 9 h) |
 | `verify` | hash chain, Ed25519 signature, schedule commitment, pre-registration, results and probe hashes | seconds |
@@ -110,13 +110,13 @@ residency timing and the blind smoke trial on a real device.
 
 - **Colab:** open `notebooks/tier0_colab.ipynb` in Google Colab
   ([direct link](https://colab.research.google.com/github/AnonRish/plan-a-closure/blob/main/notebooks/tier0_colab.ipynb)),
-  choose a T4 runtime and use Runtime > Run all (about 5 hours with the default medium trial; keep the tab open and
+  choose a T4 runtime and use Runtime > Run all (about 5 hours 40 minutes with the default medium trial; keep the tab open and
   the computer awake). One cell runs Tier 0 and the mock training run, then saves the results to Google Drive (if you
   allow it in the first cell) and downloads them, so a session dropped after the run cannot lose them. Colab lets the
   run lock the GPU's clocks, so this is the run with clocks held still. `PROFILE = "smoke"` in the run cell gives the
   2 hour 20 minute pipeline check instead.
 - **Kaggle, for two long trials read together:** `notebooks/tier0_kaggle.ipynb` runs `closure tier0 --trial-profile
-  long` on each of the session's two T4s at once (about 10.5 hours) as a committed run, which goes on with the browser
+  long` on each of the session's two T4s at once (about 11 hours) as a committed run, which goes on with the browser
   closed. The two trials are declared one campaign before either has data (`--campaign`), and `closure pool` reads them
   together when both finish: 408 null blocks instead of 204. In a new Kaggle notebook, File > Import Notebook with
   the link
@@ -168,10 +168,14 @@ threshold (`src/closure/link.py`); the hidden load is measured on its own before
 that draws x% of capacity; the seconds it ran are counted, and H1.4 is read on a time bound that does not assume hidden
 energy adds to verified energy; `hw-state` judges a challenge by its slowest block; and every hardware run draws its own
 seed. `SUMMARY.md` gains a table of what the GPU did at each load level (`closure physics --run <trial folder>`).
+Since 0.10.0 (amendment v0.8) the probe runs a null twin, the reference computation under another name, whose bound
+`s_null` is what noise alone gives on that GPU; it takes six rounds with the `medium` and `long` profiles; and
+`SUMMARY.md` says how much slack each rule a regime could adopt would leave (`closure slack-left --run <trial
+folder>`: fixed clocks, a pinned stack, energy predicted from the data, both), declared beforehand and deciding nothing.
 
 **Reading a finished run again.** `closure unpack <bundle> --out <new folder>` extracts a returned bundle safely
 (plain files only; an optional `--sha256` must match). On its trial folder: `closure verify`, `closure criteria --run`,
-`closure physics --run`, and `closure reanalyze --run`, which reproduces the registered analysis from `raw.npz`, or
+`closure physics --run`, `closure slack-left --run`, and `closure reanalyze --run`, which reproduces the registered analysis from `raw.npz`, or
 with `--analysis` applies another one and labels the result POST HOC. `closure pool --runs <trial folders>` reads the
 trials of a declared campaign together and refuses an incomplete one.
 

@@ -8,7 +8,9 @@ hardware, never waits for keyboard input, and leaves one bundle to send back. St
   preflight     NVML, energy counter, torch, clock sync                                 (stops the run on failure)
   hw-selftest   does energy track verified work on this GPU (r2 > 0.9), and do the load levels do different work?
                 its unit of work, sized to the GPU, is passed on to hw-probe and hw-trial (stops the run on failure)
-  hw-probe      efficiency slack over clocks, caps, precisions and operands; the energy floor, int8 and fp8 included
+  hw-probe      efficiency slack over clocks, caps, precisions and operands; the energy floor, int8 and fp8 included;
+                a null twin (the reference again) measures the bound noise alone gives (amendment v0.8). Six rounds
+                with the medium and long profiles, three with smoke
   hw-state      device-memory residency: blocks parked in host memory are caught by the time of the slowest block
                 of a challenge; 1,000 parked-prover and 2,000 honest challenges in one interleaved pass (challenge
                 size chosen so sampling alone touches a parked block 99.9% of the time)
@@ -52,6 +54,7 @@ from . import __version__
 
 PRIVATE_KEY = "signing_key.bin"
 BUNDLE = "tier0_bundle.tar.gz"
+PROBE_REPEATS = {"smoke": 3}         # medium and long: hw-probe's default, six rounds (amendment v0.8)
 TRIALS = {"smoke": "smoke trial (about 1 h): interleaved calibration, balanced blind hidden-load schedule",
           "medium": "medium trial (under 4 h): interleaved calibration, balanced blind hidden-load schedule",
           "long": "long trial (about 9 h): interleaved calibration, balanced blind hidden-load schedule"}
@@ -216,7 +219,10 @@ def plan(out: Path, gpu: int, mock: bool, run_tests: bool, rehearsal: bool = Fal
          cli + ["hw-selftest", "--gpus", str(gpu)] + mk + (["--windows", "3"] if small else []), not small),
         ("hw-probe", "efficiency slack and energy floor",
          cli + ["hw-probe", "--gpu", str(gpu), "--out", str(out / "probe.json")] + hw
-         + (["--dim", "64", "--window-s", "0.3", "--levels", "0,0.5", "--repeats", "1"] if small else []), False),
+         + (["--dim", "64", "--window-s", "0.3", "--levels", "0,0.5", "--repeats", "1"] if small
+            # amendment v0.8: six rounds (hw-probe's default) where the trial can decide the rules; the smoke
+            # profile checks the pipeline and keeps the three rounds runs 1 to 8 used
+            else ["--repeats", str(PROBE_REPEATS[profile])] if profile in PROBE_REPEATS else []), False),
         ("hw-state", "device-memory residency",           # mock: the small, fast configuration tests/test_cli.py uses
          cli + ["hw-state", "--device", "cpu" if small else f"cuda:{gpu}"]
          + (["--mock"] if mock else [])
@@ -445,7 +451,9 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
     if pr:
         L += ["", "## Probe (H1.6 slack, H1.7 floor)", "",
               f"- s_max = {_fmt(pr.get('s_max'))} (stack {_fmt(pr.get('s_stack'))}, operand {_fmt(pr.get('s_operand'))}); "
-              f"allowed stack variants {pr.get('n_allowed_variants')}, operand variants {pr.get('n_operand_variants')}",
+              f"allowed stack variants {pr.get('n_allowed_variants')}, operand variants {pr.get('n_operand_variants')}"
+              + (f"; null twin s_null = {_fmt(pr['s_null'])}, the bound a setting with no effect gets in "
+                 f"{(pr.get('settings') or {}).get('repeats')} rounds (not counted)" if pr.get("s_null") is not None else ""),
               f"- e_floor = {_fmt(pr.get('e_floor_j_per_flop'), '.3g')} J/FLOP at "
               f"{(pr.get('e_floor_at') or {}).get('variant')}; band/floor = {_fmt(pr.get('band_over_floor'), '.3g')}",
               f"- probe.json sha256 {pr.get('sha256')}"]
@@ -539,6 +547,15 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
                       if not ln.startswith("- scope")]
             except (KeyError, TypeError, ValueError) as e:
                 L.append(f"- comparison unavailable ({type(e).__name__}: {e})")
+        if pr:
+            try:                                    # amendment v0.8: declared before the data; it decides nothing
+                from .slack_left import reading, summary_lines as left_lines
+                rep = reading(pr, res.get("closure_gap_fraction"), sl.get("mean_predicted_fraction_of_capacity"))
+                L += ["", "## Efficiency slack left under each rule a regime could adopt (amendment v0.8; decides "
+                      "nothing)", ""]
+                L += ["- " + ln.strip() for ln in left_lines(rep)[1:]]
+            except (KeyError, TypeError, ValueError) as e:
+                L.append(f"- not available ({type(e).__name__}: {e})")
         try:
             from .physics import report as physics_report, summary_lines as physics_lines
             L += ["", "## What the GPU did, by requested load level (a diagnostic, not a criterion)", ""]

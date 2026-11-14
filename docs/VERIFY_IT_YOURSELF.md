@@ -10,7 +10,7 @@ conversation, and nothing is sent anywhere.
 | 1 | **Re-derive the published results** (below) | 10 min | Python 3.10+ | the bundles are the files whose hashes the documents give; their hash chains, signatures and commitments verify; the signed results and every number the documents quote follow from the raw data | that the raw data are true: see "what a bundle proves" |
 | 2 | **Run the pipeline**: `bash scripts/run_anywhere.sh` | 3 min | Python 3.10+ | the code installs and runs every step on your machine, on a simulated GPU, and its evidence verifies | anything about a real GPU |
 | 3 | **Ask your machine**: `bash scripts/run_anywhere.sh --check` | 1 min | any machine | which pilot steps would run on each GPU you have, and why not where not (`closure doctor`) | nothing is measured |
-| 4 | **Run it on your GPU**: `bash scripts/run_anywhere.sh --hardware` | 2 h 20 min (smoke), 5 h (medium), 10 h 30 min (long) | Linux, an NVIDIA GPU with an NVML energy counter, exclusive use of it | an independent replication on your hardware, by you, whatever it shows. On anything but a T4 it is the first run of its kind | a Plan A claim: that needs an independent power meter (level 5) |
+| 4 | **Run it on your GPU**: `bash scripts/run_anywhere.sh --hardware` | 2 h 20 min (smoke), 5 h 40 min (medium), 11 h (long) | Linux, an NVIDIA GPU with an NVML energy counter, exclusive use of it | an independent replication on your hardware, by you, whatever it shows. On anything but a T4 it is the first run of its kind | a Plan A claim: that needs an independent power meter (level 5) |
 | 5 | **The registered trial** ([RUNBOOK_HARDWARE.md](RUNBOOK_HARDWARE.md)) | days | H100-class GPUs and a DC-bus power meter | what the pre-registration says it decides | what Plan A needs beyond this one leg |
 
 ## Level 1: re-derive the published results
@@ -21,6 +21,7 @@ python3 -m venv .venv && . .venv/bin/activate && pip install -e ".[test]"
 pytest -q tests/test_runs_on_record.py        # every bundle: hash, verify, and the numbers the documents quote
 python results/record.py                      # the table in results/README.md, computed here
 python results/reread.py results/shakedown-2026-11-11-kaggle-t4-runs6-7   # one folder in full, from its bundles
+python results/slack_left.py                  # results/SLACK_LEFT.md: where the slack comes from, rule by rule
 ```
 
 By hand, for one bundle, with nothing but the commands a run prints at its end:
@@ -32,6 +33,7 @@ closure verify /tmp/run6/*/T1-long             # hash chain, Ed25519 signature, 
 closure reanalyze --run /tmp/run6/*/T1-long    # the signed results again, from raw.npz
 closure criteria --run /tmp/run6/*/T1-long     # the pre-registered rules, read off the results
 closure physics --run /tmp/run6/*/T1-long      # what the GPU did at each load level
+closure slack-left --run /tmp/run6/*/T1-long   # the slack left if a regime fixed clocks, the stack or the data
 ```
 
 **What a bundle proves.** That these results follow from these data; that the analysis, the thresholds, the seed and
@@ -48,7 +50,7 @@ the two things that would change it are an independent power meter and a run by 
 git clone https://github.com/AnonRish/plan-a-closure && cd plan-a-closure
 bash scripts/run_anywhere.sh --check                      # what would run here, in a minute
 bash scripts/run_anywhere.sh --hardware                   # the smoke pilot: 2 h 20 min
-bash scripts/run_anywhere.sh --hardware --profile medium  # about 5 h: large enough to read rules H1.1 to H1.4
+bash scripts/run_anywhere.sh --hardware --profile medium  # about 5 h 40 min: large enough to read rules H1.1 to H1.4
 ```
 
 The script makes `./.venv`, installs the package with PyTorch, prints what `closure doctor` reads, and runs

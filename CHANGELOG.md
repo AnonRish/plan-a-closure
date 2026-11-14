@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.10.0
+
+No new hardware run. The six probes on record read rule by rule: where the efficiency slack comes from, and how much of
+it each rule a verification regime could adopt would leave (`results/SLACK_LEFT.md`, generated from the bundles;
+descriptive, it decides nothing). And pre-registration amendment v0.8, written before any further run, so the next
+probe measures its own noise floor.
+
+**What the reading shows** (post hoc, on six T4s; every outcome stands as registered)
+
+- Two savings are measured, not just bounded: all-zero activations on the reference stack save 4.9 to 7.2% at half
+  load on every GPU, and a low clock lock saves 6.0 to 10.0% on the three where clocks could be locked.
+- Pinning the whole software stack (clocks, power limit, precision, library) leaves the data saving; predicting energy
+  from the data the work ran on leaves the stack's. Either alone leaves 6.8 to 13.5%. Only both together leave nothing
+  the probe tried, which is the edge of its sweep, not a measured zero.
+- With three rounds the bound is partly noise: on a T4 the fp16 variant is the reference computation under another
+  name, and it got bounds of 6.8 to 9.0%. On runs 5 to 7 that is about the size of `s_max` itself.
+- With nothing left, the reading would be the closure gap alone: 5.62% at best. A PASS needs the gap in the bin ending
+  at 3.16% and a slack of at most 2.4 to 3.0% at these loads.
+
+**New**
+
+- `closure slack-left --run <trial folder>` (or `--probe probe.json`): the slack left under six rules (nothing fixed,
+  clocks, clocks and power limit, the whole stack, the data, stack and data), over all load levels and under load,
+  with the slack-inflated gap each would give; the null twin; and, on probes that keep per-round powers, a
+  round-paired bound. With nothing fixed it reproduces `s_max` exactly. `src/closure/slack_left.py`.
+- `results/slack_left.py` writes `results/SLACK_LEFT.md` from the bundles; a test fails if the page is out of date
+  or if the reading does not reproduce what each trial signed. CI shows its main table on the run's summary page.
+
+**Amendment v0.8** (nothing that decides a trial changes)
+
+- **(a) A null twin**: `hw-probe` runs the reference computation once more under another name; its bound `s_null` is
+  reported and never counted in `s_max`, the floor or the band (`--no-null-twin` to skip it).
+- **(b) Six rounds**: `hw-probe` defaults to six rounds, and `closure tier0` uses six with `medium` and `long`
+  (`smoke` keeps three). A probe takes about twice as long: about 75 min on a T4 whose clocks can be locked, 45 where
+  they cannot. The pilot's stated durations change to about 5 h 40 min (`medium`) and about 11 h (`long`).
+- **(c) Each probe cell keeps its measured powers** (`power_w`), in the order taken.
+- **(d) Two readings are declared beside the registered one** for every run from now on: the slack left under each
+  rule and the round-paired bound, both in `SUMMARY.md`, both deciding nothing.
+
 ## 0.9.0
 
 Runs 6, 7 and 8, the first prospective tests of amendment v0.6, published in full (`docs/DEVIATIONS.md` sections 6 and

@@ -1,4 +1,4 @@
-# Pre-registration v0.7 (freeze and timestamp BEFORE any audit data exist)
+# Pre-registration v0.8 (freeze and timestamp BEFORE any audit data exist)
 
 Freeze procedure: commit this file and the analysis code; timestamp this file (`ots stamp docs/PREREGISTRATION.md`); run
 `closure hw-probe` first (section 3, H1.6 and H1.7); record the git commit and a hash of the package source in the run's
@@ -227,6 +227,49 @@ hidden loads are measured against a slower GPU, and whether detection at 5% then
 locked, and little difference on clocks that hold. None of this bears on H100-class hardware, where neither the slack
 nor the behaviour at the power limit has been measured.
 
+v0.8 (14 November 2026), made before any registered (Tier 1) data existed and before any run under it, after a
+descriptive reading of the six probes on record ([results/SLACK_LEFT.md](../results/SLACK_LEFT.md)): which settings
+the slack comes from, and how much of it each rule a regime could adopt would leave. That reading was made after the
+data were seen and decides nothing. Nothing that decides changes here either: `s_max` is computed as before, over the
+same variants, and enters the slack-inflated gap as before.
+
+(a) *A null twin.* `closure hw-probe` runs one more variant, `null-twin`: the reference computation itself under
+another name. Its true saving is zero, so its one-sided 95% upper bound, `s_null`, is what noise and drift alone give
+a setting with no effect, on that GPU at that sample size. It is never counted in `s_max`, the energy floor or the
+declared band, and it is reported beside them. Reason: on a T4 the fp16 variant is such a twin by accident (a T4's
+native half precision is fp16), and the probes of runs 3 to 8 gave it bounds of 6.8 to 9.0%, with measured savings of
+-0.4 to +2.6%. On runs 5 to 7, where only precision, library and data could be tried, `s_max` (8.4 to 9.6%) is about
+that size. On an H100 the reference is bf16 and no variant is a twin by accident.
+
+(b) *Six rounds.* `closure hw-probe` defaults to six rounds over every variant, and `closure tier0` uses six with the
+`medium` and `long` profiles; `smoke` keeps the three that runs 1 to 8 used. Reason: with three rounds the bound's
+t-quantile is 2.92 on 2 degrees of freedom; with six it is 2.02 on 5, and the standard error falls by a factor of
+about 1.4. Projected on the spread runs 3 to 8 measured, the twin's bound would fall to about 3.8 to 5.8% and `s_max`
+to about 6.3 to 11.6%. The probe takes about twice as long: about 75 minutes on a T4 whose clocks can be locked, 45
+where they cannot.
+
+(c) *Each cell keeps its measured powers* (`power_w`, in the order taken: one a round, two for the reference, which
+brackets every round), so a reading can set each round's measurement against the reference measurements around it.
+
+(d) *Two readings declared beside the registered one; neither decides anything.* For every run from this amendment
+on, `SUMMARY.md` reports under its own heading the slack left under each rule (`closure slack-left`: nothing fixed;
+SM clocks fixed; clocks and power limit fixed; the whole stack pinned; energy predicted from the data the work ran
+on, stack free; stack pinned and energy predicted from the data), with the slack-inflated gap each would give holding
+the run's gap and load as measured; and the round-paired bound (`s_max_paired`, `s_null_paired`): in each round a
+variant against the mean of the two reference measurements that bracket it, then a one-sided 95% upper bound over
+rounds. Declared before those runs' data exist, they are not post hoc. They are descriptive: H1.1 to H1.7 and the
+outcome are read as before, whatever they show.
+
+Unchanged: everything that decides; the definition of `s_max` and the variants it counts; H1.1 to H1.7 and their
+thresholds; the registered analysis (link) and the declared comparison (`link-full`); the outcome rule; T2 and T3.
+
+Expected under this amendment, stated before the runs. On a T4 the outcome will still be FAIL. The null twin's bound
+should be roughly half what three rounds gave (about 4 to 6%) and `s_max` 1 to 2 points lower. If the twin's bound
+does not fall, its spread is drift between rounds rather than noise, and the round-paired bound should be the smaller
+of the two. All-zero activations should still save about 5 to 7% at half load on the reference stack, and a low clock
+lock 6 to 10% where it can be tried: those are measured savings, not noise, and no number of rounds removes them. None
+of this bears on H100-class hardware with an independent meter, where the slack has not been measured.
+
 ## 1. Definitions
 
 - **Window** `dt`=1 s. **Block** `L` windows. **Cluster capacity** per block = `n_gpu × p_max × L × dt`, where `p_max`
@@ -274,7 +317,7 @@ rejects such traces (a forced run is labelled METER UNVERIFIED and does not supp
 | H1.3 | sensitivity | non-slack classes: detection >= 95% at hidden fraction >= 5% (primary) or 2% (stretch), per class |
 | H1.4 | bound validity | link analysis with counted hidden seconds (v0.6 (e)): the floor time bound >= the seconds the hidden load ran in >= 95% of non-slack hidden blocks; the calibrated time bound and the energy bounds are reported as checks of A1. Otherwise: `H_ub` >= hidden energy in >= 95% of non-slack hidden blocks (hidden energy characterised in solo runs) |
 | H1.5 | independent channel | DC-bus closure gap <= 1.5 × NVML closure gap, and DC-bus FPR satisfies H1.2 |
-| H1.6 | slack | `closure hw-probe` measures `s_max` over >= 3 allowed stack variants (clock cap, power cap, precision, kernel library) and the activation patterns (operand slack, reported as `s_operand`); the sealed `probe.json` is bound into `prereg.json` before the audit; report the slack-inflated gap, `s_stack`, `s_operand` and `band_over_floor` |
+| H1.6 | slack | `closure hw-probe` measures `s_max` over >= 3 allowed stack variants (clock cap, power cap, precision, kernel library) and the activation patterns (operand slack, reported as `s_operand`); the sealed `probe.json` is bound into `prereg.json` before the audit; report the slack-inflated gap, `s_stack`, `s_operand` and `band_over_floor`, and (v0.8 (a)) the null twin's bound `s_null`, which is never counted |
 | H1.7 | physics anchor | `closure hw-probe` measures `e_floor`: the lowest *dynamic* (above-idle) J/FLOP over the swept clocks, power caps, precisions (int8 and fp8 included where the device runs them; integer operations count as FLOPs) and kernel libraries at the probe's GEMM shape (one shape per probe: bind the probe with the lowest floor and report what was swept; activation patterns never set the floor); report hidden FLOPs and H100-hours per week at the gap. An empirical floor, not a proof of a physical limit |
 
 Overall T1 outcome. **PASS-primary**: H1.1, H1.2, H1.4 hold and slack-inflated gap <= 5%. **PASS-stretch**: also gap <= 2%.
