@@ -1,0 +1,438 @@
+{
+  "status": "HARDWARE (NVML energy counter; spoofable)",
+  "levels_source": "load levels as recorded",
+  "capacity_w": 70.0,
+  "windows": {
+    "warm": 300,
+    "ref": 8640,
+    "aud": 23760
+  },
+  "by_level": [
+    {
+      "level": 0.0,
+      "windows": 3428,
+      "units_per_s": 0.010778663545693254,
+      "watts": 31.594478596073785,
+      "busy_share": 0.0009429687244566348,
+      "busy_ms_per_unit": null,
+      "joules_per_unit_above_idle": null
+    },
+    {
+      "level": 0.1,
+      "windows": 3159,
+      "units_per_s": 10.260925716630036,
+      "watts": 35.180329968074936,
+      "busy_share": 0.1123201980144185,
+      "busy_ms_per_unit": 10.946400073083025,
+      "joules_per_unit_above_idle": 0.3494666534998405
+    },
+    {
+      "level": 0.2,
+      "windows": 2550,
+      "units_per_s": 20.338754495084885,
+      "watts": 38.28043159906561,
+      "busy_share": 0.2215361490935103,
+      "busy_ms_per_unit": 10.892316397596877,
+      "joules_per_unit_above_idle": 0.3287297166897593
+    },
+    {
+      "level": 0.3,
+      "windows": 3096,
+      "units_per_s": 32.59644438104484,
+      "watts": 43.16869463566093,
+      "busy_share": 0.33973083169031365,
+      "busy_ms_per_unit": 10.422327899292922,
+      "joules_per_unit_above_idle": 0.35507602928366216
+    },
+    {
+      "level": 0.5,
+      "windows": 3745,
+      "units_per_s": 70.27790569699924,
+      "watts": 63.33206222361453,
+      "busy_share": 0.5537073443928163,
+      "busy_ms_per_unit": 7.878825342065634,
+      "joules_per_unit_above_idle": 0.45160115846901067
+    },
+    {
+      "level": 0.7,
+      "windows": 2311,
+      "units_per_s": 86.53134306242772,
+      "watts": 65.28251841298135,
+      "busy_share": 0.7438017085471583,
+      "busy_ms_per_unit": 8.595749034087513,
+      "joules_per_unit_above_idle": 0.3893160399995577
+    },
+    {
+      "level": 0.9,
+      "windows": 2702,
+      "units_per_s": 100.03454109912833,
+      "watts": 66.90461917703271,
+      "busy_share": 0.9380656373309462,
+      "busy_ms_per_unit": 9.377417310300633,
+      "joules_per_unit_above_idle": 0.35297948281652697
+    },
+    {
+      "level": 1.0,
+      "windows": 3791,
+      "units_per_s": 100.63773417500924,
+      "watts": 67.37621124417389,
+      "busy_share": 0.9890469765428316,
+      "busy_ms_per_unit": 9.827794560863985,
+      "joules_per_unit_above_idle": 0.3555498634923118
+    }
+  ],
+  "hidden_load_effect": [
+    {
+      "label_fraction": 0.02,
+      "label_watts": 1.4000000000000001,
+      "level": 0.0,
+      "windows": 211,
+      "units_per_s_change": 0.05073614401937389,
+      "watts_added": 0.6232299351549528,
+      "busy_share_added": 0.03944509171223545,
+      "hidden_busy_share_counted": 0.04070631328511421
+    },
+    {
+      "label_fraction": 0.02,
+      "label_watts": 1.4000000000000001,
+      "level": 0.1,
+      "windows": 270,
+      "units_per_s_change": -0.13824932470414097,
+      "watts_added": 1.1463768038823545,
+      "busy_share_added": 0.03621640984417768,
+      "hidden_busy_share_counted": 0.04079121340980451
+    },
+    {
+      "label_fraction": 0.02,
+      "label_watts": 1.4000000000000001,
+      "level": 0.2,
+      "windows": 156,
+      "units_per_s_change": -0.300931042942576,
+      "watts_added": 0.3541490397411877,
+      "busy_share_added": 0.03549567520681082,
+      "hidden_busy_share_counted": 0.040771645692984866
+    },
+    {
+      "label_fraction": 0.02,
+      "label_watts": 1.4000000000000001,
+      "level": 0.3,
+      "windows": 82,
+      "units_per_s_change": 1.2430246237958045,
+      "watts_added": 1.9912209635597051,
+      "busy_share_added": 0.035256357825854234,
+      "hidden_busy_share_counted": 0.04065984441434318
+    },
+    {
+      "label_fraction": 0.02,
+      "label_watts": 1.4000000000000001,
+      "level": 0.5,
+      "windows": 96,
+      "units_per_s_change": -0.30294862676863943,
+      "watts_added": 1.0017863887128726,
+      "busy_share_added": 0.04117848279949343,
+      "hidden_busy_share_counted": 0.040949320083621545
+    },
+    {
+      "label_fraction": 0.02,
+      "label_watts": 1.4000000000000001,
+      "level": 0.7,
+      "windows": 258,
+      "units_per_s_change": -3.45266467381488,
+      "watts_added": 0.12976386079137114,
+      "busy_share_added": 0.025554391113731145,
+      "hidden_busy_share_counted": 0.040950408973608805
+    },
+    {
+      "label_fraction": 0.02,
+      "label_watts": 1.4000000000000001,
+      "level": 0.9,
+      "windows": 249,
+      "units_per_s_change": -1.304087086568245,
+      "watts_added": 0.5383935531816348,
+      "busy_share_added": 0.03779778820344837,
+      "hidden_busy_share_counted": 0.041053126121604055
+    },
+    {
+      "label_fraction": 0.02,
+      "label_watts": 1.4000000000000001,
+      "level": 1.0,
+      "windows": 118,
+      "units_per_s_change": -2.870518623834144,
+      "watts_added": 0.08285461751661671,
+      "busy_share_added": -0.001072387978601208,
+      "hidden_busy_share_counted": 0.04089118740473103
+    },
+    {
+      "label_fraction": 0.05,
+      "label_watts": 3.5,
+      "level": 0.0,
+      "windows": 266,
+      "units_per_s_change": 0.01924352811921736,
+      "watts_added": 4.203675017700476,
+      "busy_share_added": 0.10441778917564731,
+      "hidden_busy_share_counted": 0.10404908213636424
+    },
+    {
+      "label_fraction": 0.05,
+      "label_watts": 3.5,
+      "level": 0.1,
+      "windows": 294,
+      "units_per_s_change": -0.02147796635453325,
+      "watts_added": 3.2407668645069663,
+      "busy_share_added": 0.10374755069745359,
+      "hidden_busy_share_counted": 0.10410385221411492
+    },
+    {
+      "label_fraction": 0.05,
+      "label_watts": 3.5,
+      "level": 0.2,
+      "windows": 232,
+      "units_per_s_change": 1.5291427673127913,
+      "watts_added": 4.014736141316149,
+      "busy_share_added": 0.10916707886698404,
+      "hidden_busy_share_counted": 0.10409805729952198
+    },
+    {
+      "label_fraction": 0.05,
+      "label_watts": 3.5,
+      "level": 0.3,
+      "windows": 176,
+      "units_per_s_change": 7.379818387903171,
+      "watts_added": 12.033250035692966,
+      "busy_share_added": 0.09582575991392356,
+      "hidden_busy_share_counted": 0.10421314534574762
+    },
+    {
+      "label_fraction": 0.05,
+      "label_watts": 3.5,
+      "level": 0.5,
+      "windows": 121,
+      "units_per_s_change": -5.322994964422691,
+      "watts_added": 1.5243110186828517,
+      "busy_share_added": 0.08559893912308225,
+      "hidden_busy_share_counted": 0.1042640066697556
+    },
+    {
+      "label_fraction": 0.05,
+      "label_watts": 3.5,
+      "level": 0.7,
+      "windows": 115,
+      "units_per_s_change": -6.134004601834704,
+      "watts_added": 1.069339937052419,
+      "busy_share_added": 0.0943537260664854,
+      "hidden_busy_share_counted": 0.10435231893757527
+    },
+    {
+      "label_fraction": 0.05,
+      "label_watts": 3.5,
+      "level": 0.9,
+      "windows": 106,
+      "units_per_s_change": -7.972925307731657,
+      "watts_added": 0.8536338101453396,
+      "busy_share_added": 0.047329100181563,
+      "hidden_busy_share_counted": 0.10438948807254832
+    },
+    {
+      "label_fraction": 0.05,
+      "label_watts": 3.5,
+      "level": 1.0,
+      "windows": 130,
+      "units_per_s_change": -11.795576850600739,
+      "watts_added": -0.14432147404741613,
+      "busy_share_added": 0.00012268718288654945,
+      "hidden_busy_share_counted": 0.10439544183810884
+    },
+    {
+      "label_fraction": 0.1,
+      "label_watts": 7.0,
+      "level": 0.0,
+      "windows": 205,
+      "units_per_s_change": -0.010778663545693254,
+      "watts_added": 7.503996674524181,
+      "busy_share_added": 0.1903054565883799,
+      "hidden_busy_share_counted": 0.1913194563530655
+    },
+    {
+      "label_fraction": 0.1,
+      "label_watts": 7.0,
+      "level": 0.1,
+      "windows": 156,
+      "units_per_s_change": -0.13806065495921338,
+      "watts_added": 6.311009556358755,
+      "busy_share_added": 0.18502649509028946,
+      "hidden_busy_share_counted": 0.19164715236662655
+    },
+    {
+      "label_fraction": 0.1,
+      "label_watts": 7.0,
+      "level": 0.2,
+      "windows": 407,
+      "units_per_s_change": 2.7384732301396646,
+      "watts_added": 10.964562484091658,
+      "busy_share_added": 0.18625851363701076,
+      "hidden_busy_share_counted": 0.19169472386377
+    },
+    {
+      "label_fraction": 0.1,
+      "label_watts": 7.0,
+      "level": 0.3,
+      "windows": 169,
+      "units_per_s_change": 7.687029045371659,
+      "watts_added": 19.764783128182557,
+      "busy_share_added": 0.17099110214695806,
+      "hidden_busy_share_counted": 0.19231104375330665
+    },
+    {
+      "label_fraction": 0.1,
+      "label_watts": 7.0,
+      "level": 0.5,
+      "windows": 147,
+      "units_per_s_change": -9.566972686077804,
+      "watts_added": 2.0636858653477503,
+      "busy_share_added": 0.161034681182196,
+      "hidden_busy_share_counted": 0.19190133541128276
+    },
+    {
+      "label_fraction": 0.1,
+      "label_watts": 7.0,
+      "level": 0.7,
+      "windows": 61,
+      "units_per_s_change": -11.775485775815639,
+      "watts_added": 1.8434976232610154,
+      "busy_share_added": 0.1844439998531049,
+      "hidden_busy_share_counted": 0.1918571562088582
+    },
+    {
+      "label_fraction": 0.1,
+      "label_watts": 7.0,
+      "level": 0.9,
+      "windows": 93,
+      "units_per_s_change": -22.70304917308472,
+      "watts_added": 0.35179597024574605,
+      "busy_share_added": 0.05167621319354698,
+      "hidden_busy_share_counted": 0.19173631490502807
+    },
+    {
+      "label_fraction": 0.1,
+      "label_watts": 7.0,
+      "level": 1.0,
+      "windows": 202,
+      "units_per_s_change": -21.635402092065874,
+      "watts_added": -0.13973357629713234,
+      "busy_share_added": 0.00014652798436465275,
+      "hidden_busy_share_counted": 0.1915872566070525
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 0.0,
+      "windows": 171,
+      "units_per_s_change": 0.053439751363450784,
+      "watts_added": 13.920428055462253,
+      "busy_share_added": 0.32556586082905925,
+      "hidden_busy_share_counted": 0.331642672824431
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 0.1,
+      "windows": 295,
+      "units_per_s_change": 9.706106175710945,
+      "watts_added": 24.740905278726288,
+      "busy_share_added": 0.3839111769714132,
+      "hidden_busy_share_counted": 0.3318719964921507
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 0.2,
+      "windows": 135,
+      "units_per_s_change": 9.802089277167276,
+      "watts_added": 27.46120658550788,
+      "busy_share_added": 0.34942669244358715,
+      "hidden_busy_share_counted": 0.3325800891041132
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 0.3,
+      "windows": 53,
+      "units_per_s_change": 7.776909558832777,
+      "watts_added": 21.70105999124958,
+      "busy_share_added": 0.3377016432985534,
+      "hidden_busy_share_counted": 0.33201605019146435
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 0.7,
+      "windows": 343,
+      "units_per_s_change": -24.571726093696924,
+      "watts_added": 1.6458408563703415,
+      "busy_share_added": 0.24469380783855033,
+      "hidden_busy_share_counted": 0.3316595511649782
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 0.9,
+      "windows": 200,
+      "units_per_s_change": -35.473718211314306,
+      "watts_added": 0.6588932047445155,
+      "busy_share_added": 0.05167932522134089,
+      "hidden_busy_share_counted": 0.3307560993010357
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 1.0,
+      "windows": 243,
+      "units_per_s_change": -36.45633238065017,
+      "watts_added": -0.08956801380560364,
+      "busy_share_added": 0.0006032813333839426,
+      "hidden_busy_share_counted": 0.33146801012280463
+    }
+  ],
+  "hidden_load_on_an_idle_gpu": [
+    {
+      "label_fraction": 0.02,
+      "label_watts": 1.4000000000000001,
+      "level": 0.0,
+      "windows": 211,
+      "units_per_s_change": 0.05073614401937389,
+      "watts_added": 0.6232299351549528,
+      "busy_share_added": 0.03944509171223545,
+      "hidden_busy_share_counted": 0.04070631328511421
+    },
+    {
+      "label_fraction": 0.05,
+      "label_watts": 3.5,
+      "level": 0.0,
+      "windows": 266,
+      "units_per_s_change": 0.01924352811921736,
+      "watts_added": 4.203675017700476,
+      "busy_share_added": 0.10441778917564731,
+      "hidden_busy_share_counted": 0.10404908213636424
+    },
+    {
+      "label_fraction": 0.1,
+      "label_watts": 7.0,
+      "level": 0.0,
+      "windows": 205,
+      "units_per_s_change": -0.010778663545693254,
+      "watts_added": 7.503996674524181,
+      "busy_share_added": 0.1903054565883799,
+      "hidden_busy_share_counted": 0.1913194563530655
+    },
+    {
+      "label_fraction": 0.2,
+      "label_watts": 14.0,
+      "level": 0.0,
+      "windows": 171,
+      "units_per_s_change": 0.053439751363450784,
+      "watts_added": 13.920428055462253,
+      "busy_share_added": 0.32556586082905925,
+      "hidden_busy_share_counted": 0.331642672824431
+    }
+  ]
+}

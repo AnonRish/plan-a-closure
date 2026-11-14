@@ -1,4 +1,4 @@
-# Pre-registration v0.6 (freeze and timestamp BEFORE any audit data exist)
+# Pre-registration v0.7 (freeze and timestamp BEFORE any audit data exist)
 
 Freeze procedure: commit this file and the analysis code; timestamp this file (`ots stamp docs/PREREGISTRATION.md`); run
 `closure hw-probe` first (section 3, H1.6 and H1.7); record the git commit and a hash of the package source in the run's
@@ -164,6 +164,69 @@ honest, H1.3's stretch level (2%) will probably fail at blocks of 60 s or less, 
 4.2%. The calibrated energy bound will probably cover less than 95% near the power limit. If H1.2 fails again, the link
 analysis is wrong on this hardware and that is the result.
 
+v0.7 (14 November 2026), made before any registered (Tier 1) data existed and before any run under it, after the first
+prospective tests of v0.6 ([DEVIATIONS.md](DEVIATIONS.md) sections 6 and 7): a two-GPU Kaggle campaign on which every
+rule the trial decides held, and a Colab trial that failed H1.3 by one block in each of two classes. Both results
+stand as registered. The analysis that decides is unchanged.
+
+(a) *The trial's clock lock must hold with the GPU flat out.* `closure tier0` locks the trial's SM clocks at the
+highest clock that the probe saw the GPU hold at its top load level, that kept up with that level's work, and whose
+estimated power with the GPU busy all the time is at most 95% of the power limit: idle power, plus the power above
+idle at the probe's top level divided by the share of time the GPU was busy there. A probe that recorded no busy share
+is read on the power at its top level, as before. Where no clock qualifies, or the machine refuses locks, the trial
+runs unlocked and says so, as before. Reason: the rule of v0.4 looked at the power at the probe's top level, 0.9,
+where the GPU is not busy all the time. In run 8 it chose 870 MHz (64.9 W of 70 W at that level, with the GPU busy
+81.5% of the time; an estimated 72.4 W flat out). At requested level 1 the power limiter took over from the lock, the
+rate of verified work moved by about 5% with power pinned at the limit, and two such reference blocks set a threshold
+of 4.73 where Kaggle's were 2.29 and 2.43. On run 8's probe the new rule gives 645 MHz (64.9 W flat out); on the
+probes of runs 3 and 4, 645 MHz where v0.4 gave 1110 MHz.
+
+(b) *Scores are reported.* `results.json` carries the threshold and every reference and audit block's score, combined
+and by channel (`scores`), and `SUMMARY.md` quotes the threshold, the highest reference scores, the highest null audit
+score and the lowest score of a hidden block at 5% or more. Reported only. Reason: what failed H1.3 in run 8 was a
+threshold set by two blocks, and the signed results did not show it; it took a rereading of the raw data.
+
+(c) *One declared comparison: `link-full`.* Every hardware profile declares, in `prereg.json` before any data exist
+(`cfg.comparisons`), one analysis to be read beside the registered one: the link analysis with one more verified
+feature, the seconds of each window for which the verifier asked for the GPU flat out (requested level 1). The feature
+is one more column of each curve's index, so it places a window on the curve; it is left out of the floor bound, which
+is about work done. It uses nothing the verifier lacks: the requested level is the verifier's own request, recorded in
+`raw.npz` (`lev`) and bound into the run's evidence chain with the rest of the data. `closure tier0` writes the reading to
+`results_comparison_link-full.json` after `verify`, `SUMMARY.md` shows it under its own heading, and
+`closure pool --results results_comparison_link-full.json` reads it for a campaign. **It decides nothing.** H1.1 to
+H1.4 and the outcome are read on the registered link analysis alone, whatever the comparison shows. Reason: in runs 6,
+7 and 8 the curve misfits at the top of the load range, where nearly one rate of verified work comes with two busy
+times (the GPU busy 93% of the time at requested level 0.9 and 99% flat out), and reference blocks with the GPU flat
+out throughout scored +1.4 to +1.6 on average, against 0.3 to 0.4 for the rest. It is declared and not adopted for
+three reasons.
+The registered analysis had just passed its first prospective test on the campaign. This analysis was chosen on the
+data of runs 6 to 8, so its readings of them are post hoc. And on those data it is not uniformly better: pooled over
+the campaign it gives 2 false alarms in 408, 210/210 and 287/290, with a closure gap of 3.16% against 5.62%, but in
+run 6 alone the constant class at 2% is 45/48, and in run 7 the calibrated time bound, which is reported only, covers
+84.5%. A later amendment, made before the registered trial, may adopt it if runs that did not exist when it was
+declared favour it. Two other features were tried on the same data and are not declared: the seconds of load the
+verifier asked for in each window (run 6's constant class at 5% fell to 34/36 and run 7's floor time bound covered
+91.9%), and both features together (the same).
+
+(d) *The `medium` profile has 7 blocks for each class and intensity*, not 6: 316 audit blocks, 204 of them null,
+3.9 hours. Reason: with 6 there are 18 blocks at 5% or more in a class, so a single miss (94.4%) fails H1.3's 95% for
+that class, and a detector that catches 98.6% of such loads, the lower bound the campaign gave, would fail a trial of
+that size four to five times in ten by chance. With 21, one miss leaves 95.2%. H1.3 itself is unchanged, and so are
+the other profiles: `long` (36 blocks per class at 5% or more) and `hw-full` (45) already allow a miss, and `hw-short`
+(12) allows none and stays the first pass it was registered as. Run 8 was read at 18 and its result stands.
+
+Unchanged: the registered analysis (link) and everything that decides; `alpha`; H1.1 to H1.7 and their thresholds; the
+classes; the threat model; the overall outcome rule; T2 and T3.
+
+Expected under this amendment, stated before the runs. On a T4 the overall outcome will still be FAIL, for the reason
+v0.6 gave: the slack term alone puts the slack-inflated gap above 5%. Under (a), a Colab trial's highest reference scores should look like Kaggle's
+(under about 3) and not like run 8's; if they do not, the lock was not the cause, or not the only one. A trial locked
+at 645 MHz should do about a quarter less work at full load than one at 870 MHz, in proportion to the clock, so the
+hidden loads are measured against a slower GPU, and whether detection at 5% then holds in every class is not known. The
+`link-full` comparison will probably show a smaller closure gap than the registered analysis on clocks that are not
+locked, and little difference on clocks that hold. None of this bears on H100-class hardware, where neither the slack
+nor the behaviour at the power limit has been measured.
+
 ## 1. Definitions
 
 - **Window** `dt`=1 s. **Block** `L` windows. **Cluster capacity** per block = `n_gpu × p_max × L × dt`, where `p_max`
@@ -199,7 +262,7 @@ the independent meter, hardware modification, physical access, attacks on the ve
 Design. Verified load: synthetic GEMM + memory-bound passes at levels {0, .1, .2, .3, .5, .7, .9, 1.0} (T1a), then a
 served model with tap-derived token counts (T1b). Profile `hw-full`: 360 reference blocks, 720 audit blocks,
 `L`=120 windows, `alpha`=0.01 (36 h at 1 s windows; one regime, interleaved, since v0.6 (c)); `hw-short` for a first
-pass (12 h); `long` (9 h, v0.5), `medium` (3.8 h, v0.6) and `smoke` (1 h) for Tier 0 shakedowns. NVML run first, then
+pass (12 h); `long` (9 h, v0.5), `medium` (3.9 h, v0.6 and v0.7 (d)) and `smoke` (1 h) for Tier 0 shakedowns. NVML run first, then
 re-analysis with the DC-bus meter on the **same** run (`dcbus-analyze`). The independent channel must be absolute power in
 watts, DC-coupled and calibrated: an AC-coupled current probe has no DC response and cannot give energy, and `dcbus-analyze`
 rejects such traces (a forced run is labelled METER UNVERIFIED and does not support H1.5).

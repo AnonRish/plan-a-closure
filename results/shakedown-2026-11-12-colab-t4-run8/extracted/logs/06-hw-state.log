@@ -1,0 +1,44 @@
+$ /usr/bin/python3 -m closure.cli hw-state --device cuda:0
+
+{
+  "status": "HARDWARE",
+  "device": "cuda:0",
+  "block_mb": 64,
+  "k": 17,
+  "k_chosen": "for 99.9% sampling detection",
+  "blocks": 32,
+  "trials": 1000,
+  "park_frac": 0.25,
+  "parked_blocks": 8,
+  "challenges": {
+    "calibration": 4000,
+    "honest": 2000,
+    "parked": 1000,
+    "order": "one pass, interleaved at random, back to back"
+  },
+  "sampling_limit": 0.9993882091212458,
+  "statistic": "slowest block of each challenge",
+  "threshold_alpha": 0.005,
+  "block_time_threshold_s": 0.0049422799997955735,
+  "honest_median_slowest_block_s": 0.0032596010000816023,
+  "parked_median_slowest_block_s": 0.018411896999850796,
+  "honest_false_alarm": 0.003,
+  "parked_detection": 1.0,
+  "challenges_touching_parked": 1000,
+  "detected_when_touching_parked": 1.0,
+  "touching_one_parked_block": {
+    "n": 8,
+    "detected": 8
+  },
+  "total_time": {
+    "threshold_s": 0.05853333800087057,
+    "honest_median_s": 0.054834693500652065,
+    "parked_median_s": 0.11669557699997313,
+    "honest_false_alarm": 0.0055,
+    "parked_detection": 1.0
+  },
+  "digests_verified": 140,
+  "digests_wrong": 0,
+  "digest_ok_honest": true,
+  "pass": true
+}

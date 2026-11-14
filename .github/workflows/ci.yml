@@ -43,6 +43,42 @@ jobs:
       - name: Tier 0 pilot on a simulated GPU
         run: closure tier0 --mock --skip-tests --out runs/tier0
 
+  evidence:
+    # What a reader can see without running anything. This job's summary page (Actions > a run > Summary) shows the
+    # table of hardware runs, re-derived on GitHub's machine from the bundles published under results/, and the pilot
+    # run end to end on a simulated GPU by the same one command a reader would use (scripts/run_anywhere.sh). The
+    # simulated pilot's bundle is attached to the run as an artifact.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: one command from a fresh clone (the pilot on a simulated GPU; no physical claim)
+        run: bash scripts/run_anywhere.sh --skip-tests --out runs/mock
+      - name: the published bundles, re-read (hashes, signatures, and every number the documents quote)
+        run: .venv/bin/python -m pytest -q tests/test_runs_on_record.py
+      - name: summary page
+        run: |
+          {
+            .venv/bin/python results/record.py
+            echo
+            echo "## This runner, as \`closure doctor\` reads it"
+            echo
+            .venv/bin/python -m closure.cli doctor | sed -n '3,8p'
+            echo
+            echo "## The pilot on a simulated GPU, run here by \`bash scripts/run_anywhere.sh\` (no physical claim)"
+            echo
+            sed -n '3,16p' runs/mock/SUMMARY.md
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: simulated-pilot-bundle
+          path: |
+            runs/mock/tier0_bundle.tar.gz
+            runs/mock/SUMMARY.md
+            runs/mock/doctor.md
+
   external-suites:
     if: github.event_name == 'workflow_dispatch' && inputs.external
     runs-on: ubuntu-24.04

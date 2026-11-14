@@ -22,7 +22,10 @@ from .energy import EnergyFloor
 CLASSES = ("constant", "idle_gap", "duty", "dilute")
 # Every hardware profile since amendment v0.6: reference blocks interleaved with the audit, a balanced schedule, the
 # link analysis (link.py) and warm-up blocks. One regime, because studentised scores do the regimes' job.
-V06 = dict(n_regimes=1, alpha=0.01, classes=CLASSES, schedule="balanced", calibration="interleaved", analysis="link")
+# Since amendment v0.7 (c) every one of them also declares one comparison, read beside the registered analysis and
+# deciding nothing: link-full, the same analysis told when the verifier asked for the GPU flat out.
+V06 = dict(n_regimes=1, alpha=0.01, classes=CLASSES, schedule="balanced", calibration="interleaved", analysis="link",
+           comparisons=("link-full",))
 PROFILES = {
     # the simulator's own study (docs/SIM_STUDY.md): the straight-line analysis on a simulator that is a straight line
     "sim": dict(),
@@ -35,9 +38,11 @@ PROFILES = {
     "rehearsal": dict(dt=0.5, L=2, n_ref_blocks=40, n_audit_blocks=12, intensities=(0.2,), n_per_cell=3,
                       warmup_blocks=2, **{**V06, "classes": ("constant", "idle_gap")}),
     # Tier 0 where a session cannot be trusted for 12 hours (free Colab): under 4 hours, and still 204 null blocks, so
-    # H1.2 can be decided; 150 reference blocks; 6 blocks of 30 s for every class x intensity (18 per class at 5% or
-    # more, so H1.3 primary is decided per class). Blocks half the long profile's, so it resolves about 1.4 times less.
-    "medium": dict(L=30, n_ref_blocks=150, n_audit_blocks=300, intensities=(0.02, 0.05, 0.10, 0.20), n_per_cell=6,
+    # H1.2 can be decided; 150 reference blocks; 7 blocks of 30 s for every class x intensity: 21 per class at 5% or
+    # more, so H1.3 primary is decided per class and one miss (20/21) does not fail a 95% rule. Until amendment v0.7 (d)
+    # there were 6 (18 per class, 300 audit blocks), and run 8 failed two classes at 17/18. Blocks half the long
+    # profile's, so it resolves about 1.4 times less.
+    "medium": dict(L=30, n_ref_blocks=150, n_audit_blocks=316, intensities=(0.02, 0.05, 0.10, 0.20), n_per_cell=7,
                    warmup_blocks=5, **V06),
     # Tier 1 (registered). Since v0.6 interleaved, balanced and analysed with the link model like the shakedowns.
     "hw-short": dict(L=120, n_ref_blocks=180, n_audit_blocks=180, intensities=(0.01, 0.02, 0.05, 0.10, 0.20),
@@ -280,6 +285,14 @@ def _gpu_readiness(add, target=None) -> None:
             add("free GPU memory >= 8 GB", "PASS" if free >= 8e9 else "WARN", f"{free / 1e9:.1f} of {total / 1e9:.1f} GB free")
     except Exception as e:
         add("GPU readiness (torch)", "SKIP", f"{type(e).__name__}: {e}")
+
+
+def cmd_doctor(a) -> int:
+    from . import doctor
+    out = Path(a.out) if a.out else None
+    if out:
+        out.mkdir(parents=True, exist_ok=True)
+    return doctor.main(out / "doctor.json" if out else None, out / "doctor.md" if out else None, as_json=a.json)
 
 
 def cmd_preflight(a) -> int:
@@ -639,17 +652,23 @@ def cmd_reanalyze(a) -> int:
     run = Path(a.run)
     cfg, ref, aud, sched = _load_run(run)
     analysis = a.analysis or cfg.analysis
-    post_hoc = analysis != cfg.analysis
+    declared = analysis != cfg.analysis and analysis in tuple(cfg.comparisons or ())
+    post_hoc = analysis != cfg.analysis and not declared
     cfg2 = replace(cfg, analysis=analysis)
     if post_hoc:
         cfg2.status = (f"{cfg.status} | POST HOC: the '{analysis}' analysis, applied after the data were seen "
                        f"(pre-registered: '{cfg.analysis}')")
+    elif declared:
+        cfg2.status = (f"{cfg.status} | COMPARISON: the '{analysis}' analysis, declared before the run to be read "
+                       f"beside the registered '{cfg.analysis}' analysis; it decides nothing")
     res = analyze_any(cfg2, calibrate(ref, cfg2), aud, sched, EnergyFloor(cfg.e_floor_j_per_flop, cfg.e_floor_source))
     res["reanalysis"] = {"pre_registered_analysis": cfg.analysis, "analysis": analysis, "post_hoc": post_hoc,
-                         "package": __version__}
-    out = Path(a.out) if a.out else run / (f"results_posthoc_{analysis}.json" if post_hoc else "results_reanalysis.json")
+                         "declared_comparison": declared, "package": __version__}
+    kind = "posthoc" if post_hoc else "comparison"
+    out = Path(a.out) if a.out else run / (f"results_{kind}_{analysis}.json" if post_hoc or declared else "results_reanalysis.json")
     out.write_text(json.dumps(clean(res), indent=2, sort_keys=True))
-    print(f"{'POST HOC reading' if post_hoc else 'reanalysis'} ({analysis}) written to {out}")
+    label = "POST HOC reading" if post_hoc else "declared comparison" if declared else "reanalysis"
+    print(f"{label} ({analysis}) written to {out}")
     print("\n".join(summary_lines(evaluate(res, cfg.alpha))))
     return 0
 
@@ -782,6 +801,8 @@ def cmd_repro(a) -> int:
         for k in ("variant", "invariant"):
             r = repro.measure_reproducibility(repro.ToyLM(kernel=k), n_requests=a.n)
             out[k] = {x: r[x] for x in ("bitwise_equal_rate", "max_abs_diff", "p99_abs_diff")}
+            # the recomputation tolerance these differences call for (zero where every answer reproduced bit for bit)
+            out[k]["tolerance_alpha_0.01"] = repro.conformal_tolerance(r["diffs"], 0.01)
         print(json.dumps(out, indent=2))
         return 0
     r = repro.torch_repro_check(a.device, n=a.n, deterministic=not a.nondeterministic)
@@ -1098,6 +1119,10 @@ def main(argv=None) -> int:
     sp = ap.add_subparsers(dest="cmd", required=True)
     s = sp.add_parser("selftest"); s.set_defaults(f=cmd_selftest)
     s = sp.add_parser("verify"); s.add_argument("run"); s.set_defaults(f=cmd_verify)
+    s = sp.add_parser("doctor", help="what this kit can do on this machine: which pilot steps run on each GPU and why "
+                      "(about ten seconds; reads the machine and changes nothing)")
+    s.add_argument("--json", action="store_true"); s.add_argument("--out", default=None, help="folder for doctor.json and doctor.md")
+    s.set_defaults(f=cmd_doctor)
     s = sp.add_parser("preflight"); s.add_argument("--mock", action="store_true"); s.add_argument("--json", action="store_true")
     s.add_argument("--gpu", type=int, default=0, help="index among the GPUs CUDA shows this process"); s.set_defaults(f=cmd_preflight)
     s = sp.add_parser("sim-trial"); s.add_argument("--out", required=True); s.add_argument("--seed", type=int, default=1)
@@ -1144,7 +1169,7 @@ def main(argv=None) -> int:
     s.add_argument("--run", required=True); s.add_argument("--json", action="store_true"); s.set_defaults(f=cmd_physics)
     s = sp.add_parser("reanalyze", help="apply an analysis to a finished trial's raw data; another analysis than the "
                                         "pre-registered one gives a labelled post hoc reading")
-    s.add_argument("--run", required=True); s.add_argument("--analysis", choices=("linear", "link"), default=None)
+    s.add_argument("--run", required=True); s.add_argument("--analysis", choices=("linear", "link", "link-full"), default=None)
     s.add_argument("--out", default=None); s.set_defaults(f=cmd_reanalyze)
     s = sp.add_parser("pool", help="read several trials of one design as one (a campaign declared with --campaign)")
     s.add_argument("--runs", nargs="+", required=True); s.add_argument("--out", default="pooled.json")

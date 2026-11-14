@@ -28,3 +28,12 @@ def test_substitution_detection_curve_is_monotone():
     assert rates[0] <= 0.03 and rates[-1] >= 0.99
     q = P.detection_curve(ref, "quant", [1e-4, 1e-1], tol)
     assert q[-1][1] >= 0.99
+
+
+def test_repro_check_prints_the_tolerance_and_it_is_zero_for_a_kernel_that_reproduces(capsys):
+    import json
+    from closure.cli import main
+    assert main(["repro-check", "--mock", "--n", "60"]) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["invariant"]["bitwise_equal_rate"] == 1.0 and out["invariant"]["tolerance_alpha_0.01"] == 0.0
+    assert 0.0 < out["variant"]["tolerance_alpha_0.01"] <= out["variant"]["max_abs_diff"]

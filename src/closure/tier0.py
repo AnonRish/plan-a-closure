@@ -12,14 +12,15 @@ hardware, never waits for keyboard input, and leaves one bundle to send back. St
   hw-state      device-memory residency: blocks parked in host memory are caught by the time of the slowest block
                 of a challenge; 1,000 parked-prover and 2,000 honest challenges in one interleaved pass (challenge
                 size chosen so sampling alone touches a parked block 99.9% of the time)
-  hw-trial      T1 with SM clocks locked at the highest clock the probe saw held at full load (where the machine
-                allows it), the probe bound into the pre-registration, the hidden load measured on its own first so
+  hw-trial      T1 with SM clocks locked at the highest clock the probe shows holding with power to spare when
+                the GPU is flat out (amendment v0.7; where the machine allows a lock), the probe bound into the
+                pre-registration, the hidden load measured on its own first so
                 that its labels are its measured power, prereg.json stamped with `ots` if installed before any trial
                 data exist, a fresh random seed. Both profiles interleave reference blocks with a balanced blind audit
                 and use the link analysis (amendment v0.6).
                 --trial-profile smoke (the default): one hour, 100 reference and 80 audit blocks of 20 s; it checks
                 the pipeline and cannot decide the false-alarm rule (40 null blocks; the rule needs 200).
-                --trial-profile medium: under 4 h, 150 reference and 300 audit blocks of 30 s (204 of them null):
+                --trial-profile medium: under 4 h, 150 reference and 316 audit blocks of 30 s (204 of them null):
                 the smallest trial that can decide the registered rules H1.1 to H1.4, for a session that cannot be
                 trusted for twelve hours (free Colab).
                 --trial-profile long: about 9 h, 144 reference and 396 audit blocks of 60 s; the same rules with
@@ -75,28 +76,64 @@ def _json_in(text: str):
         return None
 
 
-def _trial_clock_args(probe_path: Path) -> list:
-    """`--lock-clock-mhz N`: the highest SM clock the probe saw this GPU hold at its top load level under its power
-    limit (within 2% of the lock, at most 95% of the limit), so the trial calibrates and audits at one clock
-    (assumption A2). Run 3 on a Colab T4 drifted without it (docs/DEVIATIONS.md section 3). Empty for a rehearsal or
-    mock probe, or when no locked clock held."""
-    pr = _read(Path(probe_path))
+COMPARISON = "link-full"   # the comparison every hardware profile declares (amendment v0.7 (c); cli.V06)
+HEADROOM = 0.95      # a trial lock may draw at most this share of the power limit with the GPU flat out (amendment v0.7)
+
+
+def trial_clock(pr: dict) -> dict:
+    """Which SM clock a trial should lock, read off a probe (amendment v0.7 (a)), and why.
+
+    A lock is only a lock while the power limiter leaves it alone. The probe's top load level is 0.9 and the trial's is
+    1.0, so a clock that held at the probe's top level can still be pulled down in the trial. Run 8 showed it
+    (docs/DEVIATIONS.md section 7): 870 MHz held at level 0.9 with 64.9 W of a 70 W limit, and at level 1 the GPU sat
+    on the limit (69.5 W) while its throughput moved by 5% from one stretch to the next. The work a full GPU gets
+    through is the only place hidden work shows there, so that wobble is what hid the two loads the run missed.
+
+    So the power a lock draws flat out is estimated from the probe: idle power, plus the power above idle at the top
+    level divided by the share of time the GPU was busy there. The trial locks the highest clock that (1) the probe
+    saw held within 2% at its top level, (2) kept up with the work there, and (3) is estimated to draw at most 95% of
+    the power limit flat out. `mhz` is None when no clock qualifies, and for a rehearsal or mock probe."""
+    out = {"mhz": None, "rule": "v0.7: highest clock held at the probe's top level whose estimated flat-out power is at "
+                                f"most {HEADROOM:.0%} of the power limit", "power_limit_w": None, "candidates": []}
     if not pr or not str(pr.get("status", "")).startswith("HARDWARE"):
-        return []
+        return out
     rig = pr.get("rig") or {}
     cap = rig.get("start_power_limit_w") or rig.get("default_power_limit_w")
-    best = None
+    out["power_limit_w"] = cap
     for v in pr.get("variants", []):
         if v.get("kind") != "clock_cap" or not v.get("allowed") or v.get("value") is None:
             continue
-        f = float(v["value"])
-        top = max(v.get("levels", []), key=lambda lv: lv.get("level", 0.0), default=None)
-        if not top or not top.get("feasible") or top.get("sm_mhz") is None or top.get("power_w_mean") is None:
+        f, levels = float(v["value"]), v.get("levels", [])
+        top = max(levels, key=lambda lv: lv.get("level", 0.0), default=None)
+        if not top or top.get("sm_mhz") is None or top.get("power_w_mean") is None:
             continue
-        held = abs(float(top["sm_mhz"]) - f) <= 0.02 * f
-        under = cap is None or float(top["power_w_mean"]) <= 0.95 * float(cap)
-        if held and under and (best is None or f > best):
-            best = f
+        idle = min(levels, key=lambda lv: lv.get("level", 0.0)).get("power_w_mean")
+        idle = v.get("idle_power_w") if idle is None else idle
+        busy = top.get("busy_frac")
+        p_top = float(top["power_w_mean"])
+        if idle is None or not busy or busy <= 0:
+            flat = p_top                              # no busy share recorded: the top level is the best estimate
+        else:
+            flat = float(idle) + (p_top - float(idle)) / min(1.0, float(busy))
+        row = {"mhz": f, "held": abs(float(top["sm_mhz"]) - f) <= 0.02 * f, "kept_up": bool(top.get("feasible")),
+               "top_level": top.get("level"), "power_at_top_level_w": p_top, "busy_share_at_top_level": busy,
+               "flat_out_power_w": flat, "flat_out_share_of_limit": None if not cap else flat / float(cap)}
+        row["ok"] = bool(row["held"] and row["kept_up"] and (cap is None or flat <= HEADROOM * float(cap)))
+        out["candidates"].append(row)
+    ok = [r["mhz"] for r in out["candidates"] if r["ok"]]
+    out["mhz"] = max(ok) if ok else None
+    # what the rule in force until 0.8.0 chose (amendment v0.4 (b)): held and at most 95% of the limit at the top level
+    old = [r["mhz"] for r in out["candidates"] if r["held"] and r["kept_up"]
+           and (cap is None or r["power_at_top_level_w"] <= HEADROOM * float(cap))]
+    out["mhz_under_v0_4"] = max(old) if old else None
+    return out
+
+
+def _trial_clock_args(probe_path: Path) -> list:
+    """`--lock-clock-mhz N` for the trial, from the probe (`trial_clock`), so that the trial calibrates and audits at
+    one clock (assumption A2; run 3 on a Colab T4 drifted without a lock, docs/DEVIATIONS.md section 3). Empty for a
+    rehearsal or mock probe, or when no clock qualifies."""
+    best = trial_clock(_read(Path(probe_path)) or {})["mhz"]
     return ["--lock-clock-mhz", str(int(round(best)))] if best else []
 
 
@@ -192,8 +229,26 @@ def plan(out: Path, gpu: int, mock: bool, run_tests: bool, rehearsal: bool = Fal
                 str(out / trial_dir(profile)), "--stamp-prereg", "--seed", str(seed)] + hw
          + (["--campaign", campaign] if campaign else []), True),
         ("verify", "evidence chain, signature, commitments", cli + ["verify", str(out / trial_dir(profile))], True),
+        # amendment v0.7 (c): one analysis declared beforehand to be read beside the registered one. It decides
+        # nothing and a failure here stops nothing.
+        ("compare", "the declared comparison (link-full): the registered analysis told when the GPU was asked to run flat out",
+         cli + ["reanalyze", "--run", str(out / trial_dir(profile)), "--analysis", COMPARISON], False),
     ]
     return steps
+
+
+def _machine_record(out: Path, env: dict, echo) -> None:
+    """doctor.json and doctor.md in the run folder: what `closure doctor` read on this machine before anything ran, so
+    that every bundle says which GPU model, driver and PyTorch it came from in one place. It runs in its own short
+    process, so that its look at CUDA leaves no context on the GPU for the run to share. A record, never a reason to
+    stop."""
+    try:
+        r = subprocess.run([sys.executable, "-m", "closure.cli", "doctor", "--out", str(out)], capture_output=True,
+                           text=True, timeout=300, env=env)
+        if r.returncode != 0:
+            echo(f"machine record not written (closure doctor exit {r.returncode})")
+    except (OSError, subprocess.SubprocessError) as e:
+        echo(f"machine record not written ({type(e).__name__}: {e})")
 
 
 def _gpu_at_start(gpu: int, echo):
@@ -237,6 +292,7 @@ def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, ech
     started, results, stopped = _now(), [], None
     echo(f"plan-a-closure {__version__} ({provenance()}) tier0 ({'MOCK: fake hardware' if mock else 'HARDWARE'}, "
          f"{profile} trial) -> {out}")
+    _machine_record(out, env, echo)
     target, start_w = (None, None) if mock else _gpu_at_start(gpu, echo)
     if seed is None:                    # a hardware run draws its own: until 0.8.0 every run used seed 1, so runs 1
         # to 5 all followed one load sequence and (per profile) one hidden-load schedule. Mock runs stay repeatable:
@@ -285,7 +341,7 @@ def run(out: Path, gpu: int = 0, mock: bool = False, run_tests: bool = True, ech
                 clock_args = _trial_clock_args(out / "probe.json")
                 if clock_args:
                     echo(f"    hw-trial locks SM clocks at {clock_args[1]} MHz, the highest clock probe.json shows "
-                         "this GPU holding at full load")
+                         f"this GPU holding with at most {HEADROOM:.0%} of its power limit when flat out")
                 argv = argv + clock_args
             if key == "hw-trial" and (out / "probe.json").exists():
                 argv = argv + ["--probe", str(out / "probe.json")]
@@ -352,6 +408,27 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
     for i, r in enumerate(results, 1):
         L.append(f"| {i} | {r['key']} | {r['title']} | {'skipped' if r['skipped'] else r['exit']} | {r['minutes']} "
                  f"| {r['log'] or ''} |")
+    doc = _read(out / "doctor.json")
+    if doc:
+        L += ["", "## This machine (`doctor.json`: what `closure doctor` read before the run)", ""]
+        seen = [g for g in doc.get("nvidia_gpus") or [] if "error" not in g]
+        for g in seen:
+            cap = g.get("compute_capability")
+            L.append(f"- GPU {g.get('index')}: {g.get('name')}"
+                     + (f", compute capability {'.'.join(map(str, cap))}" if cap else "")
+                     + (f" ({g['architecture']})" if g.get("architecture") else "")
+                     + f", power limit {_fmt(g.get('power_limit_w'), '.0f')} W, energy counter "
+                     + ("present" if g.get("energy_counter") else "absent") + "; "
+                     + ("hardware runs of this kit on this GPU model were already on record"
+                        if g.get("hardware_runs_on_record_for_this_model") else
+                        "no hardware run of this kit on this GPU model was on record when this code was released"))
+        if not seen:
+            L.append("- no NVIDIA GPU that NVML can read" + (" (as expected for a mock run on a machine without one)" if mock else ""))
+        tc, nv = doc.get("torch") or {}, doc.get("nvml") or {}
+        L.append(f"- PyTorch {tc.get('version') if tc.get('installed') else 'not installed'}"
+                 + (f", CUDA {'available' if tc.get('cuda') else 'not available'}" if tc.get("installed") else "")
+                 + f"; NVML driver {nv.get('driver') if nv.get('nvml') else 'not available'}"
+                 + f"; root: {'yes' if (doc.get('system') or {}).get('root') else 'no'}")
     hs = _json_in(_step_output(out, results, "hw-selftest"))
     if hs:
         L += ["", "## Energy tracks verified work (hw-selftest)", "",
@@ -418,6 +495,16 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
                      f"{lk.get('reference_blocks')} reference blocks; block residual SD {_fmt(lk['block_residual_sd']['energy'], '.1f')} J "
                      f"and {_fmt(lk['block_residual_sd']['busy'], '.3f')} s; partial-load slack "
                      f"{_fmt(lk.get('partial_load_slack'), '.3f')}")
+        sco = res.get("scores") or {}
+        if sco.get("reference") and (res.get("blocks") or {}).get("kind"):
+            ref_top = sorted(sco["reference"]["combined"], reverse=True)[:3]
+            kinds, hf = res["blocks"]["kind"], res["blocks"].get("hidden_fraction") or []
+            null = [s_ for s_, k in zip(sco["audit"]["combined"], kinds) if k == "none"]
+            big = [s_ for s_, k, f in zip(sco["audit"]["combined"], kinds, hf) if k not in ("none", "slack") and f >= 0.05 * (1 - 1e-6)]
+            L.append(f"- scores (reported only; in spreads of the reference blocks): threshold {_fmt(sco.get('threshold'), '.2f')}; "
+                     f"highest reference scores {', '.join(_fmt(x, '.2f') for x in ref_top)}"
+                     + (f"; highest null audit score {_fmt(max(null), '.2f')}" if null else "")
+                     + (f"; lowest score of a hidden block at 5% or more {_fmt(min(big), '.2f')}" if big else ""))
         solo = wl.get("hidden_solo") or {}
         if solo.get("duty"):
             L.append("- hidden load alone, before the trial (its labels are read off this): "
@@ -442,6 +529,16 @@ def summary(out: Path, results: list, mock: bool, started: str, stopped, rehears
             L += rule_lines(evaluate(res, float((pre.get("cfg") or {}).get("alpha", 0.01))))
         except (KeyError, TypeError, ValueError) as e:
             L.append(f"- decision rules unavailable ({type(e).__name__}: {e})")
+        comp = _read(out / trial / f"results_comparison_{COMPARISON}.json")
+        if comp:
+            try:
+                L += ["", f"## Declared comparison: the `{COMPARISON}` analysis (amendment v0.7 (c); decides nothing)", "",
+                      "- the registered analysis with one more verified feature: the seconds of each window for which "
+                      "the verifier asked for the GPU flat out. Declared before the run; read beside the rules above."]
+                L += [ln for ln in rule_lines(evaluate(comp, float((pre.get("cfg") or {}).get("alpha", 0.01))))
+                      if not ln.startswith("- scope")]
+            except (KeyError, TypeError, ValueError) as e:
+                L.append(f"- comparison unavailable ({type(e).__name__}: {e})")
         try:
             from .physics import report as physics_report, summary_lines as physics_lines
             L += ["", "## What the GPU did, by requested load level (a diagnostic, not a criterion)", ""]

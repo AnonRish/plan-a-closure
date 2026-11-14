@@ -40,7 +40,7 @@ def report(run_dir) -> dict:
     Xr, Er, Hr = z["ref_X"], z["ref_E"], z["ref_hid"]
     Xa, Ea, Ha = z["aud_X"], z["aud_E"], z["aud_hid"]
     n_a = (len(Ea) // L) * L
-    if cfg.get("analysis") == "link":                        # the run's own model: a calibrated curve (link.py)
+    if str(cfg.get("analysis", "")).startswith("link"):      # the run's own model: a calibrated curve (link.py)
         from .link import Curve
         curve = Curve.fit(Xr, Er)
         rb = (Er - curve.predict(Xr))[: (len(Er) // L) * L].reshape(-1, L).sum(1)

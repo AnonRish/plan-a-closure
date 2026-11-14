@@ -16,8 +16,9 @@ The whole pilot is one command. It needs no meeting and never waits for keyboard
 | `hw-selftest` | the GPU's energy tracks the verified work (r2 > 0.9) and the load levels do different work; sizes the unit of work to the GPU and passes it on to `hw-probe` and `hw-trial` | about 3 min |
 | `hw-probe` | efficiency slack over clock caps, power caps, precisions (tf32, fp16, int8, fp8) and activation patterns; the lowest joules per FLOP | about 40 min |
 | `hw-state` | device memory holds the verifier's data; blocks moved to host memory are caught by the time of a challenge's slowest block (7,000 challenges in one pass) | about 13 min |
-| `hw-trial` | the hidden load measured on its own (3.5 min), then reference blocks interleaved with a balanced blind audit, synthetic hidden load injected on the same GPU on a schedule committed beforehand. `smoke` (default) checks the pipeline; `--trial-profile medium` and `long` can decide the registered rules H1.1 to H1.4 | about 1 h (medium: 3.8 h, long: about 9 h) |
+| `hw-trial` | the hidden load measured on its own (3.5 min), then reference blocks interleaved with a balanced blind audit, synthetic hidden load injected on the same GPU on a schedule committed beforehand. `smoke` (default) checks the pipeline; `--trial-profile medium` and `long` can decide the registered rules H1.1 to H1.4 | about 1 h (medium: 3.9 h, long: about 9 h) |
 | `verify` | hash chain, Ed25519 signature, schedule commitment, pre-registration, results and probe hashes | seconds |
+| `compare` | the one analysis declared beforehand to be read beside the registered one (`link-full`, amendment v0.7): written to `results_comparison_link-full.json`. It decides nothing, and a failure here stops nothing | seconds |
 | `hw-restore` | always runs last, even after a failure or a signal: SM clocks unlocked, power limit set back to what it was | seconds |
 
 The run stops early if `selftest`, `preflight`, `hw-selftest` or `hw-trial` fails, and still writes the summary and the
@@ -43,8 +44,11 @@ is CUDA itself: kernels, timing and energy on a real GPU.
 - **Without root.** Clock and power variants cannot be applied; they are dropped and noted, and the probe still measures
   precisions and operand patterns, so the slack it reports covers less. The final `hw-restore` then reports that there
   was nothing to restore.
-- **Sustained load.** Dense GEMMs and memory passes at up to 90% of the GPU's capacity, within its power and thermal
+- **Sustained load.** Dense GEMMs and memory passes at up to the GPU's full capacity, within its power and thermal
   limits.
+- **The trial's clock lock.** Where the machine allows it, `hw-trial` locks SM clocks for its whole duration at the
+  highest clock the probe shows holding with the GPU flat out inside 95% of its power limit, and `hw-restore` unlocks
+  them. Where it does not (most containers), the trial runs on the GPU's own governor and says so.
 - **Hidden load.** The "hidden" work is the same synthetic GEMM load, run on the same GPU on a schedule committed before
   the audit. Nothing leaves the machine.
 - **Memory.** `hw-state` fills a few GB of device memory, and part of it again in host memory.
@@ -56,9 +60,14 @@ is CUDA itself: kernels, timing and energy on a real GPU.
 git clone https://github.com/AnonRish/plan-a-closure && cd plan-a-closure   # or unzip plan-a-closure.zip
 python -m venv .venv && . .venv/bin/activate          # Python 3.10 or newer
 pip install -e ".[test,hw]"                           # hw = pynvml + torch: install the CUDA build of torch your node needs
+closure doctor                                        # ten seconds: which steps will run on each GPU here, and why
 closure tier0 --mock --out runs/rehearsal             # optional rehearsal on fake hardware, about 2 minutes
 sudo -E env PATH="$PATH" closure tier0 --confirm-hardware --gpu 0 --out runs/tier0
 ```
+
+Or all of it in one line, from the clone: `bash scripts/run_anywhere.sh --hardware` (it makes the environment, installs,
+shows what `closure doctor` reads, runs the pilot, and uses sudo only where sudo asks for no password).
+`bash scripts/run_anywhere.sh --check` only looks, and with no option it runs the rehearsal.
 
 Root is needed only for clock and power-limit control; without `sudo` the run still completes, minus those variants.
 Use an exclusive allocation for the whole run (for example Slurm
@@ -67,7 +76,9 @@ any audit data exist; otherwise its hash is logged and kept in the signed chain.
 
 ## What to send back
 
-- `runs/tier0/tier0_bundle.tar.gz`: every log, the probe, the trial's evidence and `SUMMARY.md`.
+- `runs/tier0/tier0_bundle.tar.gz`: every log, the probe, the trial's evidence, `SUMMARY.md`, and `doctor.json`, the
+  record of the machine that `closure doctor` read before the run (GPU model and UUID, driver, PyTorch, operating
+  system; no host name, user name or path).
 - **Do not send `signing_key.bin`.** It is the run's private key and is deliberately left out of the bundle. Keep it or
   delete it. The public key is in `T1-smoke/signature.json` (`T1-medium/` or `T1-long/` for those trials).
 - If an independent power meter logged during the trial, export it as `timestamp_s,power_w` and run

@@ -1,0 +1,563 @@
+{
+  "trials": {
+    "run": {
+      "bundle": "tier0_bundle.tar.gz",
+      "bundle_sha256": "3efade48adb610882a635fc18f7644b4fbba4b4a09800e43510d5d445911f569",
+      "trial": "T1-medium",
+      "code": {
+        "git_commit": "438fcbd41c1ca4c70d915cbd2a99d37b4ed2507c",
+        "package": "0.8.0",
+        "src_sha256": "d11575c9e125159337285d3a2c54e4ef21750ee8a4c5fbae6d36e412706c70b5"
+      },
+      "seed": 1773548153,
+      "campaign": null,
+      "registered_analysis": "link",
+      "verify": "passes",
+      "registered_analysis_from_the_raw_data": {
+        "signed_keys_missing_here": [],
+        "values_that_are_not_numbers_and_differ": [],
+        "largest_relative_difference_in_any_number": 7.056074350137607e-13,
+        "decision_rules": {
+          "scope": "shakedown reading: NVML only, so assumption A6 does not hold; what these data would decide, not a Plan A claim",
+          "H1.1": true,
+          "threshold_method": [
+            "conformal"
+          ],
+          "H1.2": {
+            "holds": true,
+            "k": 0,
+            "n": 204,
+            "cp95_upper": 0.014577663934354668
+          },
+          "H1.3_primary_5_percent": {
+            "constant": {
+              "k": 17,
+              "n": 18,
+              "holds": false,
+              "cp95_lower": 0.7623390849253591
+            },
+            "dilute": {
+              "k": 17,
+              "n": 18,
+              "holds": false,
+              "cp95_lower": 0.7623390849253591
+            },
+            "duty": {
+              "k": 9,
+              "n": 9,
+              "holds": true,
+              "cp95_lower": 0.7168711644368821
+            },
+            "idle_gap": {
+              "k": 0,
+              "n": 0,
+              "holds": null,
+              "cp95_lower": null
+            },
+            "pooled_nonslack": {
+              "k": 43,
+              "n": 45,
+              "holds": true,
+              "cp95_lower": 0.8666243539080734
+            }
+          },
+          "H1.3_stretch_2_percent": {
+            "constant": {
+              "k": 20,
+              "n": 24,
+              "holds": false,
+              "cp95_lower": 0.6581926505958844
+            },
+            "dilute": {
+              "k": 20,
+              "n": 24,
+              "holds": false,
+              "cp95_lower": 0.6581926505958844
+            },
+            "duty": {
+              "k": 17,
+              "n": 18,
+              "holds": false,
+              "cp95_lower": 0.7623390849253591
+            },
+            "idle_gap": {
+              "k": 1,
+              "n": 1,
+              "holds": null,
+              "cp95_lower": 0.04999999999999982
+            },
+            "pooled_nonslack": {
+              "k": 58,
+              "n": 67,
+              "holds": false,
+              "cp95_lower": 0.7772988223432638
+            }
+          },
+          "H1.4": {
+            "holds": true,
+            "basis": "time",
+            "floor_time_bound_coverage": 1.0,
+            "hidden_blocks": 73,
+            "reported_only": {
+              "calibrated_time_bound_coverage": 1.0,
+              "calibrated_energy_bound_coverage": 1.0,
+              "floor_energy_bound_coverage": 1.0
+            }
+          },
+          "closure_gap_fraction": 0.1778279410038923,
+          "slack_inflated_gap_fraction": 0.2589356076147006,
+          "outcome": "FAIL",
+          "why": "slack-inflated gap 25.9% is above 5%"
+        }
+      },
+      "raw_data": {
+        "what": "diagnostic, post hoc: read off raw.npz after the run; it describes the run and decides nothing",
+        "thresholds": {
+          "energy": 6.623505666954341,
+          "busy": 14.868572469056236,
+          "combined": 4.730722736204025
+        },
+        "threshold_is": "the largest combined score among the reference blocks",
+        "highest_reference_scores": [
+          {
+            "reference_block": 95,
+            "score": 4.730722736204025,
+            "energy_score": 1.0576461537093924,
+            "busy_score": 4.730722736204025,
+            "share_of_windows_at_level_1": 1.0
+          },
+          {
+            "reference_block": 34,
+            "score": 4.392664492841605,
+            "energy_score": 0.9774125021276693,
+            "busy_score": 4.392664492841605,
+            "share_of_windows_at_level_1": 0.9666666666666667
+          },
+          {
+            "reference_block": 19,
+            "score": 1.7281418070547285,
+            "energy_score": 0.28689160411999975,
+            "busy_score": 1.7281418070547285,
+            "share_of_windows_at_level_1": 1.0
+          },
+          {
+            "reference_block": 59,
+            "score": 1.6593518801291167,
+            "energy_score": 0.890176719002691,
+            "busy_score": 1.6593518801291167,
+            "share_of_windows_at_level_1": 1.0
+          },
+          {
+            "reference_block": 58,
+            "score": 1.624620999308258,
+            "energy_score": -0.3096839746221158,
+            "busy_score": 1.624620999308258,
+            "share_of_windows_at_level_1": 1.0
+          }
+        ],
+        "false_alarms": [],
+        "highest_null_audit_scores": [
+          2.9099519024449445,
+          2.877066266624498,
+          2.867041967190998,
+          2.8455230852026574,
+          2.707098880626781
+        ],
+        "missed_hidden_blocks": [
+          {
+            "audit_block": 3,
+            "score": 4.231620273502958,
+            "energy_score": 1.5989651816911397,
+            "busy_score": 4.231620273502958,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 0.0,
+            "kind": "duty",
+            "label": 0.02,
+            "hidden_fraction": 0.012691008090972901,
+            "hidden_seconds": 0.4909035379987472
+          },
+          {
+            "audit_block": 33,
+            "score": 2.065295903849873,
+            "energy_score": 0.9184022887883972,
+            "busy_score": 2.065295903849873,
+            "share_of_windows_at_level_1": 1.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "duty",
+            "label": 0.02,
+            "hidden_fraction": 0.007357223351796467,
+            "hidden_seconds": 0.2842901290023292
+          },
+          {
+            "audit_block": 35,
+            "score": 3.2027319282545452,
+            "energy_score": 1.0281581372392739,
+            "busy_score": 3.2027319282545452,
+            "share_of_windows_at_level_1": 1.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "constant",
+            "label": 0.02,
+            "hidden_fraction": 0.020061301549275715,
+            "hidden_seconds": 0.7805286470038482
+          },
+          {
+            "audit_block": 53,
+            "score": 1.8680870042999336,
+            "energy_score": 1.0140007805837388,
+            "busy_score": 1.8680870042999336,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "dilute",
+            "label": 0.02,
+            "hidden_fraction": 0.020066998640696204,
+            "hidden_seconds": 0.805152268004349
+          },
+          {
+            "audit_block": 68,
+            "score": 3.7816426026782817,
+            "energy_score": 1.4296228884932605,
+            "busy_score": 3.7816426026782817,
+            "share_of_windows_at_level_1": 1.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "constant",
+            "label": 0.05,
+            "hidden_fraction": 0.050139741102854414,
+            "hidden_seconds": 1.9614684889902492
+          },
+          {
+            "audit_block": 88,
+            "score": 3.275139253473183,
+            "energy_score": 1.2608730553339997,
+            "busy_score": 3.275139253473183,
+            "share_of_windows_at_level_1": 0.6,
+            "share_of_windows_at_level_0.9_or_1": 0.6,
+            "kind": "dilute",
+            "label": 0.02,
+            "hidden_fraction": 0.02006389856338501,
+            "hidden_seconds": 0.7754964980140358
+          },
+          {
+            "audit_block": 90,
+            "score": 4.712562317728102,
+            "energy_score": 1.581727820870984,
+            "busy_score": 4.712562317728102,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 0.0,
+            "kind": "constant",
+            "label": 0.02,
+            "hidden_fraction": 0.020043026447296147,
+            "hidden_seconds": 0.7755967080065602
+          },
+          {
+            "audit_block": 114,
+            "score": 3.4868666527423042,
+            "energy_score": 0.8171412562989495,
+            "busy_score": 3.4868666527423042,
+            "share_of_windows_at_level_1": 1.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "duty",
+            "label": 0.05,
+            "hidden_fraction": 0.031745160023371376,
+            "hidden_seconds": 1.2498172340056044
+          },
+          {
+            "audit_block": 115,
+            "score": 3.1573732451219163,
+            "energy_score": 0.9966340610380264,
+            "busy_score": 3.1573732451219163,
+            "share_of_windows_at_level_1": 1.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "constant",
+            "label": 0.02,
+            "hidden_fraction": 0.020065090497334803,
+            "hidden_seconds": 0.7780966710070061
+          },
+          {
+            "audit_block": 193,
+            "score": 2.0870451215685066,
+            "energy_score": 0.7727307820829376,
+            "busy_score": 2.0870451215685066,
+            "share_of_windows_at_level_1": 1.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "duty",
+            "label": 0.02,
+            "hidden_fraction": 0.007358618577321371,
+            "hidden_seconds": 0.29139940699860745
+          },
+          {
+            "audit_block": 213,
+            "score": 2.7770403321558206,
+            "energy_score": 0.7012793536775785,
+            "busy_score": 2.7770403321558206,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "dilute",
+            "label": 0.05,
+            "hidden_fraction": 0.050166239738464354,
+            "hidden_seconds": 1.963567877015521
+          },
+          {
+            "audit_block": 221,
+            "score": -0.5808894197179281,
+            "energy_score": -0.5808894197179281,
+            "busy_score": -1.2412375267199127,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "duty",
+            "label": 0.02,
+            "hidden_fraction": 0.007353882948557536,
+            "hidden_seconds": 0.2833992140022019
+          },
+          {
+            "audit_block": 230,
+            "score": 3.131782758334194,
+            "energy_score": -0.6288256005548039,
+            "busy_score": 3.131782758334194,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 0.0,
+            "kind": "duty",
+            "label": 0.02,
+            "hidden_fraction": 0.012687092940012615,
+            "hidden_seconds": 0.48690749100933317
+          },
+          {
+            "audit_block": 259,
+            "score": 2.9293330802867836,
+            "energy_score": -0.22541298774467572,
+            "busy_score": 2.9293330802867836,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 0.0,
+            "kind": "duty",
+            "label": 0.02,
+            "hidden_fraction": 0.01269101063410441,
+            "hidden_seconds": 0.499054789001093
+          },
+          {
+            "audit_block": 280,
+            "score": 0.11913530211738396,
+            "energy_score": 0.11913530211738396,
+            "busy_score": -0.043002890548320336,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "dilute",
+            "label": 0.02,
+            "hidden_fraction": 0.020067311445871986,
+            "hidden_seconds": 0.7776936450391077
+          }
+        ],
+        "gpu_flat_out_every_window_at_level_1": {
+          "reference_blocks": 18,
+          "reference_mean_score": 1.4398468840371619,
+          "reference_highest_score": 4.730722736204025,
+          "null_audit_blocks": 26,
+          "false_alarms": 0,
+          "null_audit_highest_score": 2.707098880626781,
+          "hidden_blocks_at_5_percent_or_more": 5,
+          "missed_at_5_percent_or_more": 1,
+          "hidden_blocks_under_5_percent": 5,
+          "missed_under_5_percent": 5
+        },
+        "every_other_block": {
+          "reference_blocks": 132,
+          "reference_mean_score": 0.26952624750856596,
+          "reference_highest_score": 4.392664492841605,
+          "null_audit_blocks": 178,
+          "false_alarms": 0,
+          "null_audit_highest_score": 2.9099519024449445,
+          "hidden_blocks_at_5_percent_or_more": 40,
+          "missed_at_5_percent_or_more": 1,
+          "hidden_blocks_under_5_percent": 23,
+          "missed_under_5_percent": 8
+        },
+        "detection_by_hidden_fraction_bin": [
+          {
+            "hidden_fraction_from": 0.005623413251903491,
+            "to": 0.01,
+            "detected": 0,
+            "blocks": 3
+          },
+          {
+            "hidden_fraction_from": 0.01,
+            "to": 0.01778279410038923,
+            "detected": 0,
+            "blocks": 3
+          },
+          {
+            "hidden_fraction_from": 0.01778279410038923,
+            "to": 0.03162277660168379,
+            "detected": 7,
+            "blocks": 13
+          },
+          {
+            "hidden_fraction_from": 0.03162277660168379,
+            "to": 0.056234132519034905,
+            "detected": 18,
+            "blocks": 21
+          },
+          {
+            "hidden_fraction_from": 0.056234132519034905,
+            "to": 0.1,
+            "detected": 5,
+            "blocks": 5
+          },
+          {
+            "hidden_fraction_from": 0.1,
+            "to": 0.1778279410038923,
+            "detected": 16,
+            "blocks": 16
+          },
+          {
+            "hidden_fraction_from": 0.1778279410038923,
+            "to": 0.31622776601683794,
+            "detected": 12,
+            "blocks": 12
+          }
+        ],
+        "a_flat_out_gpu": {
+          "windows": 1971,
+          "watts_mean": 69.54841009862393,
+          "busy_share_mean": 0.9846159309994926,
+          "units_per_s_percentiles_1_50_99": [
+            99.6908750953417,
+            106.78578196300585,
+            112.68752836704373
+          ],
+          "units_per_s_by_hour": [
+            {
+              "hour": 0,
+              "windows": 738,
+              "units_per_s": 105.60160976196006
+            },
+            {
+              "hour": 1,
+              "windows": 565,
+              "units_per_s": 106.12313502218936
+            },
+            {
+              "hour": 2,
+              "windows": 252,
+              "units_per_s": 107.24399228951512
+            },
+            {
+              "hour": 3,
+              "windows": 416,
+              "units_per_s": 110.05618611590086
+            }
+          ]
+        },
+        "trial_clock": {
+          "locked_in_this_run_mhz": 870,
+          "estimated_flat_out_power_at_that_lock_w": 72.3700318725854,
+          "power_limit_w": 70.0,
+          "amendment_v0_7_would_lock_mhz": 645.0,
+          "estimated_flat_out_power_at_that_clock_w": 64.89055124570952
+        }
+      },
+      "link_full": {
+        "reading": "POST HOC: this analysis was written after this run's data were seen; decides nothing",
+        "status": "HARDWARE (NVML energy counter; spoofable) | POST HOC: the 'link-full' analysis, applied after the data were seen (pre-registered: 'link')",
+        "block_residual_sd": {
+          "busy": 0.22317257291441706,
+          "energy": 44.25028307871853
+        },
+        "block_residual_sd_registered": {
+          "busy": 0.37199567199644534,
+          "energy": 44.20608012338677
+        },
+        "threshold": 5.662178900101984,
+        "decision_rules": {
+          "scope": "post hoc reading: this analysis was chosen after these data were seen, so it describes them and decides nothing",
+          "H1.1": true,
+          "threshold_method": [
+            "conformal"
+          ],
+          "H1.2": {
+            "holds": true,
+            "k": 0,
+            "n": 204,
+            "cp95_upper": 0.014577663934354668
+          },
+          "H1.3_primary_5_percent": {
+            "constant": {
+              "k": 18,
+              "n": 18,
+              "holds": true,
+              "cp95_lower": 0.8466824460427205
+            },
+            "dilute": {
+              "k": 18,
+              "n": 18,
+              "holds": true,
+              "cp95_lower": 0.8466824460427205
+            },
+            "duty": {
+              "k": 9,
+              "n": 9,
+              "holds": true,
+              "cp95_lower": 0.7168711644368821
+            },
+            "idle_gap": {
+              "k": 0,
+              "n": 0,
+              "holds": null,
+              "cp95_lower": null
+            },
+            "pooled_nonslack": {
+              "k": 45,
+              "n": 45,
+              "holds": true,
+              "cp95_lower": 0.9355957111922173
+            }
+          },
+          "H1.3_stretch_2_percent": {
+            "constant": {
+              "k": 20,
+              "n": 24,
+              "holds": false,
+              "cp95_lower": 0.6581926505958844
+            },
+            "dilute": {
+              "k": 21,
+              "n": 24,
+              "holds": false,
+              "cp95_lower": 0.7077268034920099
+            },
+            "duty": {
+              "k": 18,
+              "n": 18,
+              "holds": true,
+              "cp95_lower": 0.8466824460427205
+            },
+            "idle_gap": {
+              "k": 1,
+              "n": 1,
+              "holds": null,
+              "cp95_lower": 0.04999999999999982
+            },
+            "pooled_nonslack": {
+              "k": 60,
+              "n": 67,
+              "holds": false,
+              "cp95_lower": 0.8127030483542228
+            }
+          },
+          "H1.4": {
+            "holds": true,
+            "basis": "time",
+            "floor_time_bound_coverage": 1.0,
+            "hidden_blocks": 73,
+            "reported_only": {
+              "calibrated_time_bound_coverage": 1.0,
+              "calibrated_energy_bound_coverage": 1.0,
+              "floor_energy_bound_coverage": 1.0
+            }
+          },
+          "closure_gap_fraction": 0.056234132519034905,
+          "slack_inflated_gap_fraction": 0.1373463545142068,
+          "outcome": "FAIL",
+          "why": "slack-inflated gap 13.7% is above 5%"
+        }
+      }
+    }
+  }
+}

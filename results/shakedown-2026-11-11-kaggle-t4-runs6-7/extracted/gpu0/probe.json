@@ -1,0 +1,561 @@
+{
+  "alpha_one_sided": 0.05,
+  "band_over_floor": 4.8172467799230185,
+  "created_utc": "2026-11-11T20:36:04Z",
+  "declared_band_j_per_flop": {
+    "hi": 1.2160571162371426e-11,
+    "hi_at": {
+      "level": 0.25,
+      "variant": "precision-tf32"
+    },
+    "lo": 1.801550007022351e-12,
+    "lo_at": {
+      "level": 0.25,
+      "variant": "operand-sparse90"
+    }
+  },
+  "e_floor_at": {
+    "level": 0.25,
+    "variant": "precision-fp16"
+  },
+  "e_floor_j_per_flop": 2.1504028397554124e-12,
+  "h1_6_variants_ok": true,
+  "levels": [
+    0.0,
+    0.25,
+    0.5,
+    0.9
+  ],
+  "n_allowed_variants": 3,
+  "n_operand_variants": 3,
+  "notes": [
+    "variant clock-1110MHz dropped: device control needs root (`nvidia-smi -rgc`: The current user does not have permission to change clocks for GPU 00000000:00:04.0.\nTerminating early due to previous errors.); clock and power-limit variants dropped",
+    "variant clock-1335MHz dropped: device control needs root (`nvidia-smi -rgc`: The current user does not have permission to change clocks for GPU 00000000:00:04.0.\nTerminating early due to previous errors.); clock and power-limit variants dropped",
+    "variant clock-645MHz dropped: device control needs root (`nvidia-smi -rgc`: The current user does not have permission to change clocks for GPU 00000000:00:04.0.\nTerminating early due to previous errors.); clock and power-limit variants dropped",
+    "variant clock-870MHz dropped: device control needs root (`nvidia-smi -rgc`: The current user does not have permission to change clocks for GPU 00000000:00:04.0.\nTerminating early due to previous errors.); clock and power-limit variants dropped",
+    "variant clock-405MHz dropped: device control needs root (`nvidia-smi -rgc`: The current user does not have permission to change clocks for GPU 00000000:00:04.0.\nTerminating early due to previous errors.); clock and power-limit variants dropped",
+    "variant powercap-87pct dropped: device control needs root (`nvidia-smi -rgc`: The current user does not have permission to change clocks for GPU 00000000:00:04.0.\nTerminating early due to previous errors.); clock and power-limit variants dropped",
+    "variant clock-1575MHz dropped: device control needs root (`nvidia-smi -rgc`: The current user does not have permission to change clocks for GPU 00000000:00:04.0.\nTerminating early due to previous errors.); clock and power-limit variants dropped",
+    "variant precision-fp8 dropped: precision 'fp8': RuntimeError: torch._scaled_mm is only supported on CUDA devices with compute capability >= 9.0 or 8.9, or ROCm MI300+"
+  ],
+  "reference": "reference",
+  "rel_tol": 0.005,
+  "rig": {
+    "auto_size": false,
+    "control": false,
+    "control_lost": "device control needs root (`nvidia-smi -rgc`: The current user does not have permission to change clocks for GPU 00000000:00:04.0.\nTerminating early due to previous errors.); clock and power-limit variants dropped",
+    "default_power_limit_w": 70.0,
+    "device": {
+      "driver": "580.178.04",
+      "gpus": [
+        {
+          "index": 0,
+          "name": "Tesla T4",
+          "power_limit_w": 70.0,
+          "sm_clock_mhz": 1470,
+          "temp_c": 72,
+          "uuid": "GPU-71bcb58e-ead3-c881-1d97-e8c16f05661b"
+        }
+      ]
+    },
+    "dim": 4096,
+    "gpu": 0,
+    "mem_elems": 268435456,
+    "nvidia_smi_id": "GPU-71bcb58e-ead3-c881-1d97-e8c16f05661b",
+    "reference_dtype": "float16",
+    "rehearsal": false,
+    "rig": "TorchRig",
+    "size_tried": [
+      {
+        "dim": 4096,
+        "mem_elems": 268435456,
+        "unit_s": 0.009698518913043352
+      }
+    ],
+    "start_power_limit_w": 70.0,
+    "t_unit_ref_s": 0.009698518913043352,
+    "target": "cuda:0 = NVML index 0 (GPU-71bcb58e-ead3-c881-1d97-e8c16f05661b), matched by uuid",
+    "torch": "2.11.0+cu130",
+    "window_s": 8.0
+  },
+  "s_max": 0.09095965038526022,
+  "s_max_at": {
+    "class": "operand",
+    "level": 0.25,
+    "saving_point": 0.034393895011722186,
+    "variant": "operand-sparse90"
+  },
+  "s_operand": 0.09095965038526022,
+  "s_stack": 0.0799617902152937,
+  "settings": {
+    "clock_source": "picked from the device's supported clocks",
+    "clocks_mhz": [
+      1575.0,
+      1335.0,
+      1110.0,
+      870.0,
+      645.0,
+      405.0
+    ],
+    "power_cap_source": "0.7 and 0.5, raised to the device minimum",
+    "power_caps": [
+      0.867
+    ],
+    "repeats": 3,
+    "seed": 1
+  },
+  "sha256": "ebfc67d0e8dfc30be82ef9d07f3dcf56a0faef037940a0fcd626c0dcd378e2f0",
+  "status": "HARDWARE-PROBE (NVML energy counter; spoofable)",
+  "variants": [
+    {
+      "allowed": true,
+      "class": "reference",
+      "idle_power_w": 30.958210091204446,
+      "kind": "reference",
+      "levels": [
+        {
+          "busy_frac": 2.5997624940525082e-05,
+          "feasible": true,
+          "level": 0.0,
+          "n": 6,
+          "power_w_mean": 30.958210091204446,
+          "power_w_se": 0.2274950385678851,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.22029214152087206,
+          "dynamic_j_per_flop": 2.331886350799465e-12,
+          "feasible": true,
+          "level": 0.25,
+          "n": 6,
+          "power_w_mean": 37.35560852567879,
+          "power_w_se": 0.28557428819881653,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.4112362930417059,
+          "dynamic_j_per_flop": 2.8228644463781785e-12,
+          "feasible": true,
+          "level": 0.5,
+          "n": 6,
+          "power_w_mean": 50.320135111189366,
+          "power_w_se": 0.39888651535574365,
+          "sm_mhz": 1095.0
+        },
+        {
+          "busy_frac": 0.7714188631667772,
+          "dynamic_j_per_flop": 2.7216796338679662e-12,
+          "feasible": true,
+          "level": 0.9,
+          "n": 6,
+          "power_w_mean": 64.5581215330013,
+          "power_w_se": 0.09780907544162168,
+          "sm_mhz": 1072.5
+        }
+      ],
+      "name": "reference",
+      "rel_err": 0.0003597261711117816,
+      "value": null
+    },
+    {
+      "allowed": true,
+      "class": "stack",
+      "idle_power_w": 31.282785586915466,
+      "kind": "precision",
+      "levels": [
+        {
+          "busy_frac": 2.526920827487326e-05,
+          "feasible": true,
+          "level": 0.0,
+          "n": 3,
+          "power_w_mean": 31.282785586915466,
+          "power_w_se": 0.5642553578504421,
+          "saving_point": -0.010484310777490125,
+          "saving_upper95": 0.06284527559510888,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.7243965713749579,
+          "dynamic_j_per_flop": 1.2160571162371426e-11,
+          "feasible": true,
+          "level": 0.25,
+          "n": 3,
+          "power_w_mean": 64.63653721375111,
+          "power_w_se": 0.148575581860358,
+          "saving_point": -0.7303034206849828,
+          "saving_upper95": -0.6811618388700769,
+          "sm_mhz": 1230.0
+        },
+        {
+          "busy_frac": 2.0896339483749578,
+          "dynamic_j_per_flop": 1.0530936036740643e-11,
+          "feasible": false,
+          "level": 0.5,
+          "n": 3,
+          "power_w_mean": 65.90761038279345,
+          "power_w_se": 0.1147729574295606,
+          "sm_mhz": 720.0
+        },
+        {
+          "busy_frac": 3.6877330765417278,
+          "dynamic_j_per_flop": 1.0359896193439369e-11,
+          "feasible": false,
+          "level": 0.9,
+          "n": 3,
+          "power_w_mean": 66.02812265765755,
+          "power_w_se": 0.037974355240044486,
+          "sm_mhz": 735.0
+        }
+      ],
+      "name": "precision-tf32",
+      "rel_err": 2.610570847200078e-07,
+      "value": "tf32"
+    },
+    {
+      "allowed": true,
+      "class": "stack",
+      "idle_power_w": 30.77848120493681,
+      "kind": "precision",
+      "levels": [
+        {
+          "busy_frac": 2.718825017685352e-05,
+          "feasible": true,
+          "level": 0.0,
+          "n": 3,
+          "power_w_mean": 30.77848120493681,
+          "power_w_se": 0.15901257796765597,
+          "saving_point": 0.005805532223540855,
+          "saving_upper95": 0.04137325862449959,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.22027668183335436,
+          "dynamic_j_per_flop": 2.1504028397554124e-12,
+          "feasible": true,
+          "level": 0.25,
+          "n": 3,
+          "power_w_mean": 36.67826660953096,
+          "power_w_se": 0.34835535340127893,
+          "saving_point": 0.01813226829599679,
+          "saving_upper95": 0.06620690411515129,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.409653266208295,
+          "dynamic_j_per_flop": 2.797468852862671e-12,
+          "feasible": true,
+          "level": 0.5,
+          "n": 3,
+          "power_w_mean": 49.96480883807899,
+          "power_w_se": 0.879563921014935,
+          "saving_point": 0.007061313971539085,
+          "saving_upper95": 0.079409396944911,
+          "sm_mhz": 1065.0
+        },
+        {
+          "busy_frac": 0.7561924136250676,
+          "dynamic_j_per_flop": 2.739605759277118e-12,
+          "feasible": true,
+          "level": 0.9,
+          "n": 3,
+          "power_w_mean": 64.59135360217427,
+          "power_w_se": 0.12029530283534877,
+          "saving_point": -0.0005147620219398963,
+          "saving_upper95": 0.009308990076310919,
+          "sm_mhz": 1125.0
+        }
+      ],
+      "name": "precision-fp16",
+      "rel_err": 0.0003597261711117816,
+      "value": "fp16"
+    },
+    {
+      "allowed": false,
+      "class": "stack",
+      "idle_power_w": 31.421042093532837,
+      "kind": "precision",
+      "levels": [
+        {
+          "busy_frac": 2.542100007000651e-05,
+          "feasible": true,
+          "level": 0.0,
+          "n": 3,
+          "power_w_mean": 31.421042093532837,
+          "power_w_se": 0.3281788328623905,
+          "saving_point": -0.01495021840619537,
+          "saving_upper95": 0.03667413933620478,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.36171049816663486,
+          "dynamic_j_per_flop": 4.525124418944875e-12,
+          "feasible": true,
+          "level": 0.25,
+          "n": 3,
+          "power_w_mean": 43.835704683475285,
+          "power_w_se": 0.3013049226052543,
+          "saving_point": -0.17347050184825608,
+          "saving_upper95": -0.124809689970244,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.6773006563332729,
+          "dynamic_j_per_flop": 4.726827669343261e-12,
+          "feasible": true,
+          "level": 0.5,
+          "n": 3,
+          "power_w_mean": 63.843174885091834,
+          "power_w_se": 0.0537843227709877,
+          "saving_point": -0.26874013243449024,
+          "saving_upper95": -0.2369870131121623,
+          "sm_mhz": 1020.0
+        },
+        {
+          "busy_frac": 1.6930546271249796,
+          "dynamic_j_per_flop": 4.748339360427215e-12,
+          "feasible": false,
+          "level": 0.9,
+          "n": 3,
+          "power_w_mean": 66.11461016508191,
+          "power_w_se": 0.2416749426789003,
+          "sm_mhz": 525.0
+        }
+      ],
+      "name": "precision-int8",
+      "rel_err": 0.015608106152267823,
+      "value": "int8"
+    },
+    {
+      "allowed": true,
+      "class": "stack",
+      "idle_power_w": 30.79360022012204,
+      "kind": "kernel",
+      "levels": [
+        {
+          "busy_frac": 2.602050000177769e-05,
+          "feasible": true,
+          "level": 0.0,
+          "n": 3,
+          "power_w_mean": 30.79360022012204,
+          "power_w_se": 0.4233532369721025,
+          "saving_point": 0.005317163705442107,
+          "saving_upper95": 0.06530406994920923,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.22067926545833907,
+          "dynamic_j_per_flop": 2.2155736068484832e-12,
+          "feasible": true,
+          "level": 0.25,
+          "n": 3,
+          "power_w_mean": 36.87162212438076,
+          "power_w_se": 0.40684523235031955,
+          "saving_point": 0.012956191062055256,
+          "saving_upper95": 0.06561601073465828,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.40898695216666664,
+          "dynamic_j_per_flop": 2.611721493601921e-12,
+          "feasible": true,
+          "level": 0.5,
+          "n": 3,
+          "power_w_mean": 48.70549658638223,
+          "power_w_se": 0.4580302121317942,
+          "saving_point": 0.032087324909588655,
+          "saving_upper95": 0.0799617902152937,
+          "sm_mhz": 1080.0
+        },
+        {
+          "busy_frac": 0.7370971443751747,
+          "dynamic_j_per_flop": 2.7247549221956353e-12,
+          "feasible": true,
+          "level": 0.9,
+          "n": 3,
+          "power_w_mean": 64.44136138475714,
+          "power_w_se": 0.12593519650296553,
+          "saving_point": 0.0018086051060898223,
+          "saving_upper95": 0.01187609478387519,
+          "sm_mhz": 1140.0
+        }
+      ],
+      "name": "kernel-cublaslt",
+      "rel_err": 0.0003597261711117816,
+      "value": "cublaslt"
+    },
+    {
+      "allowed": true,
+      "class": "operand",
+      "idle_power_w": 31.128564691847064,
+      "kind": "operand",
+      "levels": [
+        {
+          "busy_frac": 2.514279172297999e-05,
+          "feasible": true,
+          "level": 0.0,
+          "n": 3,
+          "power_w_mean": 31.128564691847064,
+          "power_w_se": 0.2161497336341259,
+          "saving_point": -0.005502727713932565,
+          "saving_upper95": 0.03557852826651331,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.22027486466655924,
+          "dynamic_j_per_flop": 1.801550007022351e-12,
+          "feasible": true,
+          "level": 0.25,
+          "n": 3,
+          "power_w_mean": 36.0708036479476,
+          "power_w_se": 0.4640516712947093,
+          "saving_point": 0.034393895011722186,
+          "saving_upper95": 0.09095965038526022,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.40150798737493193,
+          "dynamic_j_per_flop": 2.6899891813440414e-12,
+          "feasible": true,
+          "level": 0.5,
+          "n": 3,
+          "power_w_mean": 49.58127195267303,
+          "power_w_se": 0.37641955293195084,
+          "saving_point": 0.014683250688491079,
+          "saving_upper95": 0.0583228671377477,
+          "sm_mhz": 1125.0
+        },
+        {
+          "busy_frac": 0.721885683250188,
+          "dynamic_j_per_flop": 2.696033593741636e-12,
+          "feasible": true,
+          "level": 0.9,
+          "n": 3,
+          "power_w_mean": 64.40573046753623,
+          "power_w_se": 0.0892032632712025,
+          "saving_point": 0.00236052508726059,
+          "saving_upper95": 0.010771503695376494,
+          "sm_mhz": 1230.0
+        }
+      ],
+      "name": "operand-sparse90",
+      "rel_err": 0.0003597261711117816,
+      "value": "sparse90"
+    },
+    {
+      "allowed": true,
+      "class": "operand",
+      "idle_power_w": 30.974396735992627,
+      "kind": "operand",
+      "levels": [
+        {
+          "busy_frac": 2.590037487001003e-05,
+          "feasible": true,
+          "level": 0.0,
+          "n": 3,
+          "power_w_mean": 30.974396735992627,
+          "power_w_se": 0.08946322938422191,
+          "saving_point": -0.0005228546721691707,
+          "saving_upper95": 0.028755700781126214,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.22021634724998762,
+          "dynamic_j_per_flop": 2.281371213288622e-12,
+          "feasible": true,
+          "level": 0.25,
+          "n": 3,
+          "power_w_mean": 37.23363550862491,
+          "power_w_se": 0.16219506244313733,
+          "saving_point": 0.003265186189378655,
+          "saving_upper95": 0.03743054407901991,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.4045741738750716,
+          "dynamic_j_per_flop": 2.7241902877470985e-12,
+          "feasible": true,
+          "level": 0.5,
+          "n": 3,
+          "power_w_mean": 49.63914062767421,
+          "power_w_se": 0.43288826110661305,
+          "saving_point": 0.01353324036214143,
+          "saving_upper95": 0.06040151902156543,
+          "sm_mhz": 1125.0
+        },
+        {
+          "busy_frac": 0.7272745537082793,
+          "dynamic_j_per_flop": 2.698476425188936e-12,
+          "feasible": true,
+          "level": 0.9,
+          "n": 3,
+          "power_w_mean": 64.26799608032299,
+          "power_w_se": 0.09190180692647133,
+          "saving_point": 0.00449401943224137,
+          "saving_upper95": 0.01301711961445895,
+          "sm_mhz": 1320.0
+        }
+      ],
+      "name": "operand-lowent",
+      "rel_err": 0.0003597261711117816,
+      "value": "lowent"
+    },
+    {
+      "allowed": true,
+      "class": "operand",
+      "idle_power_w": 30.97898024116283,
+      "kind": "operand",
+      "levels": [
+        {
+          "busy_frac": 2.4367458185755215e-05,
+          "feasible": true,
+          "level": 0.0,
+          "n": 3,
+          "power_w_mean": 30.97898024116283,
+          "power_w_se": 0.23893940702323085,
+          "saving_point": -0.0006709092643661929,
+          "saving_upper95": 0.04241321941453802,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.22028128637497466,
+          "dynamic_j_per_flop": 1.817522837218143e-12,
+          "feasible": true,
+          "level": 0.25,
+          "n": 3,
+          "power_w_mean": 35.96453641241487,
+          "power_w_se": 0.4082284796448095,
+          "saving_point": 0.03723864148291611,
+          "saving_upper95": 0.08947401410114764,
+          "sm_mhz": 585.0
+        },
+        {
+          "busy_frac": 0.3964114711248783,
+          "dynamic_j_per_flop": 2.4391432047265693e-12,
+          "feasible": true,
+          "level": 0.5,
+          "n": 3,
+          "power_w_mean": 47.70704756386376,
+          "power_w_se": 0.15413365826758244,
+          "saving_point": 0.05192926333666681,
+          "saving_upper95": 0.08211922889757661,
+          "sm_mhz": 1155.0
+        },
+        {
+          "busy_frac": 0.6811616480417323,
+          "dynamic_j_per_flop": 2.5988993405328066e-12,
+          "feasible": true,
+          "level": 0.9,
+          "n": 3,
+          "power_w_mean": 63.069051953174665,
+          "power_w_se": 0.26305851098997973,
+          "saving_point": 0.023065565485288153,
+          "saving_upper95": 0.039214246588076485,
+          "sm_mhz": 1410.0
+        }
+      ],
+      "name": "operand-zeros",
+      "rel_err": 0.0003597261711117816,
+      "value": "zeros"
+    }
+  ]
+}

@@ -1,12 +1,26 @@
-"""Randomness no single party controls: commit-reveal among the parties, and draws (inspection samples, sortition of
-citizen witnesses) that anyone can recompute.
+"""Randomness no single party controls: commit-reveal among the parties, a public value mixed in afterwards, and
+draws (inspection samples, sortition of citizen witnesses) that anyone can recompute.
 
 Each party commits to sha256(party || nonce || value) before anyone reveals. Once all commitments are published, each
 reveals (nonce, value); the seed is sha256 over the sorted reveals. A party that waits to see the others' values
-cannot change its own without breaking its commitment; a party that refuses to reveal is identified, and the protocol
-says what happens then (here: abort, so withholding cannot steer the draw). As long as one party's value is
-unpredictable, the seed is. CBPAI asks for lot-selected, multinational citizen witnesses; MIRI's inspections sample
-declared chips at random. Both need a draw the inspected party cannot steer.
+cannot change its own without breaking its commitment, and as long as one party's value is unpredictable, the seed is.
+
+What commit-reveal alone does not stop is the last revealer. Whoever reveals last can work the seed out before
+anyone else, and refuse to reveal if the draw is one it dislikes. `seed` then names it and aborts, but a rule that
+answers an abort with a fresh round has given that party a second draw: one refusal takes a one-in-five chance of
+being sampled down to one in twenty-five (tests/test_treaty.py shows it). Two things close this, and a protocol
+should use both:
+
+  1. `finalize`: mix in a public value that did not exist when the reveals were due (the hash of a block or the
+     output of a public randomness service at a time fixed in advance, later than the reveal deadline). Nobody then
+     knows the draw when deciding whether to reveal, so refusing cannot be aimed.
+  2. With that in place, `seed(..., allow_missing=True)` goes ahead without a withheld value and names the party, so
+     refusing gains nothing and still shows. Without `finalize` it must not be used: it would hand the last revealer
+     a choice between two draws it can already see.
+
+What remains is the trust placed in the public value: whoever can bias it, at whatever cost, can bias the draw by
+that much. CBPAI asks for lot-selected, multinational citizen witnesses; MIRI's inspections sample declared chips at
+random. Both need a draw the inspected party cannot steer.
 """
 from __future__ import annotations
 
@@ -36,12 +50,19 @@ class BeaconError(ValueError):
     pass
 
 
-def seed(commitments: dict, reveals: dict) -> bytes:
+def seed(commitments: dict, reveals: dict, allow_missing: bool = False) -> bytes:
     """32-byte seed from {party: commitment} and {party: (nonce_hex, value_hex)}. Raises BeaconError naming any party
-    whose reveal is missing or does not match its commitment."""
-    missing = sorted(set(commitments) - set(reveals))
-    if missing:
-        raise BeaconError(f"no reveal from {', '.join(missing)}: abort, so withholding cannot steer the draw")
+    whose reveal does not match its commitment, and any whose reveal is missing unless `allow_missing`: then the seed
+    is taken over the values that were revealed (at least one), which is safe only if `finalize` follows with a
+    public value nobody knew at the reveal deadline (see the module's note; `missing` lists who withheld)."""
+    absent = missing(commitments, reveals)
+    if absent and not allow_missing:
+        raise BeaconError(f"no reveal from {', '.join(absent)}: named, and this round is void (do not simply rerun "
+                          "it: see the module's note on the last revealer)")
+    if absent:
+        commitments = {p: c for p, c in commitments.items() if p not in absent}
+        if not commitments:
+            raise BeaconError("no party revealed")
     extra = sorted(set(reveals) - set(commitments))
     if extra:
         raise BeaconError(f"reveal without a prior commitment from {', '.join(extra)}")
@@ -50,6 +71,19 @@ def seed(commitments: dict, reveals: dict) -> bytes:
     if bad:
         raise BeaconError(f"reveal does not match the commitment: {', '.join(bad)}")
     return _h(b"closure-beacon-seed-v1", *(p.encode() + bytes.fromhex(reveals[p][1]) for p in sorted(commitments)))
+
+
+def missing(commitments: dict, reveals: dict) -> list:
+    """The parties that committed and did not reveal."""
+    return sorted(set(commitments) - set(reveals))
+
+
+def finalize(seed_: bytes, public_value: bytes) -> bytes:
+    """The seed to draw from: the parties' seed mixed with a public value fixed in advance by its source and time and
+    not yet in existence when the reveals were due. The protocol, not this function, has to make sure of that."""
+    if len(public_value) < 16:
+        raise ValueError("the public value must be at least 16 bytes (a block hash or a randomness-service output)")
+    return _h(b"closure-beacon-final-v1", seed_, public_value)
 
 
 def _uniform(seed_: bytes, label: str, i: int, n: int) -> int:

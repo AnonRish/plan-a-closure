@@ -1,5 +1,73 @@
 # Changelog
 
+## 0.9.0
+
+Runs 6, 7 and 8, the first prospective tests of amendment v0.6, published in full (`docs/DEVIATIONS.md` sections 6 and
+7, `results/`). Pre-registration amendment v0.7, written before any further run. And a way for a reader to check all
+of it without asking anyone (`docs/VERIFY_IT_YOURSELF.md`).
+
+**What the runs showed**
+
+- **Kaggle, two nine-hour trials declared as one campaign (runs 6 and 7): every rule the trial decides holds.** 3 false
+  alarms in 408 null blocks; 210 of 210 hidden loads at 5% of capacity or more detected, in every class; 285 of 290 at
+  2% or more; the time bound covered the hidden load's seconds in 321 of 321 blocks. The outcome is FAIL, as amendment
+  v0.6 said beforehand it would be on a T4: the efficiency slack measured on these GPUs (8.4% and 9.1%), weighted by
+  the trials' load, adds 6.1 and 6.7% of capacity to the gap by itself, and the outcome rule allows 5% in all.
+- **Colab, one medium trial with clocks locked (run 8): H1.3 fails by one block in each of two classes** (17/18 and
+  17/18 at 5% or more), with no false alarm in 204. The threshold was set by two reference blocks at full load in which
+  the GPU slowed with its power at the limit: the clock the trial locked (870 MHz) held at the probe's top level and
+  not flat out.
+- In all three, the curve misfits at the top of the load range, where nearly one rate of verified work comes with two
+  busy times; and at the power limit hidden work adds no energy and displaces verified work, as in run 5.
+- Where amendment v0.6's stated expectations were wrong, the documents say so: the 2% level held on Kaggle, and the
+  calibrated energy bound covered more than 95%.
+
+**Amendment v0.7** (nothing that decides a trial changes)
+
+- **(a) The trial's clock lock must hold flat out**: the highest clock whose estimated power with the GPU busy all the
+  time is at most 95% of the power limit (`tier0.trial_clock`). On run 8's probe: 645 MHz instead of 870 MHz.
+- **(b) Scores are reported**: `results.json` carries the threshold and every block's score, and `SUMMARY.md` quotes
+  the margins. What failed run 8 was invisible in its signed results.
+- **(c) One declared comparison, `link-full`**: the link analysis with one more verified feature, the seconds for which
+  the verifier asked for the GPU flat out. Declared in `prereg.json` before the data (`cfg.comparisons`), written to
+  `results_comparison_link-full.json` by a new last step of `closure tier0`, pooled with `closure pool --results`. It
+  decides nothing. On runs 6 to 8 it is post hoc and is labelled so: pooled over the campaign, a closure gap of 3.16%
+  against 5.62%, and not uniformly better one trial at a time. Two other features that were tried are named.
+- **(d) The `medium` profile has 7 blocks per class and intensity** (316 audit blocks, 3.9 h): with 6, one miss in a
+  class of 18 failed a 95% rule. The rule is unchanged, and run 8 stands as read.
+
+**Checking it yourself**
+
+- **`closure doctor`**: what the pilot can do on this machine, in ten seconds, without running anything: each GPU's
+  model, compute capability, counters and power limit, which steps will run and why not where not, whether a hardware
+  run of that GPU model is on record (only the T4 is), and what the kernel exposes for AMD and Intel GPUs, for which no
+  reader is written. Every pilot run now carries this record in its bundle (`doctor.json`).
+- **`scripts/run_anywhere.sh`**: one command from a fresh clone. With no option it runs the pilot on a simulated GPU
+  (3 minutes); `--check` only looks; `--hardware` runs the pilot on a real GPU and bundles the result.
+- **`results/README.md`**: every hardware run in one table, generated from the bundles by `results/record.py`; a test
+  fails if it is out of date.
+- **`tests/test_runs_on_record.py`** now pins runs 6 to 8: bundle hashes, `closure verify`, the signed results
+  reproduced from raw data, the campaign's pooled reading, run 8's two misses and what set its threshold.
+  `results/reread.py` writes everything the documents quote for a results folder.
+- **CI** has an `evidence` job: its summary page shows that table and the simulated pilot, computed on GitHub's
+  machine, and attaches the simulated pilot's bundle.
+- **`docs/VERIFY_IT_YOURSELF.md`**: what each of these shows, what none of them can, and the list of what has not been
+  shown: any GPU but a T4, an independent meter, an independent operator, a deliberate adversary.
+
+**Treaty layer**
+
+- **Coalitions**: `coalition.size_bound` proves a smallest coalition minimal, and `closure treaty coalition` says when
+  a search found nothing and why (`--exclude USA,CHN,IND` now reproduces the seven-member result it documents).
+- **Beacon**: the last party to reveal could withhold and force a rerun; `beacon.missing` names it and
+  `beacon.finalize` binds a draw to a public value fixed after the last reveal.
+- **Suspended clauses** (`treaty/clauses.py`, `closure treaty clause`): in force only for an unexpired finding that k
+  of n panel members signed.
+- **Interconnect arithmetic** (`treaty/bandwidth.py`, `closure treaty bandwidth`): the link rate that training across
+  pods needs, the slowdown a cap forces, and what inference needs.
+- **Thresholds**: the monitored, post-training, strict and cluster thresholds of the agreement drafted by MIRI's
+  Technical Governance Team (arXiv 2511.10783) are named; `covert-days --threshold` takes a name or a number.
+- `closure repro-check` prints the tolerance it used.
+
 ## 0.8.0
 
 Runs 4 and 5, what they showed, and the design that answers them. Pre-registration amendment v0.6, written before any

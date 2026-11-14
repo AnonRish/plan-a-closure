@@ -12,7 +12,9 @@ Sources:
 artificial superintelligence* (asi-prevention.com, SSRN 5776982); [MV] Scher and Thiergart, *Mechanisms to Verify
 International Agreements About AI Development* (MIRI, November 2024); [GE] Barnett and Scher, *AI Governance to Avoid
 Extinction* (MIRI, May 2025); [EV] Barnett and Thiergart, *What AI evaluations for preventing catastrophic risks can and
-cannot do* (arXiv 2412.08653); [CB] Coalition for a Baruch Plan for AI, *The Deal of the Century* (cbpai.org).
+cannot do* (arXiv 2412.08653); [CB] Coalition for a Baruch Plan for AI, *The Deal of the Century* (cbpai.org). The
+thresholds of the agreement that MIRI's Technical Governance Team drafted in 2025 (Scher, Abecassis, Barnett and Abeyta,
+arXiv 2511.10783) are named in `thresholds.py` as well (`closure treaty covert-days --threshold miri-strict`).
 
 Status: **built** (implemented and tested in CI, CPU only); **runs on hardware** (written here; it means something only
 on a GPU, a cluster or a second machine, and the command is given); **existing** (already in plan-a-closure before the
@@ -32,7 +34,10 @@ These are computations from stated inputs, not forecasts. Each one is reproduced
   or without Japan, stay under 20%. Without India, the smallest coalitions also have 7 members (for example the EU,
   Japan, Indonesia, Pakistan, Brazil, Bangladesh and Russia), because the six most populous players other than India
   hold 19.7% of world population. India's population is what makes the two-member coalition possible
-  (`test_without_the_eu_bloc_or_without_india_seven_members_are_needed`). In Shapley-Shubik power with the US and
+  (`test_without_the_eu_bloc_or_without_india_seven_members_are_needed`). Each "smallest" here is proved, not only
+  searched for: no coalition can be smaller than the number of players it takes to reach both quotas when the largest
+  are taken first (`coalition.size_bound`), and `closure treaty coalition` prints that bound with what it finds
+  (`--exclude USA,CHN,IND` and `--no-bloc` reproduce the two seven-member results). In Shapley-Shubik power with the US and
   China outside, the EU is 0.27 and India 0.08, then Japan 0.06 and the UK 0.04 (`closure treaty coalition`).
 - **Winner-take-all needs near-certain detection.** If finishing a covert programme is worth W and being caught costs C,
   it does not pay only when verification catches it before it finishes with probability at least W / (W + C): 99% when
@@ -95,7 +100,7 @@ These are computations from stated inputs, not forecasts. Each one is reproduced
 | --- | --- | --- |
 | Chip ownership and location registry | existing | `ledger.StockLedger`, `ledger.reconcile` (chip-stock accounting with uncertainty) |
 | Physical inspection of a random sample of declared chips | existing, extended | `ledger.audit_sample_size`; `inspection` adds repeated inspections and samples the inspected party cannot predict (`plan_sample` from a `beacon` seed), and the two implementations are checked against each other |
-| Ping-based location tracking | built, runs on hardware | `geoloc`; landmarks on reachable hosts, the chip connects out |
+| Ping-based location tracking | built, runs on hardware | `geoloc`; landmarks on reachable hosts, the chip connects out. Tested over TCP on one host; no run between machines in different places is on record |
 | Chip-adjacent FlexHEG location attestation; tamper-evident chips; continuous monitoring with portals and cameras | hardware R&D | |
 | Supply-chain registry and chain of custody | partial | the hash-chained, signed evidence format (`evidence.py`) |
 | Exclusion of compute that cannot run a large training run | built | `thresholds.run_flop`, `seconds_to` |
@@ -103,7 +108,7 @@ These are computations from stated inputs, not forecasts. Each one is reproduced
 | Compute accounting: few unverified chip-hours remain | existing | the energy and busy-time closure, `covert-days`, `race` |
 | Partial re-running of declared work | existing | `repro.py`, `taphash.py`, `assurance.py` |
 | Workload classification from power, bandwidth, utilisation, precision | existing | `cadence-check`; closure itself is signature-independent |
-| Interconnect bandwidth limits (pods of about 128 chips) | partial | `traffic.py` (traffic closure); a bandwidth-needed calculator is not built |
+| Interconnect bandwidth limits (pods of about 128 chips) | built (the arithmetic), existing (the measurement) | `treaty/bandwidth.py`, `closure treaty bandwidth`: the link rate that data-parallel training across pods needs for a given model size, step rate and compression, the slowdown a cap forces, and the rate inference needs, for comparison; `traffic.py` measures what a link carried |
 | Hardware FLOP utilisation | existing | the trial's busy-time channel |
 | Inference-only chips; FlexHEG workload classification; allow-listed operations | hardware R&D | |
 | TEEs, model hashing and signing, cryptographic audit trails | partial | signing and hash chains (`evidence.py`); TEEs are hardware |
@@ -134,8 +139,8 @@ code.
 | mechanism | status | here |
 | --- | --- | --- |
 | "A cap on the frontier, not deployment"; Beijing's draft 1e26 FLOP threshold, as cited | built | `thresholds.THRESHOLDS["beijing-draft"]`, `covert-days --threshold 1e26` |
-| "Suspended enforcement clauses", switched on when a joint scientific panel finds a threshold crossed | partial | `quorum.verify` for the panel's signed finding; `coalition.assess` for a ladder |
-| Citizen witnesses, lot-selected and multinational | built | `beacon.sortition` (stratified by group, from a commit-reveal seed) |
+| "Suspended enforcement clauses", switched on when a joint scientific panel finds a threshold crossed | built | `treaty/clauses.py`, `closure treaty clause`: a clause is in force only for a finding that k of the n panel members signed and that has not expired, and the finding maps to a ladder level (`coalition.assess`); a month-by-month timeline keeps the persistence rules |
+| Citizen witnesses, lot-selected and multinational | built | `beacon.sortition` (stratified by group, from a commit-reveal seed). A party that reveals last could withhold and force a rerun it likes better, so a missing reveal is named (`beacon.missing`) and a draw is finalised with a public value fixed after the last reveal (`beacon.finalize`), which the last revealer cannot steer |
 | Critical actions require multiple people; air-gapped multi-party controls | built | `quorum` (k-of-n Ed25519 approval) |
 | Hardware roots of trust with public attestation; formally verified open stacks | hardware R&D, research | |
 | A secure joint network for alerts and verification data; an incident rulebook | not built | signed hash chains (`evidence.py`) are a starting point |

@@ -7,29 +7,52 @@
 Every joule, packet byte and byte of memory on an enrolled cluster must be *explained* by verified work.
 What is left over (the residual) upper-bounds hidden compute, hidden exfiltration and hidden persistent state.
 
-> **Status: v0.8.0, simulation-tested, hardware-gated.** Estimators, evidence format and orchestration are tested
-> (327 tests, `pytest`, plus 23 that run the torch code on CPU where torch is installed, 10 of them rehearsing the
-> whole GPU path against a fake NVML and nvidia-smi). The 13 vendored repositories
-> under `external/` add their own suites (2,708 tests passed here, `closure external test`). **No physical claim is
-> demonstrated yet.** Five shakedown runs on Colab and Kaggle T4s (8 and 9 November 2026, NVML only) are in
-> [docs/DEVIATIONS.md](docs/DEVIATIONS.md), each published whatever it showed. The first stopped at `hw-selftest` (a
-> unit of work sized for an H100). Run 4 was the first with no failing step. Run 5 was the first nine-hour trial,
-> large enough to read the pre-registered decision rules, and **the registered analysis failed its own false-alarm
-> rule on it**: 11 false alarms in 204 clean blocks against a 3% limit. Its raw data showed why: a straight-line
-> energy model on a power-limited GPU, a threshold that had silently fallen back to a Gaussian, hidden-load labels
-> that understated the load, and a physical finding: at the power limit, hidden work adds no energy and displaces
-> verified work instead, so energy accounting alone is blind there. Amendment v0.6 of
-> [docs/PREREGISTRATION.md](docs/PREREGISTRATION.md) answers each point and was written before any further run; the
-> same data read under it are labelled post hoc and decide nothing. Each claim is decided by the pre-registered trial
-> on instrumented hardware (Amodo's Side Channel Cloud, the Verifiable Compute Foundation cluster). A report whose
-> status says `SIMULATED` validates the estimators only. The one-GPU pilot is one unattended command, `closure tier0`
-> ([operator guide](docs/OPERATOR_TIER0.md)).
-> Without an H100, [notebooks/tier0_colab.ipynb](notebooks/tier0_colab.ipynb)
-> ([open in Colab](https://colab.research.google.com/github/AnonRish/plan-a-closure/blob/main/notebooks/tier0_colab.ipynb))
-> runs the same pilot on a free Colab GPU as a labelled shakedown (no independent meter, so not the registered trial),
-> and [notebooks/tier0_kaggle.ipynb](notebooks/tier0_kaggle.ipynb) runs a nine-hour trial on each of a Kaggle session's
-> two GPUs, declared one campaign beforehand and read together (`closure pool`): large enough to read the
-> pre-registered decision rules H1.1 to H1.4 (`closure criteria`).
+> **Status: v0.9.0. The software is tested; the physical claim is not yet demonstrated.** Eight shakedown runs on
+> Tesla T4s in Colab and Kaggle sessions (8 to 12 November 2026, the GPU's own NVML counters as the only meter) are
+> published whatever they showed: [results/README.md](results/README.md) is the table, generated from the bundles, and
+> [docs/DEVIATIONS.md](docs/DEVIATIONS.md) is the account.
+>
+> - **Runs 1 to 5** found what was wrong: a unit of work sized for an H100, calibration drift, and, on the first
+>   nine-hour trial, the registered analysis failing its own false-alarm rule (11 false alarms in 204 clean blocks).
+>   Its raw data showed why: a straight-line energy model on a power-limited GPU, a threshold that had silently fallen
+>   back to a Gaussian, hidden-load labels that understated the load, and a physical finding: at its power limit a
+>   GPU's hidden work adds no energy and displaces verified work, so energy accounting alone is blind there.
+>   Amendment v0.6 of [docs/PREREGISTRATION.md](docs/PREREGISTRATION.md) answered each point before any further run.
+> - **Runs 6 and 7** were its first prospective test: two nine-hour trials on two GPUs, declared one campaign
+>   beforehand. **Every rule the trial decides held**: 3 false alarms in 408 clean blocks, 210 of 210 hidden loads of
+>   5% of capacity or more detected, 285 of 290 of 2% or more, and the hidden load's time bounded in 321 of 321 blocks.
+> - **Run 8**, a shorter trial on Colab, **failed the detection rule by one block in each of two classes** (43 of 45 at
+>   5% or more). Its clock lock did not hold at full load; amendment v0.7 changes the lock rule before the next run.
+> - **On every T4 the pre-registered outcome is FAIL**, and was predicted to be. The probe measured an efficiency slack
+>   of 8 to 14% on these GPUs (the same verified work can cost that much less energy on another allowed setting), which
+>   at the trials' load adds 6 to 8% of capacity to the gap by itself; the outcome rule allows 5% in all.
+>
+> None of this is a claim about Plan A. A T4 is not the target device, NVML can be spoofed by whoever runs the machine,
+> and every run so far is the author's. Each claim is decided by the pre-registered trial on instrumented H100-class
+> hardware with an independent power meter. The software itself: 369 tests (`pytest`), plus 23 that run the torch code
+> on CPU where torch is installed, 10 of them rehearsing the whole GPU path against a fake NVML and nvidia-smi; the 13
+> vendored repositories under `external/` add their own suites (2,708 tests passed here, `closure external test`). A
+> report whose status says `SIMULATED` validates the estimators only.
+
+## Check it yourself
+
+[docs/VERIFY_IT_YOURSELF.md](docs/VERIFY_IT_YOURSELF.md) lists what you can see or run, what each step shows, and
+what has not been shown by anyone yet.
+
+```bash
+git clone https://github.com/AnonRish/plan-a-closure && cd plan-a-closure
+bash scripts/run_anywhere.sh               # 3 minutes, no GPU: the whole pilot on a simulated GPU, evidence verified
+bash scripts/run_anywhere.sh --check       # 1 minute: which steps would run on each GPU of this machine, and why
+bash scripts/run_anywhere.sh --hardware    # 2 h 20 min on an NVIDIA GPU: the pilot for real, and a bundle to send back
+.venv/bin/python -m pytest -q tests/test_runs_on_record.py   # every published bundle re-read: hashes, signatures, numbers
+```
+
+The pilot is one unattended command underneath, `closure tier0` ([operator guide](docs/OPERATOR_TIER0.md)).
+[notebooks/tier0_colab.ipynb](notebooks/tier0_colab.ipynb)
+([open in Colab](https://colab.research.google.com/github/AnonRish/plan-a-closure/blob/main/notebooks/tier0_colab.ipynb))
+runs it on a free Colab GPU, and [notebooks/tier0_kaggle.ipynb](notebooks/tier0_kaggle.ipynb) runs a nine-hour trial
+on each of a Kaggle session's two GPUs, declared one campaign beforehand and read together (`closure pool`). A run on
+any GPU other than a T4 would be the first of its kind, and the most useful thing a reader can add.
 
 ## The gap this targets
 
@@ -104,10 +127,12 @@ GPU or cluster step, or to "not code", and states what the computations show.
 | --- | --- | --- |
 | `treaty/thresholds.py` | the named compute thresholds (1e25 FLOP and 1e17 FLOP/s licences, a 1e26 draft) and the days a fleet needs to run a threshold-sized covert run at the hidden rate a trial measured | `closure treaty covert-days` |
 | `treaty/deterrence.py` | when detection deters: per-period and winner-take-all conditions, and a CUSUM over block residuals against the time to a threshold run, each checked by simulation | `closure treaty deterrence`, `race` |
-| `treaty/coalition.py` | the middle-powers agreement: activation at 20% of world GDP and population (World Bank data), smallest coalitions, Shapley-Shubik power, the redline ladder with its persistence and leak rules | `closure treaty coalition`, `redlines` |
+| `treaty/coalition.py` | the middle-powers agreement: activation at 20% of world GDP and population (World Bank data), smallest coalitions with a proof that none is smaller, Shapley-Shubik power, the redline ladder with its persistence and leak rules | `closure treaty coalition`, `redlines` |
 | `treaty/mockrun.py` | A Narrow Path's mock training run: a provider that sees only an energy meter stops a training job at its FLOP budget, and the job's starting weights are checked against its seed | `closure treaty mock-run` |
 | `treaty/geoloc.py` | delay-based chip location: timed, signed challenges from landmarks bound how far a chip can be from its declared site | `closure treaty geo-landmark`, `geo-chip`, `geo-check` |
-| `treaty/inspection.py`, `beacon.py`, `quorum.py` | inspection samples nobody can predict, lot-selected witnesses, and k-of-n approval of critical actions | `closure treaty inspect-plan`, `beacon-commit`, `sortition`, `quorum-verify` |
+| `treaty/inspection.py`, `beacon.py`, `quorum.py` | inspection samples nobody can predict, lot-selected witnesses, a draw the last party to reveal cannot steer, and k-of-n approval of critical actions | `closure treaty inspect-plan`, `beacon-commit`, `beacon-seed`, `sortition`, `quorum-verify` |
+| `treaty/clauses.py` | suspended enforcement clauses: in force only for an unexpired finding that k of n panel members signed | `closure treaty clause` |
+| `treaty/bandwidth.py` | interconnect limits: the link rate that training across pods needs, the slowdown a cap forces, and what inference needs | `closure treaty bandwidth` |
 
 ## Plan A coverage (checked against the pasted documents and the live pages)
 
@@ -202,9 +227,11 @@ covered. `gemm_audit.py` is a design-time screen, not the physical audit the pap
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"                # Python 3.10 or newer
-pytest                                  # 327 tests (350 with torch installed)
+pytest                                  # 369 tests (392 with torch installed)
 closure selftest                        # end-to-end simulated trial, PASS/FAIL
+closure doctor                          # what the pilot can do on this machine, and why not where not
 closure tier0 --mock --out runs/tier0   # the whole one-GPU pilot on fake hardware: logs, SUMMARY.md, bundle
+python results/record.py                # every hardware run on record, re-derived from the published bundles
 closure redteam                         # gateway sampling + recomputation against substituted models (toy model)
 closure pause claims                    # the hardwired-pause paper's numbers, re-derived
 closure metrics                         # the plan's evaluation metrics, scored per mechanism
@@ -236,16 +263,21 @@ run without the private key. The torch code itself (the probe rig with its activ
 load generator, the residency prover and the reproducibility check) runs on CPU torch 2.15 in `tests/test_torch_cpu.py`,
 which checks its API use, dtypes and shapes; int8 ran through `torch._int_mm` and fp8 through `torch._scaled_mm` there.
 
-**Run on real GPUs as shakedowns (five runs on T4s in cloud VMs, NVML only; [docs/DEVIATIONS.md](docs/DEVIATIONS.md)).**
+**Run on real GPUs as shakedowns (eight runs on T4s in cloud sessions, NVML only; [docs/DEVIATIONS.md](docs/DEVIATIONS.md)).**
 The whole pilot runs unattended for up to ten hours, restores the GPU, and its evidence verifies. `TorchLoad`,
 `TorchProver` and `TorchRig` run on a GPU; clock locking and power capping work where the platform allows them (Colab
-does, Kaggle's container does not); energy tracks verified work (r2 = 0.97); device-versus-host memory separates by
-time (200/200 in run 4, 195/200 in run 5 under a statistic since replaced); the mock training run was stopped by its
-meter inside the budget. The straight-line analysis failed its false-alarm rule on the one run large enough to decide
-it. None of this is a claim: there is no independent meter, and a T4 is not the target device.
+does, Kaggle's container does not); energy tracks verified work (r2 = 0.93 to 0.97); device-versus-host memory
+separates by the time of a challenge's slowest block (2,999 of 3,000 parked provers caught in runs 6 to 8, with 21
+false alarms in 6,000 honest challenges, inside both registered thresholds); the mock training run was stopped by its
+meter inside the budget on four GPUs. The straight-line analysis failed its false-alarm rule on the first run large
+enough to decide it (run 5). Its pre-registered replacement then held every rule the trial decides on a two-GPU
+campaign (runs 6 and 7) and failed the detection rule by one block in each of two classes on a shorter Colab trial
+(run 8). On every T4 the outcome is FAIL on the measured efficiency slack. None of this is a claim: there is no
+independent meter, a T4 is not the target device, and every run is the author's.
 
 **Hardware-gated (not yet demonstrated).** Everything the registered trial decides: the false-alarm rate and the
-closure gap under amendment v0.6, bound validity, the J/FLOP floor and the efficiency slack on an H100 or H200;
+closure gap under amendments v0.6 and v0.7, bound validity, the J/FLOP floor and the efficiency slack on an H100 or
+H200, where no run of any kind exists yet (`closure doctor` says which steps would run on a given machine);
 DC-bus clock alignment and the independent meter; TAP capture; the gateway, hashing tap and canaries on real network
 hardware; the cadence detector on real telemetry.
 
@@ -278,12 +310,14 @@ verifier never sees it until analysis. Use `--pause-after-prereg` to timestamp `
 ## Layout
 
 `src/closure/`: closure core (`conformal.py` `residual.py` `link.py` `energy.py` `sim.py` `trial.py` `criteria.py`
-`drift.py` `physics.py` `compose.py` `traffic.py` `state.py` `evidence.py` `dcbus.py` `tier0.py` `cli.py`), Plan A modules (`claims.py` `ledger.py` `retrofit.py` `assurance.py` `repro.py`
+`drift.py` `physics.py` `compose.py` `traffic.py` `state.py` `evidence.py` `dcbus.py` `tier0.py` `doctor.py` `cli.py`), Plan A modules (`claims.py` `ledger.py` `retrofit.py` `assurance.py` `repro.py`
 `gateway.py` `taphash.py` `tapwatch.py` `cadence.py` `metrics.py` `frontier.py`
 `approval.py` `captrade.py` `coverage.py` `external.py`), `hw/` (`nvml.py` `workloads.py` `source.py` `probe.py` `gpu.py`) and `pause/` (`thresholds.py`
 `treaty_ledger.py` `census.py` `inference_only.py` `gemm_audit.py` `fab.py` `whitelist.py` `registry.py` `supply_chain.py` `transition.py`
-`msic_econ.py` `pausegame.py` `bridge.py` `paper_claims.py` `coverage.py` `cli.py`). `tests/`, `scripts/` (`sim_study.py`,
-`crosscheck_upstream.py`), `docs/` (`HARDWARE_CONFIG.md`, `OPERATOR_TIER0.md`, `PREREGISTRATION.md`, `RUNBOOK_HARDWARE.md`, `PLAN_A_COVERAGE.md`,
+`msic_econ.py` `pausegame.py` `bridge.py` `paper_claims.py` `coverage.py` `cli.py`), and `treaty/` (`thresholds.py` `deterrence.py`
+`coalition.py` `mockrun.py` `geoloc.py` `inspection.py` `beacon.py` `quorum.py` `clauses.py` `bandwidth.py` `cli.py`). `tests/`, `scripts/`
+(`run_anywhere.sh`, `sim_study.py`, `crosscheck_upstream.py`), `results/` (every hardware run's bundle, `record.py`, `reread.py`), `docs/`
+(`VERIFY_IT_YOURSELF.md`, `DEVIATIONS.md`, `HARDWARE_CONFIG.md`, `OPERATOR_TIER0.md`, `PREREGISTRATION.md`, `RUNBOOK_HARDWARE.md`, `PLAN_A_COVERAGE.md`, `TREATY_COVERAGE.md`,
 `SIM_STUDY.md`, `PUBLISH.md`, `HARDWIRED_PAUSE.md`, `HARDWIRED_PAUSE_COVERAGE.md`), `CHANGELOG.md`, and `external/` (13
 vendored repositories, `MANIFEST.json`, `README.md`).
 

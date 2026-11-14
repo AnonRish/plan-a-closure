@@ -10,7 +10,9 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from closure.cli import main
+from closure.treaty import bandwidth as W
 from closure.treaty import beacon as B
+from closure.treaty import clauses as K
 from closure.treaty import coalition as C
 from closure.treaty import deterrence as D
 from closure.treaty import geoloc as G
@@ -116,6 +118,45 @@ def test_beacon_seed_is_reproducible_and_a_changed_or_withheld_reveal_is_caught(
         B.seed(comm, bad)
     with pytest.raises(B.BeaconError, match="no reveal from observer"):
         B.seed(comm, {k: v for k, v in rev.items() if k != "observer"})
+    # going ahead without a withheld value is allowed only as a step before a public value is mixed in
+    part = {k: v for k, v in rev.items() if k != "observer"}
+    assert B.missing(comm, part) == ["observer"]
+    s2 = B.seed(comm, part, allow_missing=True)
+    assert s2 != s and s2 == B.seed({k: v for k, v in comm.items() if k != "observer"}, part)
+    pub = bytes(range(32))
+    assert B.finalize(s, pub) != s and B.finalize(s, pub) == B.finalize(s, pub) != B.finalize(s2, pub)
+    with pytest.raises(ValueError):
+        B.finalize(s, b"short")
+    with pytest.raises(B.BeaconError, match="no party revealed"):
+        B.seed(comm, {}, allow_missing=True)
+
+
+def test_the_last_revealer_can_steer_a_rerun_and_cannot_steer_a_draw_finalized_with_a_later_public_value():
+    """The inspected party hides one chip of five and one chip is sampled. It reveals last, so it knows the seed
+    first. Rule A (an abort is answered with one fresh round): it withholds whenever its chip would be drawn, and is
+    caught 1 time in 25 instead of 1 in 5. Rule B (the seed is finalized with a public value that does not exist
+    yet): it cannot tell which draws to refuse, and withholding leaves the odds where they were."""
+    import random
+    rng = random.Random(7)
+    chips, hidden, rounds = [f"GPU-{i}" for i in range(5)], "GPU-3", 3000
+
+    def one_round():
+        cs = [B.new_contribution(p) for p in ("inspector", "inspected")]
+        return {c["party"]: c["commitment"] for c in cs}, {c["party"]: (c["nonce"], c["value"]) for c in cs}
+
+    caught_a = caught_b = caught_b_withholding = 0
+    for _ in range(rounds):
+        comm, rev = one_round()
+        if B.draw(B.seed(comm, rev), chips, 1)[0] == hidden:           # rule A: it sees this before revealing
+            comm, rev = one_round()                                    # ... refuses, and the round is run again
+            caught_a += B.draw(B.seed(comm, rev), chips, 1)[0] == hidden
+        comm, rev = one_round()
+        pub = rng.randbytes(32)                                        # rule B: published after the reveal deadline
+        caught_b += B.draw(B.finalize(B.seed(comm, rev), pub), chips, 1)[0] == hidden
+        part = {"inspector": rev["inspector"]}                         # ... and withholding blind changes nothing
+        caught_b_withholding += B.draw(B.finalize(B.seed(comm, part, allow_missing=True), pub), chips, 1)[0] == hidden
+    assert caught_a / rounds < 0.07                                    # about 1/25
+    assert 0.17 < caught_b / rounds < 0.23 and 0.17 < caught_b_withholding / rounds < 0.23      # about 1/5
 
 
 def test_draws_are_distinct_reproducible_and_uniform():
@@ -250,6 +291,30 @@ def test_without_the_eu_bloc_or_without_india_seven_members_are_needed(table):
     assert each["size"] == 7 and all({"IND", "DEU", "JPN"} <= set(c) for c in each["coalitions"])
     no_india = C.smallest_coalitions({k: v for k, v in table.items() if k != "IND"}, max_size=7, top=25)
     assert no_india["size"] == 7 and ("EU27", "JPN", "IDN", "PAK", "BRA", "BGD", "RUS") in no_india["coalitions"]
+    # the bound proves it without a search: no six players can reach both quotas, so seven is the least
+    assert no_india["at_least"] == 7 and no_india["proved_minimal"] and each["at_least"] == 7 and each["proved_minimal"]
+
+
+def test_the_size_bound_is_a_bound_and_the_search_says_when_it_found_nothing(table):
+    assert C.size_bound(table) == 2                                    # the EU and India: found at the bound
+    r = C.smallest_coalitions(table, max_size=3)
+    assert r["at_least"] == 2 and r["proved_minimal"]
+    small = {"A": (0.15, 0.01), "B": (0.01, 0.15), "C": (0.06, 0.06), "D": (0.05, 0.05)}
+    assert C.size_bound(small) == 2                                    # A's GDP with C's, B's people with C's
+    r = C.smallest_coalitions(small, max_size=4)
+    assert r["size"] == 3 and r["at_least"] == 2 and r["proved_minimal"]    # sizes below 3 were searched in full
+    assert C.size_bound({"A": (0.1, 0.1)}) is None
+    none = C.smallest_coalitions({k: v for k, v in table.items() if k != "IND"}, max_size=6)
+    assert none["size"] is None and none["at_least"] == 7 and "fewer than 7" in none["note"]
+
+
+def test_the_coalition_command_reproduces_both_claims_as_documented(capsys):
+    for argv, size, member in ((["treaty", "coalition", "--permutations", "200"], 2, "IND"),
+                               (["treaty", "coalition", "--exclude", "USA,CHN,IND", "--permutations", "200"], 7, "EU27")):
+        assert main(argv) == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["smallest"]["size"] == size and out["smallest"]["proved_minimal"]
+        assert all(member in c["members"] for c in out["smallest"]["coalitions"])
 
 
 def test_shapley_shubik_estimate_matches_exact_enumeration():
@@ -302,3 +367,99 @@ def test_treaty_commands_run(capsys, tmp_path):
     (run / "results.json").write_text(json.dumps({"status": "SIMULATED", "closure_gap_fraction": None, "slack": {}}))
     (run / "prereg.json").write_text(json.dumps({"cfg": {"p_max_w": 700.0}}))
     assert main(["treaty", "covert-days", "--run", str(run)]) == 1 and "no closure gap" in capsys.readouterr().out
+
+
+# ---- suspended clauses, MIRI's thresholds, interconnect arithmetic (0.9.0) -------------------------------------------
+def _panel(n=5):
+    keys = [Ed25519PrivateKey.generate() for _ in range(n)]
+    return keys, {Q.public_hex(k): f"member-{i}" for i, k in enumerate(keys)}
+
+
+def test_a_suspended_clause_switches_on_only_for_a_finding_the_panel_signed():
+    keys, members = _panel(5)
+    rec = K.finding("State X", {"ai_rnd_engineer_speedup": 4.0}, issued=1000.0, expires=5000.0)
+    three = [Q.sign(k, rec) for k in keys[:3]]
+    on = K.in_force(rec, three, members, 3, now=2000.0)
+    assert on["in_force"] and on["level"] == 4 and on["measure"] == C.LEVELS[4] and on["actor"] == "State X"
+    assert not K.in_force(rec, three[:2], members, 3, now=2000.0)["in_force"]            # short of its quorum
+    assert not K.in_force(rec, three, members, 3, now=6000.0)["in_force"]                # expired
+    altered = {**rec, "findings": {"ai_rnd_engineer_speedup": 10.0}}                     # altered after signing
+    off = K.in_force(altered, three, members, 3, now=2000.0)
+    assert not off["in_force"] and off["level"] == 0 and len(off["quorum"]["problems"]) == 3
+    outsiders = [Q.sign(Ed25519PrivateKey.generate(), rec) for _ in range(3)]            # not on the panel
+    assert not K.in_force(rec, outsiders, members, 3, now=2000.0)["in_force"]
+    other = {"type": "transfer", "findings": {"ai_rnd_engineer_speedup": 4.0}}            # signed, but not a finding
+    r = K.in_force(other, [Q.sign(k, other) for k in keys[:3]], members, 3, now=0.0)
+    assert not r["in_force"] and "not a finding" in r["quorum"]["problems"][-1]
+    clean = K.finding("State X", {}, issued=1000.0)                                      # a signed finding of nothing
+    assert not K.in_force(clean, [Q.sign(k, clean) for k in keys[:3]], members, 3, now=2000.0)["in_force"]
+    with pytest.raises(ValueError, match="unknown findings"):
+        K.finding("State X", {"typo": True}, issued=0.0)
+
+
+def test_a_clause_timeline_counts_only_signed_months_and_keeps_the_persistence_rules():
+    keys, members = _panel(4)
+
+    def month(i, findings, signers=3):
+        rec = K.finding("State X", findings, issued=float(i))
+        return {"record": rec, "approvals": [Q.sign(k, rec) for k in keys[:signers]]}
+    wide = {"ai_rnd_engineer_speedup": 4.0}
+    rows = K.timeline([month(i, wide) for i in range(8)], members, 3)
+    assert [r["level"] for r in rows] == [4] * 6 + [5, 5] and all(r["finding_signed"] for r in rows)
+    # the same findings with a month the panel did not sign: that month counts for nothing and the six-month clock restarts
+    rows = K.timeline([month(i, wide, signers=2 if i == 3 else 3) for i in range(8)], members, 3)
+    assert [r["level"] for r in rows] == [4, 4, 4, 0, 4, 4, 4, 4] and rows[3]["finding_signed"] is False
+    assert K.timeline([None, month(1, wide)], members, 3)[0]["finding_signed"] is None
+
+
+def test_the_clause_command_reads_three_files(tmp_path, capsys):
+    keys, members = _panel(3)
+    rec = K.finding("State X", {"ai_escaped_or_uncontrolled": True}, issued=10.0)
+    (tmp_path / "f.json").write_text(json.dumps(rec)); (tmp_path / "m.json").write_text(json.dumps(members))
+    (tmp_path / "a.json").write_text(json.dumps([Q.sign(k, rec) for k in keys[:2]]))
+    argv = ["treaty", "clause", "--finding", str(tmp_path / "f.json"), "--approvals", str(tmp_path / "a.json"),
+            "--members", str(tmp_path / "m.json")]
+    assert main(argv + ["--k", "2"]) == 0 and json.loads(capsys.readouterr().out)["level"] == 6
+    assert main(argv + ["--k", "3"]) == 1 and not json.loads(capsys.readouterr().out)["in_force"]
+
+
+def test_miris_agreement_thresholds_are_named_and_usable(capsys):
+    t = T.THRESHOLDS
+    assert (t["miri-monitored"].value, t["miri-post-training"].value, t["miri-strict"].value) == (1e22, 1e23, 1e24)
+    assert t["miri-cluster"].value == 16 and t["miri-cluster"].unit == "H100e"
+    assert T.flop_threshold("miri-strict") == 1e24 and T.flop_threshold("3e24") == 3e24 and T.flop_threshold(1e25) == 1e25
+    with pytest.raises(ValueError, match="H100e"):
+        T.flop_threshold("miri-cluster")
+    with pytest.raises(ValueError, match="neither a number"):
+        T.flop_threshold("nonsense")
+    # a hundredth of the threshold is reached in a hundredth of the time
+    a, b = T.covert_days(T.flop_threshold("miri-strict"), 0.05, 1000), T.covert_days(T.flop_threshold("miri-monitored"), 0.05, 1000)
+    assert b.days == pytest.approx(a.days / 100)
+    assert main(["treaty", "covert-days", "--threshold", "miri-monitored", "--gap", "0.05", "--fleet", "1000"]) == 0
+    assert json.loads(capsys.readouterr().out)["threshold_flop"] == 1e22
+    assert main(["treaty", "covert-days", "--threshold", "nonsense", "--gap", "0.05"]) == 2
+
+
+def test_interconnect_arithmetic():
+    # 1e11 values of 2 bytes: 200 GB a pod per exchange; among 4 pods each sends 2 * 3/4 of that
+    assert W.payload_bytes(1e11) == 2e11 and W.sent_per_exchange(2e11, 4) == pytest.approx(3e11)
+    need = W.needed_gbps(1e11, steps_per_s=1.0, pods=4)
+    assert need == pytest.approx(3e11 * 8 / 1e9)                                          # 2400 Gbit/s
+    assert W.needed_gbps(1e11, 1.0, 4, sync_every=10, compression=100) == pytest.approx(need / 1000)
+    assert W.slowdown(need, 1e11, 1.0, 4) == 1.0 and W.slowdown(need / 50, 1e11, 1.0, 4) == pytest.approx(50)
+    assert W.slowdown(0.0, 1e11, 1.0, 4) == float("inf") and W.exchanges_per_s(0.0, 1e11, 4) == 0.0
+    assert W.exchanges_per_s(need, 1e11, 4) == pytest.approx(1.0)
+    assert W.inference_gbps(1e6, 16.0) == pytest.approx(0.128)
+    r = W.assess(cap_gbps=1.0, params=1e11, steps_per_s=1.0, pods=4, tokens_per_s=1e6)
+    assert r["cap_separates_them"] and r["inference_fits"] and r["training_slowdown"] == pytest.approx(2400)
+    assert r["headroom_between_them"] == pytest.approx(2400 / 0.128)
+    assert not W.assess(0.1, 1e11, 1.0, 4, 1e6)["inference_fits"]                         # a cap too thin to serve
+    assert not W.assess(5000.0, 1e11, 1.0, 4, 1e6)["cap_separates_them"]                  # a cap too wide to matter
+    for bad in (lambda: W.payload_bytes(0), lambda: W.sent_per_exchange(1.0, 1), lambda: W.needed_gbps(1e9, 0, 2)):
+        with pytest.raises(ValueError):
+            bad()
+
+
+def test_the_bandwidth_command(capsys):
+    assert main(["treaty", "bandwidth", "--cap-gbps", "1", "--params", "1e11", "--pods", "4", "--tokens-per-s", "1e6"]) == 0
+    assert json.loads(capsys.readouterr().out)["cap_separates_them"] is True

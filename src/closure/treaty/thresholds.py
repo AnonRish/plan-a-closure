@@ -31,7 +31,30 @@ THRESHOLDS = {t.key: t for t in (
               "CBPAI, The Deal of the Century (cbpai.org)"),
     Threshold("miri-accounting-example", 1e25, "FLOP", "illustrative threshold for compute accounting",
               "Scher and Thiergart 2024, compute accounting"),
+    Threshold("miri-monitored", 1e22, "FLOP", "training runs above this are declared and monitored (Monitored Threshold)",
+              "MIRI Technical Governance Team, An International Agreement to Prevent the Premature Creation of "
+              "Artificial Superintelligence (Scher, Abecassis, Barnett, Abeyta; arXiv:2511.10783, 2025)"),
+    Threshold("miri-post-training", 1e23, "FLOP", "post-training above this is prohibited",
+              "MIRI Technical Governance Team 2025 (arXiv:2511.10783), as summarised by MIRI"),
+    Threshold("miri-strict", 1e24, "FLOP", "training above this is prohibited (Strict Threshold)",
+              "MIRI Technical Governance Team 2025 (arXiv:2511.10783)"),
+    Threshold("miri-cluster", 16.0, "H100e", "clusters above this many H100-equivalents go into monitored facilities",
+              "MIRI Technical Governance Team 2025 (arXiv:2511.10783), as summarised by MIRI"),
 )}
+
+
+def flop_threshold(x) -> float:
+    """A training-compute threshold given as a number or as one of THRESHOLDS' names (those in FLOP)."""
+    t = THRESHOLDS.get(str(x))
+    if t is not None:
+        if t.unit != "FLOP":
+            raise ValueError(f"'{t.key}' is in {t.unit}, not FLOP")
+        return t.value
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        raise ValueError(f"'{x}' is neither a number nor one of: "
+                         f"{', '.join(k for k, v in THRESHOLDS.items() if v.unit == 'FLOP')}") from None
 
 
 def run_flop(chips: float, peak_flop_per_s: float, utilization: float, seconds: float) -> float:

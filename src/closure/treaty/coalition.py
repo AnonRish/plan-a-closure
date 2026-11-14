@@ -81,18 +81,40 @@ def activates(members, table: dict, gdp_quota: float = GDP_QUOTA, pop_quota: flo
     return g >= gdp_quota and p >= pop_quota
 
 
+def size_bound(table: dict, gdp_quota: float = GDP_QUOTA, pop_quota: float = POP_QUOTA):
+    """The fewest members any activating coalition can have: the smallest k for which the k largest GDP shares reach
+    the GDP quota and the k largest population shares reach the population quota. No coalition of fewer members can
+    activate, whoever is in it, because none can beat the largest shares on either count. None if the whole table
+    cannot activate. A bound, not a coalition: the two top-k lists need not be the same players."""
+    g = np.cumsum(sorted((v[0] for v in table.values()), reverse=True))
+    q = np.cumsum(sorted((v[1] for v in table.values()), reverse=True))
+    ok = (g >= gdp_quota - 1e-12) & (q >= pop_quota - 1e-12)
+    return int(np.argmax(ok)) + 1 if ok.any() else None
+
+
 def smallest_coalitions(table: dict, max_size: int = 4, top: int = 40, gdp_quota: float = GDP_QUOTA,
                         pop_quota: float = POP_QUOTA) -> dict:
-    """Coalitions with the fewest members that activate the agreement. Exhaustive over all players up to size 3;
-    for larger sizes, over the `top` players largest by either share (reported as such)."""
+    """Coalitions with the fewest members that activate the agreement. Sizes below `size_bound` are skipped: nothing
+    that small can activate. The search is over all players up to size 3 and, for larger sizes, over the `top`
+    players largest by either share. `proved_minimal`: no smaller coalition exists among all the players, either
+    because the size found equals the bound or because every smaller size was searched in full."""
     names = sorted(table)
-    for size in range(1, int(max_size) + 1):
+    bound = size_bound(table, gdp_quota, pop_quota)
+    exhaustive_below = True
+    for size in range(bound or 1, int(max_size) + 1) if bound else ():
         pool = names if size <= 3 else sorted(names, key=lambda n: -max(table[n]))[: int(top)]
         hits = [c for c in itertools.combinations(pool, size) if activates(c, table, gdp_quota, pop_quota)]
         if hits:
             hits.sort(key=lambda c: -shares(c, table)[0])
-            return {"size": size, "exhaustive": size <= 3, "searched": len(pool), "coalitions": hits}
-    return {"size": None, "exhaustive": False, "searched": 0, "coalitions": []}
+            return {"size": size, "exhaustive": len(pool) == len(names), "searched": len(pool), "coalitions": hits,
+                    "at_least": bound, "proved_minimal": bool(size == bound or exhaustive_below)}
+        exhaustive_below = exhaustive_below and len(pool) == len(names)
+    return {"size": None, "exhaustive": False, "searched": 0, "coalitions": [], "at_least": bound,
+            "proved_minimal": False, "searched_up_to_size": int(max_size),
+            "note": ("the whole table cannot activate" if bound is None else
+                     f"no coalition of fewer than {bound} members can activate; none was found up to size {max_size} "
+                     "(raise max_size)" if bound <= max_size else
+                     f"no coalition of fewer than {bound} members can activate, and the search stopped at {max_size}")}
 
 
 def shapley_shubik(table: dict, permutations: int = 20000, seed: int = 0, gdp_quota: float = GDP_QUOTA,

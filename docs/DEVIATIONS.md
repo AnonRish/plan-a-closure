@@ -291,3 +291,166 @@ work on a GPU at its power limit, where the time channel and the displaced verif
 efficiency slack measured on a T4 (10 to 13%) alone exceeds the 5% the outcome rule allows, so on this GPU the
 registered outcome is FAIL however good the detector. None of it is evidence about H100s, independent metering or the registered
 thresholds. The prospective test of amendment v0.6 is the next run.
+
+## 6. Kaggle T4 x2 campaign, 11 to 12 November 2026, 19:58Z to 06:01Z (plan-a-closure 0.8.0, commit 438fcbd): every decided rule holds; FAIL on the slack
+
+**What ran.** `closure tier0 --trial-profile long --campaign kaggle-20261111-195848:i/2` from
+[notebooks/tier0_kaggle.ipynb](../notebooks/tier0_kaggle.ipynb) as a committed Kaggle run: one trial on each T4 of a
+"GPU T4 x2" session, at the same time (run 6 on `GPU-71bcb58e...`, run 7 on `GPU-876c9e8c...`; driver 580.178.04,
+torch 2.11.0+cu130), inside Kaggle's container, NVML only, no independent meter: a shakedown. It is the first
+prospective test of amendment v0.6: the analysis, the labels, the thresholds and the campaign were fixed and published
+(commit 438fcbd) before any of these data existed, and each trial drew its own seed. **Every step of both runs ran and
+exited 0.** Bundles as returned:
+[results/shakedown-2026-11-11-kaggle-t4-runs6-7/](../results/shakedown-2026-11-11-kaggle-t4-runs6-7/), sha256
+`b0d99770ef90d069555a4acab85d4d08d9db1d5b431f3fd6dc105ca0ba4345d3` (run 6) and
+`9a136d861ea55ee710a7a93b0249762f70fe1661feeebe9c1ced04e4f96cef05` (run 7).
+
+| step | run 6 (GPU 0, seed 1886737444) | run 7 (GPU 1, seed 1231193211) |
+| --- | --- | --- |
+| unit tests | passed (340 passed, 1 skipped; 14.0 min) | not run: the notebook runs them once, with GPU 0 |
+| hw-selftest | passed: r2 = 0.948, idle 29.8 W, work at 25% / 100% load = 0.28 | passed: r2 = 0.952, idle 29.2 W, 0.28 |
+| hw-probe | exit 0 with 3 stack variants (H1.6 needs 3). The container refuses clock and power-limit changes, so those variants were dropped and s_max = 9.1% (stack 8.0%, operand 9.1%) is a lower bound for this GPU; energy floor 2.15e-12 J/FLOP | 3 stack variants; s_max = 8.4% (stack 6.8%, operand 8.4%), a lower bound; energy floor 2.14e-12 J/FLOP |
+| hw-state | passed: honest false alarms 4/2000 (0.2%), parked-block detection 999/1000 | passed: 11/2000 (0.55%), 1000/1000 |
+| hw-trial (long) | ran 552 minutes, SM clocks not locked: false positives 3/204; closure gap 5.62%, slack-inflated 12.3% | ran 552 minutes, not locked: 0/204; 5.62%, 11.7% |
+| verify | passed | passed |
+
+**The pre-registered rules, read on the campaign** (`closure pool`; `CAMPAIGN.md` and `pooled.json` as the session
+wrote them, reproduced exactly from the two bundles):
+
+| rule | pooled | run 6 | run 7 |
+| --- | --- | --- | --- |
+| H1.1 the threshold is conformal | holds | holds | holds |
+| H1.2 false alarms: at most 3% of at least 200 null blocks | **holds: 3/408** (0.7%; 95% upper bound 1.9%) | 3/204 | 0/204 |
+| H1.3 primary: detection at 5% or more, each class at least 95% | **holds in every class: 210/210** (constant 72/72, dilute 72/72, duty 48/48, idle_gap 18/18); 95% lower bound 98.6% | 105/105 | 105/105 |
+| H1.3 stretch: detection at 2% or more, each class at least 95% | **holds in every class: 285/290** (constant 92/96, dilute 95/96, duty 72/72, idle_gap 26/26); 95% lower bound 96.4% | 143/145 | 142/145 |
+| H1.4 the time bound covers the seconds the hidden load ran in at least 95% of hidden blocks | **holds: 321/321** | 160/160 | 161/161 |
+| closure gap; slack-inflated gap | 5.62%; 12.3% | 5.62%; 12.3% | 5.62%; 11.7% |
+| outcome (PASS needs a slack-inflated gap of 5% or less) | **FAIL** | FAIL | FAIL |
+
+Reported only, as checks of additivity (A1): the calibrated time bound covered 99.1% of hidden blocks, and the energy
+bound covered the hidden load's solo energy in 97.5% (calibrated) and 100% (floor). Calibration drift: -0.18 and -0.01
+SD, spread 1.04x and 0.92x. The lower bound of 98.6% on detection at 5% or more is the highest that 210 blocks can
+give.
+
+**Against what amendment v0.6 said before the runs.**
+
+| stated beforehand | what happened |
+| --- | --- |
+| On a T4 the outcome will still be FAIL, because the probe's slack puts the slack-inflated gap above 5% | as stated: FAIL, with s_max 9.1% and 8.4% |
+| The 2% level will probably fail at blocks of 60 s or less | wrong here: it held in every class (285/290) |
+| The calibrated energy bound will probably cover less than 95% near the power limit | wrong here: 97.5% |
+| If H1.2 fails again, the link analysis is wrong on this hardware | H1.2 held: 3/408 |
+
+**What the raw data add (read after the runs; they describe and decide nothing).** `reread.json` in the results
+folder holds the numbers.
+
+1. *The thresholds are the largest of 144 reference scores*: 2.29 and 2.43, in spreads of the reference blocks. The
+   three false alarms, all in run 6, scored 2.33, 2.40 and 2.59; two were blocks with the GPU flat out throughout.
+2. *Every missed block carried a 2% label.* None at 5% or more was missed on either GPU.
+3. *The curve misfits at the top of the load range.* Reference blocks with the GPU flat out throughout scored +1.57 and
+   +1.54 on average, against 0.37 and 0.41 for the others. Nearly one rate of verified work comes with two busy times
+   there: 102 and 105 units a second in run 6, and 100 and 101 in run 7, at requested levels 0.9 and 1, with the GPU
+   busy 93% of the time at 0.9, where there are gaps between slots, and 99% flat out. A curve in work alone has to pass
+   between the two.
+4. *At the power limit hidden work adds no energy; it displaces verified work.* At requested level 1 the load labelled
+   20% changed power by -0.6 W and -0.1 W and cut verified work by 40 and 37 units a second: run 5's finding on two
+   more GPUs, and the reason H1.4 is read on time.
+
+**The same data with the verifier's own request added (post hoc: it describes these runs and decides nothing).**
+Finding 3 suggests one more verified feature for both curves: the seconds of each window for which the verifier asked
+for the GPU flat out. That is the `link-full` analysis, which amendment v0.7 declares as a comparison for every later
+run. Here it was chosen after these data were seen, on these data.
+
+| | registered analysis (signed) | `link-full` (post hoc) |
+| --- | --- | --- |
+| false alarms in 408 null blocks | 3 | 2 |
+| detection, 5% or more | 210/210 | 210/210 |
+| detection, 2% or more | 285/290 | 287/290 |
+| time bound covers the hidden seconds | 321/321 | 321/321 |
+| block spread of the busy-time residual, run 6 and run 7 | 0.69 s and 0.65 s | 0.48 s and 0.19 s |
+| closure gap | 5.62% | 3.16% |
+| slack-inflated gap | 12.3% | 9.8% |
+| outcome | FAIL | FAIL |
+
+One trial at a time it is not uniformly better: in run 6 the 2% level's constant class is 45/48, under that class's
+95%, and in run 7 the calibrated time bound, which is reported and decides nothing, covers 84.5%. Two other features
+were tried on these data and not adopted, and are named because they were tried: the seconds of load the verifier
+asked for in each window (level times duration), with which run 6's constant class at 5% fell to 34/36 and run 7's
+floor time bound covered 91.9%; and both features together, which behaved like the second.
+
+**Mock training run** (`drill.json`, GPU 0 after the trials): compliant. The provider, who sees only the energy meter,
+stopped the job when the energy drawn could have paid for the budget of 1e16 FLOP at the probe's energy floor; the job
+had by then logged 1.29e15 FLOP, 12.9% of the budget. The bound is conservative by a factor of about 8 on this GPU.
+
+## 7. Colab T4 run, 12 November 2026, 16:19Z to 21:16Z (plan-a-closure 0.8.0, commit 438fcbd): H1.3 fails by one block in each of two classes
+
+**What ran.** `closure tier0 --trial-profile medium` from [notebooks/tier0_colab.ipynb](../notebooks/tier0_colab.ipynb)
+on a free Colab T4 (`GPU-5389cace...`, driver 580.82.07, torch 2.14.1+cu130), inside Colab's virtual machine, NVML
+only, no independent meter: a shakedown. The second prospective test of amendment v0.6, the first run of the medium
+profile, and the first trial of that amendment with its clocks locked (at 870 MHz, by the rule of amendment v0.4).
+**Every step ran and exited 0, and the trial failed the detection rule.** Bundle as returned:
+[results/shakedown-2026-11-12-colab-t4-run8/](../results/shakedown-2026-11-12-colab-t4-run8/), sha256
+`3efade48adb610882a635fc18f7644b4fbba4b4a09800e43510d5d445911f569`.
+
+| step | result |
+| --- | --- |
+| unit tests | passed (340 passed, 1 skipped; 15.0 min) |
+| hw-selftest | passed: r2 = 0.933, idle 28.8 W, work at 25% / 100% load = 0.28 |
+| hw-probe | exit 0 with 10 stack variants (Colab allows clock and power-limit changes; fp8 is not on a T4): s_max = 10.8% (stack 9.1%, operand 10.8%); energy floor 2.03e-12 J/FLOP |
+| hw-state | passed: honest false alarms 6/2000 (0.3%), parked-block detection 1000/1000 |
+| hw-trial (medium) | ran 233 minutes, SM clocks locked at 870 MHz, seed 1773548153: false positives 0/204; closure gap 17.8%, slack-inflated 25.9% |
+| verify | passed |
+
+**The pre-registered rules, read on this trial.**
+
+| rule | result |
+| --- | --- |
+| H1.1 the threshold is conformal | holds |
+| H1.2 false alarms | holds: 0/204 (95% upper bound 1.5%) |
+| H1.3 primary: detection at 5% or more, each class at least 95% | **fails: constant 17/18 and dilute 17/18**; duty 9/9 holds; idle_gap had no block at 5% or more. 43/45 in all |
+| H1.3 stretch: detection at 2% or more | fails: constant 20/24, dilute 20/24, duty 17/18. 58/67 in all |
+| H1.4 the time bound covers the seconds the hidden load ran | holds: 73/73 |
+| closure gap; slack-inflated gap | 17.8%; 25.9% |
+| outcome | **FAIL** |
+
+The medium trial has 18 blocks at 5% or more in a class, so a single miss (94.4%) fails that class. Amendment v0.6
+expected the 2% level to fail at blocks this short (30 s), and it did; it did not expect the 5% level to fail. The
+calibrated energy bound, expected to cover under 95%, covered 100%. Calibration drift: +0.02 SD, spread 1.00x.
+
+**Why, read off the raw data (after the run; it describes and decides nothing).**
+
+1. *Two reference blocks set a threshold twice as high as the Kaggle ones.* The threshold is the largest of the 150
+   reference scores: 4.73. The next are 4.39 and then 1.73. No null audit block scored above 2.91, so there were no
+   false alarms; the two blocks missed at 5% scored 3.78 (constant, GPU flat out) and 2.78 (dilute, requested level
+   0.9), above both Kaggle thresholds (2.29 and 2.43) and under this one.
+2. *Both are blocks at full load, in which the GPU slowed while its power sat at the limit.* The clock rule of
+   amendment v0.4 locks the highest clock the probe saw hold with power within 95% of the limit. The probe measures at
+   requested levels up to 0.9. At that level, locked at 870 MHz, the GPU was busy 81.5% of the time and drew 64.9 W of
+   its 70 W; busy all the time it needs an estimated 72.4 W. So at full load the power limiter took over from the
+   lock: power sat at 69.5 W, a unit of work took 9.2 ms of busy time against 8.7 ms at every level up to 0.7, and the
+   rate of verified work moved between 99.7 and 112.7 units a second (1st and 99th percentile), with an hourly mean
+   that rose from 105.6 to 110.1 through the run. The rule chose a clock that does not hold where the trial needs it
+   most.
+3. *The curve misfits at the top of the load range*, as in runs 6 and 7: reference blocks with the GPU flat out
+   throughout scored +1.44 on average, against 0.27 for the others.
+
+**What changes, and what does not (amendment v0.7, made before any further run).** The clock the trial locks must
+hold flat out: the highest clock whose estimated flat-out power is at most 95% of the power limit, which on this run's
+probe is 645 MHz (64.9 W) instead of 870 MHz. The `link-full` analysis is declared as a comparison that decides
+nothing; on this run's data, post hoc, it gives 0 false alarms in 204, 45/45 at 5% or more with every decided class
+holding, 60/67 at 2% or more, a closure gap of 5.62% and a slack-inflated gap of 13.7%: FAIL on the slack. The
+registered analysis, its thresholds, the block counts and the outcome rule are unchanged: the trial failed H1.3 as
+registered and that is its result.
+
+**Mock training run** (`drill.json`): compliant, stopped by the provider at the budget's energy with 12.2% of the
+budget's FLOP logged.
+
+**What runs 6 to 8 show.** On three more T4s, with everything fixed beforehand: the amended analysis kept false
+alarms inside its rule on all three (3/408 and 0/204); on the two-GPU campaign it detected every one of 210 hidden
+loads at 5% of capacity or more and 285 of 290 at 2% or more, and its time bound covered every hidden block; on Colab
+it missed two of 45 at 5% or more, one in each of two classes, which fails the rule at that trial's size, in a trial
+whose clock lock did not hold at full load. On every GPU the outcome is FAIL, because the efficiency slack the probe
+measured (8.4 to 10.8%), weighted by the trials' load, adds 6 to 8% of capacity to the gap by itself, more than the 5%
+the outcome rule allows: no analysis changes that, and amendment v0.6 said so before the runs. Residency (T2) passed its registered thresholds on all three. None of it is evidence about H100s,
+independent metering or the registered thresholds. The next runs are a T4 run under amendment v0.7, to test the clock
+rule, and the registered trial on instrumented H100-class hardware.

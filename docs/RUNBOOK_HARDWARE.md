@@ -1,15 +1,20 @@
 # Runbook: running the trial on real hardware
 
-Everything below is **untested on a GPU** until you run it; `closure hw-selftest` is the first gate. The hardware request
-(tiers, configuration, questions for the operator) is in [HARDWARE_CONFIG.md](HARDWARE_CONFIG.md).
+Everything below has run only on Tesla T4s in cloud sessions ([DEVIATIONS.md](DEVIATIONS.md)); on H100-class hardware,
+with an independent meter, it is **untested** until you run it. `closure doctor` says in ten seconds which steps will
+run on a machine, and `closure hw-selftest` is the first gate. The hardware request (tiers, configuration, questions for
+the operator) is in [HARDWARE_CONFIG.md](HARDWARE_CONFIG.md).
 
 ## 0. Access
 
 | cluster | route | notes |
 | --- | --- | --- |
-| Amodo Side Channel Cloud | the sign-up form at https://sidechannel.cloud/ | free for open-source and non-profit work; opens in hardware waves |
+| Side Channel Cloud | the sign-up form at https://sidechannel.cloud/ | free for open-source and non-profit work; opens in hardware waves. The page does not say who operates it |
 | Verifiable Compute Foundation (operated by Lucid) | the Research Access Program interest form on https://verifiablecompute.ai/ | free access for verification research; beta at the time of writing |
 | Compute Verification Project | the "Get in touch" link under its entry on the Get Involved page of the Verification Plan | runs a competition against its inference-versus-training protocol |
+
+Routes and terms are as each page gave them in early November 2026; check the page before relying on a row
+(verifiablecompute.ai was not re-read for 0.9.0).
 
 Clusters are normally scheduled (for example with Slurm): ask for an exclusive, whole-node allocation for the full duration,
 and for the permissions listed in HARDWARE_CONFIG.md section B.

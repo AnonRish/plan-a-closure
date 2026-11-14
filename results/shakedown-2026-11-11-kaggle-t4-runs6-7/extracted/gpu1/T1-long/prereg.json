@@ -1,0 +1,98 @@
+{
+  "analysis": "closure.trial.analyze_link (link.py: calibrated curves, studentised scores, one conformal threshold on the larger channel score at alpha)",
+  "assumptions": [
+    "A1 additivity: hidden work adds energy/busy-time on top of verified work (no free lunch from sharing).",
+    "A2 exchangeability: calibration and audit blocks come from the same regime mix (same stack, clocks, cooling, firmware).",
+    "A3 approximate normality of block residual sums, checked by the Jarque-Bera diagnostic stored with the calibration.",
+    "A4 no efficiency slack: the adversary is no more energy-efficient than the calibration reference (the 'slack' class tests this and is expected to evade).",
+    "A5 the verified-work features are trustworthy (they come from the tap/recompute evidence, not from the prover).",
+    "A6 the power meter is independent of the prover (DC-bus instrument); NVML-only runs are labelled as spoofable."
+  ],
+  "cfg": {
+    "L": 60,
+    "alpha": 0.01,
+    "analysis": "link",
+    "beta": 0.05,
+    "calibration": "interleaved",
+    "campaign": {
+      "id": "kaggle-20261111-195848",
+      "index": 2,
+      "size": 2
+    },
+    "classes": [
+      "constant",
+      "idle_gap",
+      "duty",
+      "dilute"
+    ],
+    "dt": 1.0,
+    "e_floor_j_per_flop": 2.137889984471957e-12,
+    "e_floor_source": "measured by hw-probe (HARDWARE-PROBE (NVML energy counter; spoofable)), sha256 5db96ed13113204c",
+    "intensities": [
+      0.02,
+      0.05,
+      0.1,
+      0.2
+    ],
+    "n_audit_blocks": 396,
+    "n_gpu": 1,
+    "n_per_cell": 12,
+    "n_ref_blocks": 144,
+    "n_regimes": 1,
+    "p_hidden": 0.5,
+    "p_max_w": 70.0,
+    "probe_sha256": "5db96ed13113204c46393b1cb8c0333a4b28fd59c82e6689f37f71d6b345a766",
+    "schedule": "balanced",
+    "seed": 1231193211,
+    "slack_s_max": 0.08389609877639059,
+    "slack_source": "measured by hw-probe (HARDWARE-PROBE (NVML energy counter; spoofable)), sha256 5db96ed13113204c",
+    "status": "HARDWARE (NVML energy counter; spoofable)",
+    "warmup_blocks": 5,
+    "workload": {
+      "auto_sized": false,
+      "budget_s": 0.020000000000000004,
+      "dim": 4096,
+      "dtype": "float16",
+      "fits_slot": true,
+      "hidden_solo": {
+        "duty": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4,
+          0.8
+        ],
+        "idle_w_per_gpu": [
+          32.69759479740138,
+          32.786869005852395,
+          32.93039463335367,
+          33.15262630673276,
+          33.24938658422751,
+          32.882505032588014
+        ],
+        "used": true,
+        "watts_per_gpu": [
+          0.611095762025208,
+          1.7614806878465785,
+          3.3541909112156887,
+          7.375941870965818,
+          17.596921596723533,
+          33.11636507040136
+        ]
+      },
+      "idle_w_measured": 32.622725113520055,
+      "locked_sm_mhz": null,
+      "mem_elems": 268435456,
+      "slot_s": 0.1,
+      "unit_s": 0.00914129500006311
+    }
+  },
+  "code": {
+    "git_commit": "438fcbd41c1ca4c70d915cbd2a99d37b4ed2507c",
+    "package": "0.8.0",
+    "src_sha256": "d11575c9e125159337285d3a2c54e4ef21750ee8a4c5fbae6d36e412706c70b5"
+  },
+  "order_commitment": "617d2355930924e5257333a58ed0bcce7f133fbf9c94a1b1395516057e97aacc",
+  "schedule_commitment": "f40801910b20e0a51de43775fec8d2a745abc8c92c983e46587a14f82ad9a749"
+}

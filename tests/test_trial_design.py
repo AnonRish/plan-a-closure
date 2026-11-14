@@ -73,9 +73,12 @@ def test_medium_profile_is_the_smallest_that_can_decide_the_rules_and_fits_a_col
     s = make_schedule(cfg, np.random.default_rng(1))
     assert s.count(None) == 204 >= 200                                               # H1.2 needs 200 null blocks
     cells = Counter((x["kind"], x["frac"]) for x in s if x)
-    assert set(cells.values()) == {6} and len(cells) == 16
+    assert set(cells.values()) == {7} and len(cells) == 16
     for kind in cfg.classes:                                                         # H1.3 primary, per class: 8 or more
-        assert sum(n for (k, f), n in cells.items() if k == kind and f >= 0.05) == 18
+        at5 = sum(n for (k, f), n in cells.items() if k == kind and f >= 0.05)
+        # amendment v0.7 (d): 21, so that one miss leaves 20/21 = 95.2% and does not by itself fail the class. With
+        # the 18 of 0.8.0 the rule allowed no miss at all (run 8: 17/18 in two classes)
+        assert at5 == 21 and (at5 - 1) / at5 >= 0.95 > 17 / 18
     blocks = cfg.warmup_blocks + cfg.n_ref_blocks + cfg.n_audit_blocks
     assert blocks * cfg.L * cfg.dt / 3600 < 4.0 and cfg.n_ref_blocks >= 99
 

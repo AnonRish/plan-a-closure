@@ -8,13 +8,14 @@ import json
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 from closure.hw import selftest as ST
 from closure.hw.workloads import (MIN_DIM, characterise_hidden, duty_for_watts, measure_idle_w, native_half,
                                   size_unit)
 from pathlib import Path
 
-from closure.tier0 import _trial_clock_args, _unit_args
+from closure.tier0 import _trial_clock_args, _unit_args, trial_clock
 
 
 def test_size_unit_halves_until_one_unit_fits_the_budget():
@@ -114,15 +115,49 @@ def test_tier0_passes_the_selftest_unit_on_to_the_probe_and_the_trial():
 RUN3_PROBE = Path(__file__).resolve().parents[1] / "results" / "shakedown-2026-11-08-colab-t4-run3" / "extracted" / "probe.json"
 
 
-def test_tier0_locks_the_trial_at_the_highest_clock_the_t4_held_under_its_cap(tmp_path):
-    # Run 3's probe: locks at 1575 and 1335 MHz were pulled down to 1125 and 975 MHz by the 70 W cap at full load;
-    # 1110 MHz held at 65.2 W. The trial then calibrates and audits at one clock.
-    assert _trial_clock_args(RUN3_PROBE) == ["--lock-clock-mhz", "1110"]
+RUN8_PROBE = Path(__file__).resolve().parents[1] / "results" / "shakedown-2026-11-12-colab-t4-run8" / "extracted" / "probe.json"
+
+
+def test_tier0_locks_the_trial_at_the_highest_clock_that_holds_with_the_gpu_flat_out(tmp_path):
+    # Amendment v0.7 (a). Run 3's probe: locks at 1575 and 1335 MHz were pulled down by the 70 W cap at the probe's top
+    # level (0.9); 1110 and 870 MHz held there, but flat out they would need 73.5 and 70.3 W; 645 MHz needs 62.7 W.
+    t = trial_clock(json.loads(RUN3_PROBE.read_text()))
+    assert t["mhz"] == 645.0 and t["mhz_under_v0_4"] == 1110.0 and t["power_limit_w"] == 70.0
+    by = {int(c["mhz"]): c for c in t["candidates"]}
+    assert not by[1575]["held"] and not by[1335]["held"] and by[1110]["held"] and by[870]["held"]
+    assert by[1110]["flat_out_power_w"] == pytest.approx(73.5, abs=0.1) and not by[1110]["ok"]
+    assert by[645]["flat_out_share_of_limit"] == pytest.approx(0.895, abs=0.002) and by[645]["ok"]
+    assert not by[405]["kept_up"] and not by[405]["ok"]                      # too slow to do the probe's top level
+    assert _trial_clock_args(RUN3_PROBE) == ["--lock-clock-mhz", "645"]
     pr = json.loads(RUN3_PROBE.read_text())
     pr["status"] = "REHEARSAL"
     (tmp_path / "p.json").write_text(json.dumps(pr))
     assert _trial_clock_args(tmp_path / "p.json") == []                      # never on a rehearsal or mock probe
     assert _trial_clock_args(tmp_path / "missing.json") == []
+
+
+def test_run_8_locked_a_clock_that_could_not_hold_flat_out_and_v0_7_would_not_have():
+    # Run 8 (docs/DEVIATIONS.md section 7) locked 870 MHz under the rule then in force: it held at the probe's top
+    # level with 64.9 W, 92.7% of the limit. Flat out it needs an estimated 72.4 W of a 70 W limit, and the trial's
+    # level 1 sat on the limit. Under v0.7 the lock is 645 MHz (64.9 W flat out).
+    t = trial_clock(json.loads(RUN8_PROBE.read_text()))
+    by = {int(c["mhz"]): c for c in t["candidates"]}
+    assert t["mhz_under_v0_4"] == 870.0 and t["mhz"] == 645.0
+    assert by[870]["power_at_top_level_w"] == pytest.approx(64.9, abs=0.05)
+    assert by[870]["flat_out_power_w"] == pytest.approx(72.4, abs=0.1) and by[870]["flat_out_share_of_limit"] > 1.0
+    assert by[645]["flat_out_power_w"] == pytest.approx(64.9, abs=0.1)
+
+
+def test_a_probe_without_a_busy_share_falls_back_to_the_power_at_its_top_level():
+    pr = {"status": "HARDWARE-PROBE (NVML energy counter; spoofable)", "rig": {"start_power_limit_w": 100.0},
+          "variants": [{"kind": "clock_cap", "allowed": True, "value": f, "levels": [
+              {"level": 0.0, "power_w_mean": 30.0, "sm_mhz": f, "feasible": True},
+              {"level": 0.9, "power_w_mean": w, "sm_mhz": f, "feasible": True}]} for f, w in ((1000.0, 97.0), (800.0, 90.0))]}
+    t = trial_clock(pr)
+    assert t["mhz"] == 800.0 and [c["flat_out_power_w"] for c in t["candidates"]] == [97.0, 90.0]
+    pr["rig"] = {}                                                           # no power limit known: held and kept up
+    assert trial_clock(pr)["mhz"] == 1000.0
+    assert trial_clock({})["mhz"] is None and trial_clock({"status": "MOCK"})["candidates"] == []
 
 
 class _SoloRig:

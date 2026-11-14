@@ -103,9 +103,12 @@ class Curve:
     knots: np.ndarray
     coef: np.ndarray              # c0, then one non-negative slope per segment
     seg_var: np.ndarray           # window residual variance by segment
+    n_work: int | None = None     # how many of X's columns after the duration are work done (None: all of them). The
+                                  # rest say what the verifier asked for (trial.py, the link-full analysis): they
+                                  # place a window on the curve and are left out of the floor, which is about work.
 
     @staticmethod
-    def fit(X, y, K: int = K_SEGMENTS) -> "Curve":
+    def fit(X, y, K: int = K_SEGMENTS, n_work: int | None = None) -> "Curve":
         X, y = np.asarray(X, float), np.asarray(y, float)
         theta1 = nnls_exact(X, y)
         dur, w = X[:, 0], X[:, 1:] @ theta1[1:]
@@ -126,7 +129,7 @@ class Curve:
             coef = nnls_exact(np.vstack([Phi, math.sqrt(lam) * D]), np.concatenate([y, np.zeros(n_slopes - 1)]))
         else:
             coef = nnls_exact(Phi, y)
-        c = Curve(theta1, knots, coef, np.ones(len(knots) + 1))
+        c = Curve(theta1, knots, coef, np.ones(len(knots) + 1), n_work)
         r = y - c.predict(X)
         seg, pooled = c.segment(X), float(np.mean(r * r)) if len(r) else 1.0
         c.seg_var = np.array([float(np.mean(r[seg == j] ** 2)) if (seg == j).sum() >= MIN_SEG_WINDOWS else pooled
@@ -160,6 +163,8 @@ class Curve:
         usually costs at that load; this says what it must cost at least, so an amount above it is unexplained even
         if hidden work moved the GPU to a more efficient operating point (assumption A1 not needed)."""
         dur, w = self.index(X)
+        if self.n_work is not None:                 # the work done only: what was asked for is not work
+            w = np.asarray(X, float)[:, 1:1 + self.n_work] @ self.theta1[1:1 + self.n_work]
         n = (len(w) // L) * L
         slope = 0.0
         if len(self.knots):
@@ -181,8 +186,11 @@ class Curve:
         return float(np.max(1.0 - chord[1:] / np.maximum(f[1:], 1e-300)))
 
     def to_dict(self) -> dict:
-        return {"theta1": self.theta1.tolist(), "knots": self.knots.tolist(), "coef": self.coef.tolist(),
-                "segment_variance": self.seg_var.tolist()}
+        d = {"theta1": self.theta1.tolist(), "knots": self.knots.tolist(), "coef": self.coef.tolist(),
+             "segment_variance": self.seg_var.tolist()}
+        if self.n_work is not None:
+            d["n_work"] = int(self.n_work)
+        return d
 
 
 @dataclass
@@ -230,8 +238,9 @@ def _rho1(v) -> float:
 
 
 def calibrate(X, ys: dict, L: int, folds: int = 5, seed: int = 0, exchangeable_by_design: bool = False,
-              K: int = K_SEGMENTS) -> LinkCalibration:
-    """ys: {"energy": per-window joules, "busy": per-window busy seconds} for the reference windows X."""
+              K: int = K_SEGMENTS, n_work: int | None = None) -> LinkCalibration:
+    """ys: {"energy": per-window joules, "busy": per-window busy seconds} for the reference windows X. `n_work`: how
+    many of X's columns after the duration are work done; None means all of them (see Curve)."""
     X = np.asarray(X, float)
     B = len(X) // L
     if B < 2 * folds:
@@ -245,11 +254,11 @@ def calibrate(X, ys: dict, L: int, folds: int = 5, seed: int = 0, exchangeable_b
         S, G = np.empty(B), np.empty(B)
         for f in range(folds):
             tr, te = fold != f, fold == f
-            c = Curve.fit(Xb[tr].reshape(-1, Xb.shape[2]), yb[tr].ravel(), K)
+            c = Curve.fit(Xb[tr].reshape(-1, Xb.shape[2]), yb[tr].ravel(), K, n_work)
             S[te], G[te], _ = c.blocks(Xb[te].reshape(-1, Xb.shape[2]), yb[te].ravel(), L)
         z = S / G
         sd = float(np.std(z, ddof=1))
-        chans[name] = Channel(name, unit, Curve.fit(Xb.reshape(-1, Xb.shape[2]), yb.ravel(), K), S, G,
+        chans[name] = Channel(name, unit, Curve.fit(Xb.reshape(-1, Xb.shape[2]), yb.ravel(), K, n_work), S, G,
                               sd if sd > 0 else 1.0, _rho1(z), float(jarque_bera_p(z)))
     e, b = chans["energy"], chans["busy"]
     score = np.maximum(e.z / e.scale, b.z / b.scale)

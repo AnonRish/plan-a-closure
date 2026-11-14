@@ -1,0 +1,1207 @@
+{
+  "trials": {
+    "gpu0": {
+      "bundle": "gpu0-tier0_bundle.tar.gz",
+      "bundle_sha256": "b0d99770ef90d069555a4acab85d4d08d9db1d5b431f3fd6dc105ca0ba4345d3",
+      "trial": "T1-long",
+      "code": {
+        "git_commit": "438fcbd41c1ca4c70d915cbd2a99d37b4ed2507c",
+        "package": "0.8.0",
+        "src_sha256": "d11575c9e125159337285d3a2c54e4ef21750ee8a4c5fbae6d36e412706c70b5"
+      },
+      "seed": 1886737444,
+      "campaign": {
+        "id": "kaggle-20261111-195848",
+        "index": 1,
+        "size": 2
+      },
+      "registered_analysis": "link",
+      "verify": "passes",
+      "registered_analysis_from_the_raw_data": {
+        "signed_keys_missing_here": [],
+        "values_that_are_not_numbers_and_differ": [],
+        "largest_relative_difference_in_any_number": 1.3336497777914782e-12,
+        "decision_rules": {
+          "scope": "shakedown reading: NVML only, so assumption A6 does not hold; what these data would decide, not a Plan A claim",
+          "H1.1": true,
+          "threshold_method": [
+            "conformal"
+          ],
+          "H1.2": {
+            "holds": true,
+            "k": 3,
+            "n": 204,
+            "cp95_upper": 0.0375673127055034
+          },
+          "H1.3_primary_5_percent": {
+            "constant": {
+              "k": 36,
+              "n": 36,
+              "holds": true,
+              "cp95_lower": 0.9201534904801054
+            },
+            "dilute": {
+              "k": 36,
+              "n": 36,
+              "holds": true,
+              "cp95_lower": 0.9201534904801054
+            },
+            "duty": {
+              "k": 24,
+              "n": 24,
+              "holds": true,
+              "cp95_lower": 0.8826538438450502
+            },
+            "idle_gap": {
+              "k": 9,
+              "n": 9,
+              "holds": true,
+              "cp95_lower": 0.7168711644368821
+            },
+            "pooled_nonslack": {
+              "k": 105,
+              "n": 105,
+              "holds": true,
+              "cp95_lower": 0.9718723759963259
+            }
+          },
+          "H1.3_stretch_2_percent": {
+            "constant": {
+              "k": 46,
+              "n": 48,
+              "holds": true,
+              "cp95_lower": 0.8745855955255157
+            },
+            "dilute": {
+              "k": 48,
+              "n": 48,
+              "holds": true,
+              "cp95_lower": 0.9394965906511015
+            },
+            "duty": {
+              "k": 36,
+              "n": 36,
+              "holds": true,
+              "cp95_lower": 0.9201534904801054
+            },
+            "idle_gap": {
+              "k": 13,
+              "n": 13,
+              "holds": true,
+              "cp95_lower": 0.7941833348134484
+            },
+            "pooled_nonslack": {
+              "k": 143,
+              "n": 145,
+              "holds": true,
+              "cp95_lower": 0.9572194550934388
+            }
+          },
+          "H1.4": {
+            "holds": true,
+            "basis": "time",
+            "floor_time_bound_coverage": 1.0,
+            "hidden_blocks": 160,
+            "reported_only": {
+              "calibrated_time_bound_coverage": 1.0,
+              "calibrated_energy_bound_coverage": 0.96875,
+              "floor_energy_bound_coverage": 1.0
+            }
+          },
+          "closure_gap_fraction": 0.056234132519034905,
+          "slack_inflated_gap_fraction": 0.12274020469538487,
+          "outcome": "FAIL",
+          "why": "slack-inflated gap 12.3% is above 5%"
+        }
+      },
+      "raw_data": {
+        "what": "diagnostic, post hoc: read off raw.npz after the run; it describes the run and decides nothing",
+        "thresholds": {
+          "energy": 10.216421359494692,
+          "busy": 9.514887990425192,
+          "combined": 2.2872774618601106
+        },
+        "threshold_is": "the largest combined score among the reference blocks",
+        "highest_reference_scores": [
+          {
+            "reference_block": 2,
+            "score": 2.2872774618601106,
+            "energy_score": 2.2872774618601106,
+            "busy_score": 0.17947817745502204,
+            "share_of_windows_at_level_1": 0.0
+          },
+          {
+            "reference_block": 97,
+            "score": 2.063695441003971,
+            "energy_score": 0.0473155240705254,
+            "busy_score": 2.063695441003971,
+            "share_of_windows_at_level_1": 1.0
+          },
+          {
+            "reference_block": 113,
+            "score": 2.0578148395803986,
+            "energy_score": 1.1628012701574713,
+            "busy_score": 2.0578148395803986,
+            "share_of_windows_at_level_1": 0.36666666666666664
+          },
+          {
+            "reference_block": 102,
+            "score": 1.9869616129964456,
+            "energy_score": 0.25443232544817235,
+            "busy_score": 1.9869616129964456,
+            "share_of_windows_at_level_1": 1.0
+          },
+          {
+            "reference_block": 118,
+            "score": 1.9617411829351707,
+            "energy_score": 1.9617411829351707,
+            "busy_score": 0.2843345199130711,
+            "share_of_windows_at_level_1": 0.0
+          }
+        ],
+        "false_alarms": [
+          {
+            "audit_block": 103,
+            "score": 2.332388430510412,
+            "energy_score": 1.0154297473095708,
+            "busy_score": 2.332388430510412,
+            "share_of_windows_at_level_1": 0.5666666666666667,
+            "share_of_windows_at_level_0.9_or_1": 0.5666666666666667
+          },
+          {
+            "audit_block": 233,
+            "score": 2.395279728876732,
+            "energy_score": 0.26611557137143904,
+            "busy_score": 2.395279728876732,
+            "share_of_windows_at_level_1": 1.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0
+          },
+          {
+            "audit_block": 359,
+            "score": 2.5945787503917384,
+            "energy_score": 0.4264558107084133,
+            "busy_score": 2.5945787503917384,
+            "share_of_windows_at_level_1": 1.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0
+          }
+        ],
+        "highest_null_audit_scores": [
+          2.5945787503917384,
+          2.395279728876732,
+          2.332388430510412,
+          2.2828564916771144,
+          2.2435850059547353
+        ],
+        "missed_hidden_blocks": [
+          {
+            "audit_block": 95,
+            "score": 0.9368351996595459,
+            "energy_score": -1.786831496763924,
+            "busy_score": 0.9368351996595459,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 0.0,
+            "kind": "idle_gap",
+            "label": 0.02,
+            "hidden_fraction": 0.0026709576447804767,
+            "hidden_seconds": 0.316414134007573
+          },
+          {
+            "audit_block": 101,
+            "score": 2.164603932979505,
+            "energy_score": 1.4963005487953362,
+            "busy_score": 2.164603932979505,
+            "share_of_windows_at_level_1": 0.38333333333333336,
+            "share_of_windows_at_level_0.9_or_1": 0.38333333333333336,
+            "kind": "constant",
+            "label": 0.02,
+            "hidden_fraction": 0.020040160099665326,
+            "hidden_seconds": 2.36373124002057
+          },
+          {
+            "audit_block": 168,
+            "score": 0.5836448683281286,
+            "energy_score": 0.5836448683281286,
+            "busy_score": -0.2552594468115055,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 0.0,
+            "kind": "idle_gap",
+            "label": 0.02,
+            "hidden_fraction": 0.00901246174176534,
+            "hidden_seconds": 1.0620147049849038
+          },
+          {
+            "audit_block": 173,
+            "score": 1.3804640506335972,
+            "energy_score": 0.8922933069535209,
+            "busy_score": 1.3804640506335972,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 0.2,
+            "kind": "constant",
+            "label": 0.02,
+            "hidden_fraction": 0.020042950709660848,
+            "hidden_seconds": 2.372877068009984
+          }
+        ],
+        "gpu_flat_out_every_window_at_level_1": {
+          "reference_blocks": 9,
+          "reference_mean_score": 1.5718701217476954,
+          "reference_highest_score": 2.063695441003971,
+          "null_audit_blocks": 18,
+          "false_alarms": 2,
+          "null_audit_highest_score": 2.5945787503917384,
+          "hidden_blocks_at_5_percent_or_more": 6,
+          "missed_at_5_percent_or_more": 0,
+          "hidden_blocks_under_5_percent": 4,
+          "missed_under_5_percent": 0
+        },
+        "every_other_block": {
+          "reference_blocks": 135,
+          "reference_mean_score": 0.3710216373467716,
+          "reference_highest_score": 2.2872774618601106,
+          "null_audit_blocks": 186,
+          "false_alarms": 1,
+          "null_audit_highest_score": 2.332388430510412,
+          "hidden_blocks_at_5_percent_or_more": 99,
+          "missed_at_5_percent_or_more": 0,
+          "hidden_blocks_under_5_percent": 51,
+          "missed_under_5_percent": 4
+        },
+        "detection_by_hidden_fraction_bin": [
+          {
+            "hidden_fraction_from": 0.0017782794100389228,
+            "to": 0.0031622776601683794,
+            "detected": 0,
+            "blocks": 1
+          },
+          {
+            "hidden_fraction_from": 0.005623413251903491,
+            "to": 0.01,
+            "detected": 1,
+            "blocks": 2
+          },
+          {
+            "hidden_fraction_from": 0.01,
+            "to": 0.01778279410038923,
+            "detected": 12,
+            "blocks": 12
+          },
+          {
+            "hidden_fraction_from": 0.01778279410038923,
+            "to": 0.03162277660168379,
+            "detected": 37,
+            "blocks": 39
+          },
+          {
+            "hidden_fraction_from": 0.03162277660168379,
+            "to": 0.056234132519034905,
+            "detected": 39,
+            "blocks": 39
+          },
+          {
+            "hidden_fraction_from": 0.056234132519034905,
+            "to": 0.1,
+            "detected": 2,
+            "blocks": 2
+          },
+          {
+            "hidden_fraction_from": 0.1,
+            "to": 0.1778279410038923,
+            "detected": 39,
+            "blocks": 39
+          },
+          {
+            "hidden_fraction_from": 0.1778279410038923,
+            "to": 0.31622776601683794,
+            "detected": 26,
+            "blocks": 26
+          }
+        ],
+        "a_flat_out_gpu": {
+          "windows": 3520,
+          "watts_mean": 66.46981139754465,
+          "busy_share_mean": 0.9889036931818183,
+          "units_per_s_percentiles_1_50_99": [
+            98.83913930107894,
+            104.67815174087394,
+            115.76367188114452
+          ],
+          "units_per_s_by_hour": [
+            {
+              "hour": 0,
+              "windows": 149,
+              "units_per_s": 108.60502269106175
+            },
+            {
+              "hour": 1,
+              "windows": 417,
+              "units_per_s": 105.61470302416613
+            },
+            {
+              "hour": 2,
+              "windows": 173,
+              "units_per_s": 107.09150912172936
+            },
+            {
+              "hour": 3,
+              "windows": 193,
+              "units_per_s": 108.54863053076315
+            },
+            {
+              "hour": 4,
+              "windows": 575,
+              "units_per_s": 105.20486529000986
+            },
+            {
+              "hour": 5,
+              "windows": 367,
+              "units_per_s": 103.35284552000364
+            },
+            {
+              "hour": 6,
+              "windows": 813,
+              "units_per_s": 104.85727620150485
+            },
+            {
+              "hour": 7,
+              "windows": 499,
+              "units_per_s": 105.71735020902324
+            },
+            {
+              "hour": 8,
+              "windows": 334,
+              "units_per_s": 104.84682451639935
+            }
+          ]
+        },
+        "trial_clock": {
+          "locked_in_this_run_mhz": null,
+          "estimated_flat_out_power_at_that_lock_w": null,
+          "power_limit_w": 70.0,
+          "amendment_v0_7_would_lock_mhz": null,
+          "estimated_flat_out_power_at_that_clock_w": null
+        }
+      },
+      "link_full": {
+        "reading": "POST HOC: this analysis was written after this run's data were seen; decides nothing",
+        "status": "HARDWARE (NVML energy counter; spoofable) | POST HOC: the 'link-full' analysis, applied after the data were seen (pre-registered: 'link')",
+        "block_residual_sd": {
+          "busy": 0.4769015542236955,
+          "energy": 62.82395475983642
+        },
+        "block_residual_sd_registered": {
+          "busy": 0.6875038996444722,
+          "energy": 62.82395475983642
+        },
+        "threshold": 2.2872774618601106,
+        "decision_rules": {
+          "scope": "post hoc reading: this analysis was chosen after these data were seen, so it describes them and decides nothing",
+          "H1.1": true,
+          "threshold_method": [
+            "conformal"
+          ],
+          "H1.2": {
+            "holds": true,
+            "k": 0,
+            "n": 204,
+            "cp95_upper": 0.014577663934354668
+          },
+          "H1.3_primary_5_percent": {
+            "constant": {
+              "k": 36,
+              "n": 36,
+              "holds": true,
+              "cp95_lower": 0.9201534904801054
+            },
+            "dilute": {
+              "k": 36,
+              "n": 36,
+              "holds": true,
+              "cp95_lower": 0.9201534904801054
+            },
+            "duty": {
+              "k": 24,
+              "n": 24,
+              "holds": true,
+              "cp95_lower": 0.8826538438450502
+            },
+            "idle_gap": {
+              "k": 9,
+              "n": 9,
+              "holds": true,
+              "cp95_lower": 0.7168711644368821
+            },
+            "pooled_nonslack": {
+              "k": 105,
+              "n": 105,
+              "holds": true,
+              "cp95_lower": 0.9718723759963259
+            }
+          },
+          "H1.3_stretch_2_percent": {
+            "constant": {
+              "k": 45,
+              "n": 48,
+              "holds": false,
+              "cp95_lower": 0.8463110011266579
+            },
+            "dilute": {
+              "k": 48,
+              "n": 48,
+              "holds": true,
+              "cp95_lower": 0.9394965906511015
+            },
+            "duty": {
+              "k": 36,
+              "n": 36,
+              "holds": true,
+              "cp95_lower": 0.9201534904801054
+            },
+            "idle_gap": {
+              "k": 13,
+              "n": 13,
+              "holds": true,
+              "cp95_lower": 0.7941833348134484
+            },
+            "pooled_nonslack": {
+              "k": 142,
+              "n": 145,
+              "holds": true,
+              "cp95_lower": 0.9473973996515967
+            }
+          },
+          "H1.4": {
+            "holds": true,
+            "basis": "time",
+            "floor_time_bound_coverage": 1.0,
+            "hidden_blocks": 160,
+            "reported_only": {
+              "calibrated_time_bound_coverage": 1.0,
+              "calibrated_energy_bound_coverage": 0.96875,
+              "floor_energy_bound_coverage": 1.0
+            }
+          },
+          "closure_gap_fraction": 0.056234132519034905,
+          "slack_inflated_gap_fraction": 0.12274020469538487,
+          "outcome": "FAIL",
+          "why": "slack-inflated gap 12.3% is above 5%"
+        }
+      }
+    },
+    "gpu1": {
+      "bundle": "gpu1-tier0_bundle.tar.gz",
+      "bundle_sha256": "9a136d861ea55ee710a7a93b0249762f70fe1661feeebe9c1ced04e4f96cef05",
+      "trial": "T1-long",
+      "code": {
+        "git_commit": "438fcbd41c1ca4c70d915cbd2a99d37b4ed2507c",
+        "package": "0.8.0",
+        "src_sha256": "d11575c9e125159337285d3a2c54e4ef21750ee8a4c5fbae6d36e412706c70b5"
+      },
+      "seed": 1231193211,
+      "campaign": {
+        "id": "kaggle-20261111-195848",
+        "index": 2,
+        "size": 2
+      },
+      "registered_analysis": "link",
+      "verify": "passes",
+      "registered_analysis_from_the_raw_data": {
+        "signed_keys_missing_here": [],
+        "values_that_are_not_numbers_and_differ": [],
+        "largest_relative_difference_in_any_number": 5.012919376698398e-12,
+        "decision_rules": {
+          "scope": "shakedown reading: NVML only, so assumption A6 does not hold; what these data would decide, not a Plan A claim",
+          "H1.1": true,
+          "threshold_method": [
+            "conformal"
+          ],
+          "H1.2": {
+            "holds": true,
+            "k": 0,
+            "n": 204,
+            "cp95_upper": 0.014577663934354668
+          },
+          "H1.3_primary_5_percent": {
+            "constant": {
+              "k": 36,
+              "n": 36,
+              "holds": true,
+              "cp95_lower": 0.9201534904801054
+            },
+            "dilute": {
+              "k": 36,
+              "n": 36,
+              "holds": true,
+              "cp95_lower": 0.9201534904801054
+            },
+            "duty": {
+              "k": 24,
+              "n": 24,
+              "holds": true,
+              "cp95_lower": 0.8826538438450502
+            },
+            "idle_gap": {
+              "k": 9,
+              "n": 9,
+              "holds": true,
+              "cp95_lower": 0.7168711644368821
+            },
+            "pooled_nonslack": {
+              "k": 105,
+              "n": 105,
+              "holds": true,
+              "cp95_lower": 0.9718723759963259
+            }
+          },
+          "H1.3_stretch_2_percent": {
+            "constant": {
+              "k": 46,
+              "n": 48,
+              "holds": true,
+              "cp95_lower": 0.8745855955255157
+            },
+            "dilute": {
+              "k": 47,
+              "n": 48,
+              "holds": true,
+              "cp95_lower": 0.9049413753758602
+            },
+            "duty": {
+              "k": 36,
+              "n": 36,
+              "holds": true,
+              "cp95_lower": 0.9201534904801054
+            },
+            "idle_gap": {
+              "k": 13,
+              "n": 13,
+              "holds": true,
+              "cp95_lower": 0.7941833348134484
+            },
+            "pooled_nonslack": {
+              "k": 142,
+              "n": 145,
+              "holds": true,
+              "cp95_lower": 0.9473973996515967
+            }
+          },
+          "H1.4": {
+            "holds": true,
+            "basis": "time",
+            "floor_time_bound_coverage": 1.0,
+            "hidden_blocks": 161,
+            "reported_only": {
+              "calibrated_time_bound_coverage": 0.9813664596273292,
+              "calibrated_energy_bound_coverage": 0.9813664596273292,
+              "floor_energy_bound_coverage": 1.0
+            }
+          },
+          "closure_gap_fraction": 0.056234132519034905,
+          "slack_inflated_gap_fraction": 0.11727462058853164,
+          "outcome": "FAIL",
+          "why": "slack-inflated gap 11.7% is above 5%"
+        }
+      },
+      "raw_data": {
+        "what": "diagnostic, post hoc: read off raw.npz after the run; it describes the run and decides nothing",
+        "thresholds": {
+          "energy": 10.703170757669014,
+          "busy": 7.6237716909151105,
+          "combined": 2.4331918561863137
+        },
+        "threshold_is": "the largest combined score among the reference blocks",
+        "highest_reference_scores": [
+          {
+            "reference_block": 130,
+            "score": 2.4331918561863137,
+            "energy_score": 2.4331918561863137,
+            "busy_score": 0.1784742004826141,
+            "share_of_windows_at_level_1": 0.0
+          },
+          {
+            "reference_block": 36,
+            "score": 2.246580374089948,
+            "energy_score": 2.246580374089948,
+            "busy_score": 0.30162872812877545,
+            "share_of_windows_at_level_1": 0.0
+          },
+          {
+            "reference_block": 111,
+            "score": 1.9419579481806686,
+            "energy_score": 0.3338337224984667,
+            "busy_score": 1.9419579481806686,
+            "share_of_windows_at_level_1": 1.0
+          },
+          {
+            "reference_block": 98,
+            "score": 1.9308892103274644,
+            "energy_score": 0.4240247188732753,
+            "busy_score": 1.9308892103274644,
+            "share_of_windows_at_level_1": 0.8833333333333333
+          },
+          {
+            "reference_block": 105,
+            "score": 1.771420480140423,
+            "energy_score": 0.3597869170771266,
+            "busy_score": 1.771420480140423,
+            "share_of_windows_at_level_1": 1.0
+          }
+        ],
+        "false_alarms": [],
+        "highest_null_audit_scores": [
+          1.989219674194097,
+          1.8154982303201612,
+          1.806143784140542,
+          1.7481381998321395,
+          1.7279566527902657
+        ],
+        "missed_hidden_blocks": [
+          {
+            "audit_block": 31,
+            "score": 1.9739654720692559,
+            "energy_score": 0.49497352595007926,
+            "busy_score": 1.9739654720692559,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 0.0,
+            "kind": "duty",
+            "label": 0.02,
+            "hidden_fraction": 0.010020523786544801,
+            "hidden_seconds": 1.2408698519984682
+          },
+          {
+            "audit_block": 81,
+            "score": 0.8917943760924917,
+            "energy_score": 0.7829851393799476,
+            "busy_score": 0.8917943760924917,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 0.75,
+            "kind": "constant",
+            "label": 0.02,
+            "hidden_fraction": 0.02004062541325887,
+            "hidden_seconds": 2.455177015022855
+          },
+          {
+            "audit_block": 108,
+            "score": -0.01678472198278739,
+            "energy_score": -0.5057022700337005,
+            "busy_score": -0.01678472198278739,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "duty",
+            "label": 0.02,
+            "hidden_fraction": 0.01002117625872294,
+            "hidden_seconds": 1.2383002869937627
+          },
+          {
+            "audit_block": 132,
+            "score": 0.7851517826470082,
+            "energy_score": 0.7334537620389955,
+            "busy_score": 0.7851517826470082,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 0.0,
+            "kind": "duty",
+            "label": 0.02,
+            "hidden_fraction": 0.010018159151077271,
+            "hidden_seconds": 1.2464342929997656
+          },
+          {
+            "audit_block": 181,
+            "score": 0.6731171673730583,
+            "energy_score": 0.6116111115546191,
+            "busy_score": 0.6731171673730583,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 0.8166666666666667,
+            "kind": "duty",
+            "label": 0.02,
+            "hidden_fraction": 0.010021047353744508,
+            "hidden_seconds": 1.2303607649919286
+          },
+          {
+            "audit_block": 193,
+            "score": 1.3021527872075938,
+            "energy_score": 0.7763837676290496,
+            "busy_score": 1.3021527872075938,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "dilute",
+            "label": 0.02,
+            "hidden_fraction": 0.020045995314915976,
+            "hidden_seconds": 2.45832500002507
+          },
+          {
+            "audit_block": 238,
+            "score": 1.1772480546118422,
+            "energy_score": -0.0548648189155349,
+            "busy_score": 1.1772480546118422,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "constant",
+            "label": 0.02,
+            "hidden_fraction": 0.020045094569524132,
+            "hidden_seconds": 2.5021672580078302
+          },
+          {
+            "audit_block": 319,
+            "score": -0.0034630822211203305,
+            "energy_score": -0.4395957704807233,
+            "busy_score": -0.0034630822211203305,
+            "share_of_windows_at_level_1": 0.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "duty",
+            "label": 0.02,
+            "hidden_fraction": 0.010022902727127074,
+            "hidden_seconds": 1.238112857026863
+          },
+          {
+            "audit_block": 392,
+            "score": 2.097044541842262,
+            "energy_score": 0.29617868927898394,
+            "busy_score": 2.097044541842262,
+            "share_of_windows_at_level_1": 1.0,
+            "share_of_windows_at_level_0.9_or_1": 1.0,
+            "kind": "duty",
+            "label": 0.02,
+            "hidden_fraction": 0.010022890329360963,
+            "hidden_seconds": 1.2433322449360276
+          }
+        ],
+        "gpu_flat_out_every_window_at_level_1": {
+          "reference_blocks": 12,
+          "reference_mean_score": 1.5448599733879433,
+          "reference_highest_score": 1.9419579481806686,
+          "null_audit_blocks": 16,
+          "false_alarms": 0,
+          "null_audit_highest_score": 1.8154982303201612,
+          "hidden_blocks_at_5_percent_or_more": 6,
+          "missed_at_5_percent_or_more": 0,
+          "hidden_blocks_under_5_percent": 2,
+          "missed_under_5_percent": 1
+        },
+        "every_other_block": {
+          "reference_blocks": 132,
+          "reference_mean_score": 0.40947861241614686,
+          "reference_highest_score": 2.4331918561863137,
+          "null_audit_blocks": 188,
+          "false_alarms": 0,
+          "null_audit_highest_score": 1.989219674194097,
+          "hidden_blocks_at_5_percent_or_more": 99,
+          "missed_at_5_percent_or_more": 0,
+          "hidden_blocks_under_5_percent": 54,
+          "missed_under_5_percent": 8
+        },
+        "detection_by_hidden_fraction_bin": [
+          {
+            "hidden_fraction_from": 0.005623413251903491,
+            "to": 0.01,
+            "detected": 1,
+            "blocks": 1
+          },
+          {
+            "hidden_fraction_from": 0.01,
+            "to": 0.01778279410038923,
+            "detected": 8,
+            "blocks": 14
+          },
+          {
+            "hidden_fraction_from": 0.01778279410038923,
+            "to": 0.03162277660168379,
+            "detected": 37,
+            "blocks": 40
+          },
+          {
+            "hidden_fraction_from": 0.03162277660168379,
+            "to": 0.056234132519034905,
+            "detected": 40,
+            "blocks": 40
+          },
+          {
+            "hidden_fraction_from": 0.056234132519034905,
+            "to": 0.1,
+            "detected": 3,
+            "blocks": 3
+          },
+          {
+            "hidden_fraction_from": 0.1,
+            "to": 0.1778279410038923,
+            "detected": 38,
+            "blocks": 38
+          },
+          {
+            "hidden_fraction_from": 0.1778279410038923,
+            "to": 0.31622776601683794,
+            "detected": 25,
+            "blocks": 25
+          }
+        ],
+        "a_flat_out_gpu": {
+          "windows": 3791,
+          "watts_mean": 67.37619168871431,
+          "busy_share_mean": 0.9890469533104722,
+          "units_per_s_percentiles_1_50_99": [
+            98.73111257336636,
+            99.78327140747973,
+            110.80731123684453
+          ],
+          "units_per_s_by_hour": [
+            {
+              "hour": 0,
+              "windows": 218,
+              "units_per_s": 101.12472574457493
+            },
+            {
+              "hour": 1,
+              "windows": 407,
+              "units_per_s": 101.25295179775989
+            },
+            {
+              "hour": 2,
+              "windows": 662,
+              "units_per_s": 100.28056131515531
+            },
+            {
+              "hour": 3,
+              "windows": 521,
+              "units_per_s": 101.7420888438429
+            },
+            {
+              "hour": 4,
+              "windows": 371,
+              "units_per_s": 99.98199946467862
+            },
+            {
+              "hour": 5,
+              "windows": 615,
+              "units_per_s": 100.17639920103161
+            },
+            {
+              "hour": 6,
+              "windows": 458,
+              "units_per_s": 100.91628365996316
+            },
+            {
+              "hour": 7,
+              "windows": 420,
+              "units_per_s": 100.18853132253976
+            },
+            {
+              "hour": 8,
+              "windows": 113,
+              "units_per_s": 99.74706622055456
+            },
+            {
+              "hour": 9,
+              "windows": 6,
+              "units_per_s": 99.44620219738351
+            }
+          ]
+        },
+        "trial_clock": {
+          "locked_in_this_run_mhz": null,
+          "estimated_flat_out_power_at_that_lock_w": null,
+          "power_limit_w": 70.0,
+          "amendment_v0_7_would_lock_mhz": null,
+          "estimated_flat_out_power_at_that_clock_w": null
+        }
+      },
+      "link_full": {
+        "reading": "POST HOC: this analysis was written after this run's data were seen; decides nothing",
+        "status": "HARDWARE (NVML energy counter; spoofable) | POST HOC: the 'link-full' analysis, applied after the data were seen (pre-registered: 'link')",
+        "block_residual_sd": {
+          "busy": 0.18591676803710533,
+          "energy": 52.16942244752575
+        },
+        "block_residual_sd_registered": {
+          "busy": 0.6518043162704087,
+          "energy": 52.16942244752575
+        },
+        "threshold": 2.4331918561863137,
+        "decision_rules": {
+          "scope": "post hoc reading: this analysis was chosen after these data were seen, so it describes them and decides nothing",
+          "H1.1": true,
+          "threshold_method": [
+            "conformal"
+          ],
+          "H1.2": {
+            "holds": true,
+            "k": 2,
+            "n": 204,
+            "cp95_upper": 0.030538394461943952
+          },
+          "H1.3_primary_5_percent": {
+            "constant": {
+              "k": 36,
+              "n": 36,
+              "holds": true,
+              "cp95_lower": 0.9201534904801054
+            },
+            "dilute": {
+              "k": 36,
+              "n": 36,
+              "holds": true,
+              "cp95_lower": 0.9201534904801054
+            },
+            "duty": {
+              "k": 24,
+              "n": 24,
+              "holds": true,
+              "cp95_lower": 0.8826538438450502
+            },
+            "idle_gap": {
+              "k": 9,
+              "n": 9,
+              "holds": true,
+              "cp95_lower": 0.7168711644368821
+            },
+            "pooled_nonslack": {
+              "k": 105,
+              "n": 105,
+              "holds": true,
+              "cp95_lower": 0.9718723759963259
+            }
+          },
+          "H1.3_stretch_2_percent": {
+            "constant": {
+              "k": 48,
+              "n": 48,
+              "holds": true,
+              "cp95_lower": 0.9394965906511015
+            },
+            "dilute": {
+              "k": 48,
+              "n": 48,
+              "holds": true,
+              "cp95_lower": 0.9394965906511015
+            },
+            "duty": {
+              "k": 36,
+              "n": 36,
+              "holds": true,
+              "cp95_lower": 0.9201534904801054
+            },
+            "idle_gap": {
+              "k": 13,
+              "n": 13,
+              "holds": true,
+              "cp95_lower": 0.7941833348134484
+            },
+            "pooled_nonslack": {
+              "k": 145,
+              "n": 145,
+              "holds": true,
+              "cp95_lower": 0.9795517375977232
+            }
+          },
+          "H1.4": {
+            "holds": true,
+            "basis": "time",
+            "floor_time_bound_coverage": 1.0,
+            "hidden_blocks": 161,
+            "reported_only": {
+              "calibrated_time_bound_coverage": 0.84472049689441,
+              "calibrated_energy_bound_coverage": 0.9813664596273292,
+              "floor_energy_bound_coverage": 1.0
+            }
+          },
+          "closure_gap_fraction": 0.03162277660168379,
+          "slack_inflated_gap_fraction": 0.09266326467118052,
+          "outcome": "FAIL",
+          "why": "slack-inflated gap 9.3% is above 5%"
+        }
+      }
+    }
+  },
+  "campaign": {
+    "id": "kaggle-20261111-195848",
+    "trials": 2,
+    "decision_rules": {
+      "scope": "shakedown reading of several trials pooled: NVML only, so assumption A6 does not hold; what these data would decide, not a Plan A claim",
+      "H1.1": true,
+      "threshold_method": [
+        "conformal"
+      ],
+      "H1.2": {
+        "holds": true,
+        "k": 3,
+        "n": 408,
+        "cp95_upper": 0.01889360518144123
+      },
+      "H1.3_primary_5_percent": {
+        "constant": {
+          "k": 72,
+          "n": 72,
+          "holds": true,
+          "cp95_lower": 0.9592463137693592
+        },
+        "dilute": {
+          "k": 72,
+          "n": 72,
+          "holds": true,
+          "cp95_lower": 0.9592463137693592
+        },
+        "duty": {
+          "k": 48,
+          "n": 48,
+          "holds": true,
+          "cp95_lower": 0.9394965906511015
+        },
+        "idle_gap": {
+          "k": 18,
+          "n": 18,
+          "holds": true,
+          "cp95_lower": 0.8466824460427205
+        },
+        "pooled_nonslack": {
+          "k": 210,
+          "n": 210,
+          "holds": true,
+          "cp95_lower": 0.9858358768052193
+        }
+      },
+      "H1.3_stretch_2_percent": {
+        "constant": {
+          "k": 92,
+          "n": 96,
+          "holds": true,
+          "cp95_lower": 0.9071878784698457
+        },
+        "dilute": {
+          "k": 95,
+          "n": 96,
+          "holds": true,
+          "cp95_lower": 0.9515379282949397
+        },
+        "duty": {
+          "k": 72,
+          "n": 72,
+          "holds": true,
+          "cp95_lower": 0.9592463137693592
+        },
+        "idle_gap": {
+          "k": 26,
+          "n": 26,
+          "holds": true,
+          "cp95_lower": 0.891169644239219
+        },
+        "pooled_nonslack": {
+          "k": 285,
+          "n": 290,
+          "holds": true,
+          "cp95_lower": 0.9640918660579683
+        }
+      },
+      "H1.4": {
+        "holds": true,
+        "basis": "time",
+        "floor_time_bound_coverage": 1.0,
+        "hidden_blocks": 321,
+        "reported_only": {
+          "calibrated_time_bound_coverage": 0.9906542056074766,
+          "calibrated_energy_bound_coverage": 0.9750778816199377,
+          "floor_energy_bound_coverage": 1.0
+        }
+      },
+      "closure_gap_fraction": 0.056234132519034905,
+      "slack_inflated_gap_fraction": 0.12257703533000876,
+      "outcome": "FAIL",
+      "why": "slack-inflated gap 12.3% is above 5%"
+    },
+    "pooled_json_as_returned": {
+      "values_that_are_not_numbers_and_differ": [],
+      "largest_relative_difference_in_any_number": 0.0
+    },
+    "link_full": {
+      "reading": "POST HOC: this analysis was written after this run's data were seen; decides nothing",
+      "decision_rules": {
+        "scope": "post hoc reading: this analysis was chosen after these data were seen, so it describes them and decides nothing",
+        "H1.1": true,
+        "threshold_method": [
+          "conformal"
+        ],
+        "H1.2": {
+          "holds": true,
+          "k": 2,
+          "n": 408,
+          "cp95_upper": 0.015349832230624472
+        },
+        "H1.3_primary_5_percent": {
+          "constant": {
+            "k": 72,
+            "n": 72,
+            "holds": true,
+            "cp95_lower": 0.9592463137693592
+          },
+          "dilute": {
+            "k": 72,
+            "n": 72,
+            "holds": true,
+            "cp95_lower": 0.9592463137693592
+          },
+          "duty": {
+            "k": 48,
+            "n": 48,
+            "holds": true,
+            "cp95_lower": 0.9394965906511015
+          },
+          "idle_gap": {
+            "k": 18,
+            "n": 18,
+            "holds": true,
+            "cp95_lower": 0.8466824460427205
+          },
+          "pooled_nonslack": {
+            "k": 210,
+            "n": 210,
+            "holds": true,
+            "cp95_lower": 0.9858358768052193
+          }
+        },
+        "H1.3_stretch_2_percent": {
+          "constant": {
+            "k": 93,
+            "n": 96,
+            "holds": true,
+            "cp95_lower": 0.9212130669141727
+          },
+          "dilute": {
+            "k": 96,
+            "n": 96,
+            "holds": true,
+            "cp95_lower": 0.9692763231664676
+          },
+          "duty": {
+            "k": 72,
+            "n": 72,
+            "holds": true,
+            "cp95_lower": 0.9592463137693592
+          },
+          "idle_gap": {
+            "k": 26,
+            "n": 26,
+            "holds": true,
+            "cp95_lower": 0.891169644239219
+          },
+          "pooled_nonslack": {
+            "k": 287,
+            "n": 290,
+            "holds": true,
+            "cp95_lower": 0.9734816790865963
+          }
+        },
+        "H1.4": {
+          "holds": true,
+          "basis": "time",
+          "floor_time_bound_coverage": 1.0,
+          "hidden_blocks": 321,
+          "reported_only": {
+            "calibrated_time_bound_coverage": 0.9221183800623053,
+            "calibrated_energy_bound_coverage": 0.9750778816199377,
+            "floor_energy_bound_coverage": 1.0
+          }
+        },
+        "closure_gap_fraction": 0.03162277660168379,
+        "slack_inflated_gap_fraction": 0.09796567941265766,
+        "outcome": "FAIL",
+        "why": "slack-inflated gap 9.8% is above 5%"
+      }
+    }
+  }
+}

@@ -19,7 +19,9 @@ from .sim import FEATURES, HiddenSpec
 MIN_N_EFF = 15.0  # below this many effective independent calibration blocks per regime, flag UNDERPOWERED
 ANALYSES = {"linear": "closure.trial.analyze (alpha/2 Bonferroni for combined)",
             "link": "closure.trial.analyze_link (link.py: calibrated curves, studentised scores, one conformal "
-                    "threshold on the larger channel score at alpha)"}
+                    "threshold on the larger channel score at alpha)",
+            "link-full": "closure.trial.analyze_link with one more verified feature: the seconds of each window in "
+                         "which the verifier asked for the GPU flat out (amendment v0.7 (c): a declared comparison)"}
 
 ASSUMPTIONS = [
     "A1 additivity: hidden work adds energy/busy-time on top of verified work (no free lunch from sharing).",
@@ -69,6 +71,9 @@ class TrialConfig:
     # "link": a calibrated monotone curve per channel, studentised scores and one conformal threshold (link.py).
     analysis: str = "linear"
     campaign: dict | None = None              # {"id", "index", "size"}: one of several trials declared together
+    # Analyses declared before the run to be read beside the registered one (amendment v0.7 (c)). They decide nothing;
+    # declaring them here is what separates them from a reading chosen after the data were seen.
+    comparisons: tuple = ()
 
 
 def _src_sha256() -> str:
@@ -126,9 +131,25 @@ def make_order(cfg: TrialConfig, rng) -> list:
 
 
 _KEYS = ("X", "E", "B", "t0", "hid")
-# Ground truth a source may report with each block: the load level it was asked for, and the seconds its hidden load
-# actually ran. Kept in raw.npz to check the bounds against; never a regressor and never in the evidence digest.
+# What a source may report with each block beside the evidence: the load level it was asked for, and the seconds its
+# hidden load actually ran. Kept in raw.npz. The hidden seconds are ground truth: they check the bounds and never enter
+# an analysis. The level is the verifier's own request, so the verifier knows it without asking the prover; the
+# registered analyses do not use it, and the link-full comparison (amendment v0.7 (c)) uses one thing from it: whether
+# the GPU was asked to run flat out.
 _TRUTH = (("lev", "level"), ("hs", "hidden_s"))
+FLAT_OUT = 1.0 - 1e-9                         # a requested level at or above this is "as much as the GPU can do"
+
+
+def with_flat_out(d: dict) -> np.ndarray:
+    """A block set's features with one more column: the seconds of each window for which the verifier asked for the
+    GPU flat out (requested level 1). A GPU at its power limit gets through about as much work flat out as at level
+    0.9 and is busy 99% of the time against 93%, so work alone cannot tell the two apart (docs/DEVIATIONS.md section
+    6); what the verifier asked for can."""
+    if "lev" not in d:
+        raise ValueError("the link-full analysis needs the load level asked for in every window (raw.npz records it "
+                         "from 0.8.0 on)")
+    X = np.asarray(d["X"], float)
+    return np.column_stack([X, X[:, 0] * (np.asarray(d["lev"], float) >= FLAT_OUT)])
 
 
 def _new_parts() -> dict:
@@ -178,19 +199,25 @@ def fit_channels(ref: dict, cfg: TrialConfig):
             R.fit(ref["X"], ref["B"], channel="busy_s", unit="s", **kw))
 
 
+def _link_X(d: dict, cfg: TrialConfig) -> np.ndarray:
+    return with_flat_out(d) if cfg.analysis == "link-full" else d["X"]
+
+
 def fit_link(ref: dict, cfg: TrialConfig):
-    """The link calibration (amendment v0.6; link.py)."""
+    """The link calibration (amendment v0.6; link.py). For link-full, with the flat-out seconds as one more feature
+    and the floor bounds still resting on the work columns alone."""
     from . import link
-    return link.calibrate(ref["X"], {"energy": ref["E"], "busy": ref["B"]}, cfg.L, seed=cfg.seed,
-                          exchangeable_by_design=cfg.calibration == "interleaved")
+    return link.calibrate(_link_X(ref, cfg), {"energy": ref["E"], "busy": ref["B"]}, cfg.L, seed=cfg.seed,
+                          exchangeable_by_design=cfg.calibration == "interleaved",
+                          n_work=np.asarray(ref["X"]).shape[1] - 1 if cfg.analysis == "link-full" else None)
 
 
 def calibrate(ref: dict, cfg: TrialConfig):
     """The calibration cfg.analysis calls for: (energy, busy) straight-line calibrations, or a link calibration."""
-    if cfg.analysis == "link":
+    if cfg.analysis in ("link", "link-full"):
         return fit_link(ref, cfg)
     if cfg.analysis != "linear":
-        raise ValueError(f"unknown analysis '{cfg.analysis}' (linear or link)")
+        raise ValueError(f"unknown analysis '{cfg.analysis}' (linear, link or link-full)")
     return fit_channels(ref, cfg)
 
 
@@ -243,9 +270,10 @@ def _score_linear(cfg: TrialConfig, calE, calB, aud: dict) -> dict:
 
 def _score_link(cfg: TrialConfig, cal, aud: dict) -> dict:
     from . import link
-    a = link.audit(cal, aud["X"], {"energy": aud["E"], "busy": aud["B"]}, cfg.alpha)
+    X = _link_X(aud, cfg)
+    a = link.audit(cal, X, {"energy": aud["E"], "busy": aud["B"]}, cfg.alpha)
     cap, cap_s = block_capacity_j(cfg.n_gpu, cfg.p_max_w, cfg.L, cfg.dt), cfg.L * cfg.dt
-    return {"analysis": "link", "flag": a["flag"], "ub_energy": a["ub"]["energy"], "ub_busy": a["ub"]["busy"],
+    return {"analysis": cfg.analysis, "flag": a["flag"], "ub_energy": a["ub"]["energy"], "ub_busy": a["ub"]["busy"],
             "ub_floor": a["ub_floor"], "pred_energy": a["pred_energy"],
             "md": {"energy": [link.min_detectable(cal, "energy", cfg.alpha, cfg.beta) / cap],
                    "busy": [link.min_detectable(cal, "busy", cfg.alpha, cfg.beta) / cap_s]},
@@ -257,7 +285,26 @@ def _score_link(cfg: TrialConfig, cal, aud: dict) -> dict:
                                "exchangeable_by_design": cal.exchangeable_by_design,
                                "thresholds": {k: float(v) for k, v in a["threshold"].items()},
                                "block_residual_sd": {c.name: float(np.std(c.S, ddof=1)) for c in cal.channels},
-                               "partial_load_slack": cal.energy.curve.partial_load_slack()}}}
+                               "partial_load_slack": cal.energy.curve.partial_load_slack()},
+                      # Reported only (amendment v0.7 (b)): how far every block was from the threshold. Each channel
+                      # score is in units of its own spread over the reference blocks; `combined` is the larger of
+                      # the two and is what the threshold is set on and compared with. `work_rate` is the verified
+                      # work index a second, as a share of the highest in the audit: 1 is a GPU flat out.
+                      "scores": {"threshold": float(a["threshold"]["combined"]),
+                                 "reference": {"combined": cal.score, "energy": cal.energy.z / cal.energy.scale,
+                                               "busy": cal.busy.z / cal.busy.scale},
+                                 "audit": {"combined": a["score"], "energy": a["z"]["energy"] / cal.energy.scale,
+                                           "busy": a["z"]["busy"] / cal.busy.scale,
+                                           "work_rate": _block_work_rate(cal.energy.curve, X, cal.L)}}}}
+
+
+def _block_work_rate(curve, X, L: int):
+    """Each audit block's verified work index a second, as a share of the largest block's."""
+    dur, w = curve.index(X)
+    n = (len(w) // L) * L
+    rate = w[:n].reshape(-1, L).sum(1) / np.maximum(dur[:n].reshape(-1, L).sum(1), 1e-12)
+    top = float(rate.max()) if len(rate) else 0.0
+    return rate / top if top > 0 else rate
 
 
 def block_table(cfg: TrialConfig, sc: dict, aud: dict, schedule: list) -> dict:
@@ -387,9 +434,14 @@ def analyze_any(cfg: TrialConfig, cal, aud: dict, schedule: list, floor: EnergyF
         analyze_link(cfg, cal, aud, schedule, floor)
 
 
-def _digest(d: dict) -> dict:
-    """The evidence: what the verifier would see. Ground truth (hidden energy, level, hidden seconds) is left out."""
-    return {k: array_digest(v) for k, v in d.items() if k in ("X", "E", "B", "t0")}
+def _digest(d: dict, level: bool = False) -> dict:
+    """The evidence: what the verifier would see. Ground truth (hidden energy, hidden seconds) is left out. The load
+    level the verifier asked for is included when an analysis declared for the run reads it (link-full)."""
+    return {k: array_digest(v) for k, v in d.items() if k in ("X", "E", "B", "t0") + (("lev",) if level else ())}
+
+
+def _reads_level(cfg: TrialConfig) -> bool:
+    return "link-full" in (cfg.analysis, *tuple(cfg.comparisons or ()))
 
 
 def _save_partial(out: Path, acc: dict, chain: Chain, err: BaseException, reveal) -> None:
@@ -435,7 +487,7 @@ def _run(source, cfg, out, signer, schedule, floor, pause_hook, interleaved, cha
 
     def fit(ref):
         cal = calibrate(ref, cfg)
-        chain.append({"phase": "calibration", "cfg": asdict(cfg), "ref_digest": _digest(ref),
+        chain.append({"phase": "calibration", "cfg": asdict(cfg), "ref_digest": _digest(ref, _reads_level(cfg)),
                       **calibration_record(cal)})
         return cal
 
@@ -465,10 +517,11 @@ def _run(source, cfg, out, signer, schedule, floor, pause_hook, interleaved, cha
     if interleaved:
         warm = collect(source, cfg, cfg.warmup_blocks, parts=acc["warm"]) if cfg.warmup_blocks else None
         ref, aud = collect_interleaved(source, cfg, order, schedule, ref=acc["ref"], aud=acc["aud"])
-        chain.append({"phase": "audit_data", "audit_digest": _digest(aud), "ref_digest": _digest(ref)})
+        lv = _reads_level(cfg)
+        chain.append({"phase": "audit_data", "audit_digest": _digest(aud, lv), "ref_digest": _digest(ref, lv)})
     else:
         aud = collect(source, cfg, cfg.n_audit_blocks, schedule, parts=acc["aud"])
-        chain.append({"phase": "audit_data", "audit_digest": _digest(aud)})
+        chain.append({"phase": "audit_data", "audit_digest": _digest(aud, _reads_level(cfg))})
     assert verify_commit(schedule, cm["commitment"], cm["nonce"])
     # the data and the reveal are on disk before anything is fitted, so a failed analysis can be rerun from them
     (out / "schedule_reveal.json").write_text(json.dumps(reveal))

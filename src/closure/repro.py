@@ -85,6 +85,9 @@ def measure_reproducibility(model, n_requests: int = 200, batch_sizes=(1, 2, 4, 
 
 
 def conformal_tolerance(diffs, alpha: float = 0.01, margin: float = 1.0) -> float:
+    """The recomputation tolerance the measured differences call for: their conformal upper quantile at alpha (their
+    largest value when there are too few for that quantile), times a margin. An honest answer then differs from its
+    recomputation by more than this at most alpha of the time; on a stack that reproduces bit for bit it is zero."""
     q = upper_conformal_quantile(diffs, alpha)
     return float(margin * (q if np.isfinite(q) else np.max(diffs)))
 
@@ -110,7 +113,7 @@ def torch_repro_check(device: str = "cuda:0", batch_sizes=(1, 4, 16), n: int = 6
     layers = [torch.nn.Linear(1024, 1024) for _ in range(4)]
     net = torch.nn.Sequential(*[m for l in layers for m in (l, torch.nn.GELU())]).to(device).eval()
     x = torch.randn(max(batch_sizes) * n, 1024, generator=g).to(device)
-    eq, tot, mx = 0, 0, 0.0
+    eq, tot, mx, diffs = 0, 0, 0.0, []
     with torch.no_grad():
         for i in range(n):
             ref = net(x[i:i + 1])
@@ -122,4 +125,6 @@ def torch_repro_check(device: str = "cuda:0", batch_sizes=(1, 4, 16), n: int = 6
                 eq += int(d == 0.0)
                 tot += 1
                 mx = max(mx, d)
-    return {"device": device, "bitwise_equal_rate": eq / tot, "max_abs_diff": mx, "deterministic_algorithms": deterministic}
+                diffs.append(d)
+    return {"device": device, "bitwise_equal_rate": eq / tot, "max_abs_diff": mx, "deterministic_algorithms": deterministic,
+            "comparisons": tot, "tolerance_alpha_0.01": conformal_tolerance(diffs, 0.01)}

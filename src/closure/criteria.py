@@ -43,7 +43,7 @@ def _scope(status: str) -> str:
 
 
 def evaluate(res: dict, alpha: float) -> dict:
-    link = res.get("analysis") == "link"
+    link = str(res.get("analysis", "")).startswith("link")
     cal = [{"channel": ch, "regime": r, "jarque_bera_p": p, "n_eff": n}
            for ch in ("energy", "busy")
            for r, (p, n) in enumerate(zip(res["normality_p"][ch], res["calibration_n_eff"][ch]))]
@@ -95,7 +95,7 @@ def evaluate(res: dict, alpha: float) -> dict:
         outcome, why = "PASS-primary", f"slack-inflated gap {sgap:.1%} <= {PRIMARY:.0%}"
     else:
         outcome, why = "FAIL", f"slack-inflated gap {sgap:.1%} is above {PRIMARY:.0%}"
-    return {"scope": _scope(res.get("status", "")), "analysis": "link" if link else "linear",
+    return {"scope": _scope(res.get("status", "")), "analysis": res.get("analysis") if link else "linear",
             "H1.1": {"holds": h11, "rule": "conformal threshold" if link else "normality and n_eff",
                      "threshold_methods": how, "regimes": cal},
             "H1.2": {"holds": h12, "k": fp["k"], "n": fp["n"], "rate": fp["rate"], "cp95_upper": fp["cp95_upper"],

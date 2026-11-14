@@ -28,6 +28,11 @@ def cmd_thresholds(a) -> int:
 
 def cmd_covert_days(a) -> int:
     from . import thresholds as T
+    try:
+        a.threshold = T.flop_threshold(a.threshold)
+    except ValueError as e:
+        print(e)
+        return 2
     if a.run:
         run = Path(a.run)
         try:
@@ -86,8 +91,32 @@ def cmd_beacon_seed(a) -> int:
     from . import beacon as B
     contribs = [_read(p) for p in a.contributions]
     comm = {c["party"]: c["commitment"] for c in contribs} if not a.commitments else _read(a.commitments)
-    seed = B.seed(comm, {c["party"]: (c["nonce"], c["value"]) for c in contribs})
+    reveals = {c["party"]: (c["nonce"], c["value"]) for c in contribs}
+    if a.allow_missing and not a.public_value:
+        print("refusing: --allow-missing without --public-value would let the last party to reveal choose between two "
+              "draws it can already see")
+        return 2
+    seed = B.seed(comm, reveals, allow_missing=a.allow_missing)
+    if a.public_value:
+        seed = B.finalize(seed, bytes.fromhex(a.public_value))
+    withheld = B.missing(comm, reveals)
+    if withheld:
+        print(f"withheld (named; their values are not in the seed): {', '.join(withheld)}", file=sys.stderr)
     print(seed.hex())
+    return 0
+
+
+def cmd_clause(a) -> int:
+    from . import clauses as K
+    r = K.in_force(_read(a.finding), _read(a.approvals), _read(a.members), a.k, time.time() if a.now is None else a.now)
+    _print(r)
+    return 0 if r["quorum"]["approved"] else 1
+
+
+def cmd_bandwidth(a) -> int:
+    from . import bandwidth as W
+    _print(W.assess(a.cap_gbps, a.params, a.steps_per_s, a.pods, a.tokens_per_s, a.sync_every, a.bytes_per_value,
+                    a.compression, a.bytes_per_token))
     return 0
 
 
@@ -218,7 +247,9 @@ def add_parser(sp) -> None:
     ts = t.add_subparsers(dest="treaty_cmd", required=True)
     s = ts.add_parser("thresholds"); s.set_defaults(f=cmd_thresholds)
     s = ts.add_parser("covert-days", help="days to a threshold-sized covert run at the hidden rate verification allows")
-    s.add_argument("--threshold", type=float, default=1e25); s.add_argument("--fleet", type=float, default=100_000)
+    s.add_argument("--threshold", default="1e25", help="FLOP, or a name from `closure treaty thresholds` "
+                   "(np-training-licence, miri-monitored, miri-strict, ...)")
+    s.add_argument("--fleet", type=float, default=100_000)
     s.add_argument("--run", default=None, help="a trial folder with results.json and prereg.json")
     s.add_argument("--gap", type=float, default=None); s.add_argument("--p-max", type=float, default=700.0)
     s.add_argument("--floor", type=float, default=0.5e-12); s.add_argument("--no-slack", action="store_true")
@@ -242,7 +273,22 @@ def add_parser(sp) -> None:
     s.set_defaults(f=cmd_beacon_commit)
     s = ts.add_parser("beacon-seed"); s.add_argument("contributions", nargs="+")
     s.add_argument("--commitments", default=None, help="the commitments as published, {party: hex}")
+    s.add_argument("--public-value", default=None, help="hex of a public value that did not exist when the reveals "
+                   "were due (a block hash, a randomness-service round fixed in advance); mixed into the seed")
+    s.add_argument("--allow-missing", action="store_true", help="go ahead without a withheld reveal and name the "
+                   "party; only with --public-value")
     s.set_defaults(f=cmd_beacon_seed)
+    s = ts.add_parser("clause", help="what a panel's signed finding switches on (suspended enforcement clauses)")
+    s.add_argument("--finding", required=True); s.add_argument("--approvals", required=True)
+    s.add_argument("--members", required=True); s.add_argument("--k", type=int, required=True)
+    s.add_argument("--now", type=float, default=None, help="Unix time to judge expiry at (default: now)")
+    s.set_defaults(f=cmd_clause)
+    s = ts.add_parser("bandwidth", help="what a cap on the link between pods does to training and to serving")
+    s.add_argument("--cap-gbps", type=float, required=True); s.add_argument("--params", type=float, required=True)
+    s.add_argument("--steps-per-s", type=float, default=1.0); s.add_argument("--pods", type=int, default=2)
+    s.add_argument("--tokens-per-s", type=float, default=1e5); s.add_argument("--sync-every", type=int, default=1)
+    s.add_argument("--bytes-per-value", type=float, default=2.0); s.add_argument("--compression", type=float, default=1.0)
+    s.add_argument("--bytes-per-token", type=float, default=16.0); s.set_defaults(f=cmd_bandwidth)
     s = ts.add_parser("sortition"); s.add_argument("--seed", required=True); s.add_argument("--candidates", required=True)
     s.add_argument("--per-group", required=True); s.set_defaults(f=cmd_sortition)
     s = ts.add_parser("quorum-verify"); s.add_argument("--action", required=True); s.add_argument("--approvals", required=True)
@@ -262,7 +308,7 @@ def add_parser(sp) -> None:
     s.add_argument("--declared", required=True, help="LAT,LON of the declared site"); s.set_defaults(f=cmd_geo_check)
     s = ts.add_parser("coalition", help="the middle-powers agreement: activation, smallest coalitions, voting power")
     s.add_argument("--members", default=""); s.add_argument("--exclude", default="USA,CHN")
-    s.add_argument("--no-bloc", action="store_true"); s.add_argument("--max-size", type=int, default=6)
+    s.add_argument("--no-bloc", action="store_true"); s.add_argument("--max-size", type=int, default=7)
     s.add_argument("--top", type=int, default=30); s.add_argument("--permutations", type=int, default=20000)
     s.add_argument("--seed", type=int, default=0); s.add_argument("--show", type=int, default=12)
     s.set_defaults(f=cmd_coalition)

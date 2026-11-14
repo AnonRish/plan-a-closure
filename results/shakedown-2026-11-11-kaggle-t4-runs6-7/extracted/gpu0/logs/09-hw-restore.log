@@ -1,0 +1,6 @@
+$ /usr/bin/python3 -m closure.cli hw-restore --gpu 0 --same-user --power-limit-w 70
+
+GPU: cuda:0 = NVML index 0 (GPU-71bcb58e-ead3-c881-1d97-e8c16f05661b), matched by uuid
+power limit -> 70 W (given)
+nothing to restore: this user may not lock clocks or set power limits (The current user does not have permission to change clocks for GPU 00000000:00:04.0.
+Terminating early due to previous errors.), so no step of this run changed them
