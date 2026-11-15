@@ -242,6 +242,107 @@ def cmd_mock_run(a) -> int:
     return 0 if (rec["compliant"] and rec["init_weights_match_seed"]) else 1
 
 
+# ---- MIRI's draft agreement (arXiv:2511.10783) -------------------------------------------------------------------
+def cmd_asi_tables(a) -> int:
+    from . import asi_agreement as A
+    got = A.tables(a.flop_s, a.boundaries)
+    print(f"Appendix D.3, Tables 1 and 2, recomputed at {a.flop_s:.4g} FLOP/s per H100e ({a.boundaries} boundaries)")
+    print(f"{'':22}" + "".join(f"{s:>10,}" for s in A.TABLE_SIZES))
+    for k in A.TABLE_PRINTED:
+        print(f"{k:22}" + "".join(f"{x:>10}" for x in got[k]))
+    diff = A.compare_tables(a.flop_s, a.boundaries)
+    print("\nevery cell matches the printed table" if not diff else
+          "\ncells that differ from the printed table:\n" +
+          "\n".join(f"  {k} at {s:,} H100e: printed {p}, recomputed {g}" for k, s, p, g in diff))
+    return 0
+
+
+def cmd_asi_run(a) -> int:
+    from . import asi_agreement as A
+    r = A.classify_run(a.pretraining, a.post_training, cumulative=not a.separate)
+    _print({"category": r.category, "reasons": list(r.reasons), "needs": list(r.needs)})
+    return 0
+
+
+def cmd_asi_cluster(a) -> int:
+    from . import asi_agreement as A
+    d = _read(a.hosts)
+    hosts = [A.Host(str(h["id"]), str(h.get("site", h["id"])),
+                    float(h["tpp"]) if "tpp" in h else float(h["h100e"]) * A.H100E_TPP,
+                    float(h["memory_gb"]) if "memory_gb" in h else float(h.get("h100e", 0.0)) * A.H100E_MEMORY_GB)
+             for h in d["hosts"]]
+    out = A.covered_clusters(hosts, [tuple(x) for x in d.get("links", [])], d.get("together", []))
+    _print(out)
+    return 0
+
+
+def cmd_asi_off(a) -> int:
+    from .. import dcbus
+    from . import asi_agreement as A
+    t, p = dcbus.load_csv(a.csv)
+    r = A.powered_off(t, p, a.off_w, a.max_gap_s)
+    _print(r)
+    return 0 if r["verified_off"] else 1
+
+
+def cmd_asi_crosssite(a) -> int:
+    from . import asi_agreement as A
+    _print(A.cross_site_training_gbps(a.h100e_per_site, a.sites, a.utilization, a.tokens_per_step, a.sync_every,
+                                      a.bytes_per_value, a.compression, a.cap_gbps))
+    return 0
+
+
+# ---- FLI's Draft Articles ----------------------------------------------------------------------------------------
+def cmd_chip_auth(a) -> int:
+    from . import chipauth as CA
+    r = CA.simulate(a.mode, a.period_min * 60, a.allowance_min * 60, a.duty, a.days, hoard=not a.no_hoard,
+                    cap_s=None if a.cap_min is None else a.cap_min * 60, ids=a.ids)
+    _print(r)
+    print(f"after {a.days:g} days, renewal stops; the chip can still compute at full speed for "
+          f"{r['run_on_s'] / 3600:,.2f} hours ({r['run_on_days']:,.2f} days)", file=sys.stderr)
+    return 0
+
+
+def cmd_obligations(a) -> int:
+    from . import obligations as O
+    d = _read(a.events)
+    events, subjects = (d, []) if isinstance(d, list) else (d["events"], d.get("subjects", []))
+    rows = O.check(events, a.now or time.time(), subjects, a.source)
+    for r in rows:
+        print(f"{r['status']:8} {r['ref']:22} {r['subject'] or '-':16} due {r['deadline']}  {r['what']}"
+              + (f"  ({r['note']})" if r["note"] else ""))
+    bad = O.failures(rows)
+    print(f"\n{len(rows)} deadlines, {len(bad)} missed or overdue")
+    return 1 if bad else 0
+
+
+def cmd_fli_weighted(a) -> int:
+    from . import fli_articles as F
+    w = F.gdp_stand_in([x for x in a.members.split(",") if x] or None)
+    total = sum(w.values())
+    few = F.fewest_to_decide(w)
+    power = F.weighted_power(w, a.permutations, a.seed)
+    _print({"stand_in": "contributions in proportion to GDP (World Bank 2023, current US$)", "parties": len(w),
+            "fewest_deciding_weighted_matters": [{"state": s, "share": w[s] / total} for s in few],
+            "their_share": sum(w[s] for s in few) / total,
+            "states_needed_for_one_vote_matters": len(w) // 2 + 1,
+            "shapley_shubik_top": [{"state": k, "index": v[0], "se": v[1]}
+                                   for k, v in sorted(power.items(), key=lambda kv: -kv[1][0])[:a.show]]})
+    return 0
+
+
+def cmd_agreements_coverage(a) -> int:
+    from . import coverage as V
+    errs = V.validate()
+    print(json.dumps(V.summary()))
+    if a.write:
+        Path(a.write).parent.mkdir(parents=True, exist_ok=True)
+        Path(a.write).write_text(V.to_markdown(), encoding="utf-8")
+    for e in errs:
+        print("ERROR", e, file=sys.stderr)
+    return 1 if errs else 0
+
+
 def add_parser(sp) -> None:
     t = sp.add_parser("treaty", help="mechanisms from the halt and treaty proposals (docs/TREATY_COVERAGE.md)")
     ts = t.add_subparsers(dest="treaty_cmd", required=True)
@@ -324,6 +425,50 @@ def add_parser(sp) -> None:
     s.add_argument("--count-from", choices=["spawn", "start"], default="spawn",
                    help="charge energy from process start (default) or from the job's start line (small drills)")
     s.set_defaults(f=cmd_mock_run)
+    s = ts.add_parser("asi-tables", help="MIRI's draft agreement: Tables 1 and 2 (time to the thresholds, staged "
+                      "registration) recomputed and compared with the printed cells")
+    s.add_argument("--flop-s", type=float, default=990e12, help="FLOP/s per H100e (the definition says 989e12)")
+    s.add_argument("--boundaries", choices=["table", "text"], default="table"); s.set_defaults(f=cmd_asi_tables)
+    s = ts.add_parser("asi-run", help="MIRI's draft agreement: is a training run banned, monitored or free (Art. IV)?")
+    s.add_argument("--pretraining", type=float, required=True); s.add_argument("--post-training", type=float, default=0.0)
+    s.add_argument("--separate", action="store_true", help="do not count post-training toward the Strict Threshold")
+    s.set_defaults(f=cmd_asi_run)
+    s = ts.add_parser("asi-cluster", help="MIRI's draft agreement: which hosts form covered chip clusters (Art. II s.16)")
+    s.add_argument("--hosts", required=True, help='JSON: {"hosts": [{"id", "site", "h100e" or "tpp" and "memory_gb"}], '
+                   '"links": [[id, id, gbit/s]], "together": [[ids running one workload]]}')
+    s.set_defaults(f=cmd_asi_cluster)
+    s = ts.add_parser("asi-off", help="MIRI's draft agreement, Art. VII s.3: was the hardware off all the time an "
+                      "independent meter's trace covers?")
+    s.add_argument("--csv", required=True, help="timestamp_s,power_w (meter-log, dcbus-import or dcbus-decimate)")
+    s.add_argument("--off-w", type=float, required=True, help="the most an idle, powered-off rig may draw")
+    s.add_argument("--max-gap-s", type=float, default=5.0, help="the longest stretch without a reading")
+    s.set_defaults(f=cmd_asi_off)
+    s = ts.add_parser("asi-crosssite", help="bandwidth that training across sub-CCC sets needs, against 25 Gbit/s")
+    s.add_argument("--h100e-per-site", type=float, default=16.0); s.add_argument("--sites", type=int, default=2)
+    s.add_argument("--utilization", type=float, default=0.4); s.add_argument("--tokens-per-step", type=float, default=4e6)
+    s.add_argument("--sync-every", type=int, default=1); s.add_argument("--bytes-per-value", type=float, default=2.0)
+    s.add_argument("--compression", type=float, default=1.0); s.add_argument("--cap-gbps", type=float, default=25.0)
+    s.set_defaults(f=cmd_asi_crosssite)
+    s = ts.add_parser("chip-auth", help="FLI Annex C chip authorization: how long a chip runs on after renewal stops")
+    s.add_argument("--mode", choices=["as-written", "fresh"], default="as-written")
+    s.add_argument("--period-min", type=float, default=5.0, help="minutes between renewals")
+    s.add_argument("--allowance-min", type=float, default=10.0, help="full-speed minutes each authorization allows")
+    s.add_argument("--duty", type=float, default=1.0, help="share of full speed the chip uses")
+    s.add_argument("--days", type=float, default=30.0, help="days of operation before renewal stops")
+    s.add_argument("--no-hoard", action="store_true", help="the provider hands every authorization over at once")
+    s.add_argument("--cap-min", type=float, default=None, help="most allowance the chip holds, in minutes")
+    s.add_argument("--ids", choices=["set", "increasing"], default="set"); s.set_defaults(f=cmd_chip_auth)
+    s = ts.add_parser("obligations", help="deadlines of both draft agreements against a log of dated events")
+    s.add_argument("--events", required=True, help='JSON list of {"type", "at", "subject"}, or {"events": [...], '
+                   '"subjects": [Parties]}')
+    s.add_argument("--now", default=None, help="ISO time or Unix seconds to judge at (default: now)")
+    s.add_argument("--source", choices=["MA", "FLI"], default=None); s.set_defaults(f=cmd_obligations)
+    s = ts.add_parser("fli-weighted", help="FLI Art. 12(7): who decides contribution-weighted matters (GDP stand-in)")
+    s.add_argument("--members", default="", help="ISO3 codes of the States Parties (default: every economy)")
+    s.add_argument("--permutations", type=int, default=20000); s.add_argument("--seed", type=int, default=0)
+    s.add_argument("--show", type=int, default=8); s.set_defaults(f=cmd_fli_weighted)
+    s = ts.add_parser("coverage", help="every article of MIRI's draft agreement and FLI's Draft Articles, mapped")
+    s.add_argument("--write", default=None); s.set_defaults(f=cmd_agreements_coverage)
     s = ts.add_parser("mock-job"); s.add_argument("--out", required=True); s.add_argument("--dim", type=int, required=True)
     s.add_argument("--layers", type=int, required=True); s.add_argument("--batch", type=int, required=True)
     s.add_argument("--seed", type=int, required=True); s.add_argument("--device", default="cpu")

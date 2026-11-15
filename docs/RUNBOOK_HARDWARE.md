@@ -9,12 +9,14 @@ the operator) is in [HARDWARE_CONFIG.md](HARDWARE_CONFIG.md).
 
 | cluster | route | notes |
 | --- | --- | --- |
-| Side Channel Cloud | the sign-up form at https://sidechannel.cloud/ | free for open-source and non-profit work; opens in hardware waves. The page does not say who operates it |
+| Side Channel Cloud (operated by Amodo Design, per its acknowledgement page) | the sign-up form at https://sidechannel.cloud/ | H100s and H200s, bare metal with GPU hardware counters, the DC bus feeding the H200s instrumented, network taps placeable anywhere on its network; free for open-source and non-profit work; opens in hardware waves. Its one published work used an AC-coupled Rogowski probe, which carries no energy: ask for a DC-coupled channel |
 | Verifiable Compute Foundation (operated by Lucid) | the Research Access Program interest form on https://verifiablecompute.ai/ | free access for verification research; beta at the time of writing |
 | Compute Verification Project | the "Get in touch" link under its entry on the Get Involved page of the Verification Plan | runs a competition against its inference-versus-training protocol |
+| Modal, research clusters with Slurm, Colab compute units, hourly VMs | [GPU_ACCESS.md](GPU_ACCESS.md) (`scripts/modal_tier0.py`, `scripts/slurm_tier0.sh`) | NVML-only shakedowns on H100, H200, B200 and B300 for free or a few dollars; no independent meter |
 
-Routes and terms are as each page gave them in early November 2026; check the page before relying on a row
-(verifiablecompute.ai was not re-read for 0.9.0).
+Routes and terms are as each page gave them in early November 2026, and for Side Channel Cloud and the routes in
+GPU_ACCESS.md on 14 November 2026; check the page before relying on a row (verifiablecompute.ai did not render for
+either check).
 
 Clusters are normally scheduled (for example with Slurm): ask for an exclusive, whole-node allocation for the full duration,
 and for the permissions listed in HARDWARE_CONFIG.md section B.

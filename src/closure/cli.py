@@ -5,9 +5,11 @@ import json
 import os
 import platform
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 from dataclasses import asdict, fields
 from pathlib import Path
 
@@ -1091,6 +1093,85 @@ def cmd_dcbus_decimate(a) -> int:
     return 0
 
 
+def cmd_dcbus_import(a) -> int:
+    """A meter's own log format as `timestamp_s,power_w` window means for dcbus-analyze (PowerSensor3 dumps for now)."""
+    from . import dcbus
+    try:
+        r = dcbus.powersensor3_to_csv(a.src, a.dst, window_s=a.window_ms / 1000.0, t0=a.t0)
+    except (ValueError, OSError) as e:
+        print(f"refusing: {e}", file=sys.stderr)
+        return 2
+    print(json.dumps(clean(r), indent=2))
+    print(f"next: closure dcbus-analyze --run <trial folder> --csv {a.dst}", file=sys.stderr)
+    return 0
+
+
+def cmd_meter_log(a) -> int:
+    """Record a PowerSensor3 for as long as a run lasts: a dump with absolute (Unix) times, so that it lines up with the
+    trial's windows without a hand-entered offset, then the same trace as `timestamp_s,power_w` for dcbus-analyze.
+    Start it before `closure tier0` and stop it (Ctrl-C, SIGTERM or --seconds) after the trial; it changes nothing on
+    the GPU and needs no root, only read access to the meter's serial device."""
+    from . import dcbus
+    try:
+        import powersensor
+    except ModuleNotFoundError:
+        print("closure meter-log needs PowerSensor3's Python binding (the module 'powersensor'): build its host library "
+              "with -DPYTHON_BINDINGS=ON (github.com/nlesc-recruit/PowerSensor3, docs/INSTALLATION_HOST.md) and put the "
+              "built library on PYTHONPATH. Without it, run `psrun -f dump.txt -- sleep <seconds>` and convert the dump "
+              "with `closure dcbus-import dump.txt bus.csv --t0 <Unix time at its start>`.", file=sys.stderr)
+        return 2
+    out = Path(a.out)
+    if out.exists():
+        print(f"refusing: {out} exists; a meter log is never appended to", file=sys.stderr)
+        return 2
+    out.parent.mkdir(parents=True, exist_ok=True)
+    stop = {"sig": None}
+
+    def on_signal(signum, frame):
+        stop["sig"] = int(signum)
+
+    old = {}
+    from .hw.gpu import STOP_SIGNALS
+    for sg in STOP_SIGNALS:
+        try:
+            old[sg] = signal.signal(sg, on_signal)
+        except (ValueError, OSError):
+            pass
+    ps = powersensor.PowerSensor(a.device)
+    names = []
+    for i in range(4):                                   # PowerSensor3 has at most four sensor pairs
+        try:
+            names.append(str(ps.get_name(i)))
+        except Exception:
+            names.append("")
+    started = time.time()
+    ps.dump(str(out), True)
+    print(f"recording {a.device} -> {out} (absolute times; sensor pairs: {', '.join(n for n in names if n) or 'unnamed'})."
+          f" {'Stops after ' + format(a.seconds, 'g') + ' s' if a.seconds else 'Ctrl-C or SIGTERM stops it'}.", flush=True)
+    try:
+        while stop["sig"] is None and (a.seconds is None or time.time() - started < a.seconds):
+            time.sleep(0.2)
+    finally:
+        ps.dump("", False)                                # stops dumping and closes the file
+        for sg, h in old.items():
+            try:
+                signal.signal(sg, h)
+            except (ValueError, OSError):
+                pass
+    print(f"stopped after {time.time() - started:.1f} s" + (f" (signal {stop['sig']})" if stop["sig"] else ""), flush=True)
+    if a.no_csv:
+        return 0
+    csv_path = Path(a.csv) if a.csv else out.with_suffix(".csv")
+    try:
+        r = dcbus.powersensor3_to_csv(out, csv_path, window_s=a.window_ms / 1000.0)
+    except ValueError as e:
+        print(f"the dump was recorded, but not converted: {e}", file=sys.stderr)
+        return 1
+    print(json.dumps(clean(r), indent=2))
+    print(f"next: closure dcbus-analyze --run <trial folder> --csv {csv_path}")
+    return 0
+
+
 def _load_cfg(run: Path) -> TrialConfig:
     cfgd = json.loads((run / "prereg.json").read_text())["cfg"]
     for k in ("intensities", "classes"):
@@ -1307,6 +1388,19 @@ def main(argv=None) -> int:
     s = sp.add_parser("dcbus-decimate"); s.add_argument("src"); s.add_argument("dst"); s.add_argument("--window-ms", type=float, default=1.0)
     s.add_argument("--scale", type=float, default=1.0); s.add_argument("--ts-unit", choices=["s", "ms", "us", "ns"], default="s")
     s.set_defaults(f=cmd_dcbus_decimate)
+    s = sp.add_parser("dcbus-import", help="a meter's own log as timestamp_s,power_w window means for dcbus-analyze "
+                      "(a PowerSensor3 dump)")
+    s.add_argument("src"); s.add_argument("dst"); s.add_argument("--format", choices=["powersensor3"], default="powersensor3")
+    s.add_argument("--t0", type=float, default=None, help="Unix time at which a dump with relative times started")
+    s.add_argument("--window-ms", type=float, default=10.0); s.set_defaults(f=cmd_dcbus_import)
+    s = sp.add_parser("meter-log", help="record an independent PowerSensor3 meter during a run (absolute times), then "
+                      "write it as timestamp_s,power_w for dcbus-analyze")
+    s.add_argument("--device", default="/dev/ttyACM0", help="the PowerSensor3's serial device")
+    s.add_argument("--out", required=True, help="the dump to write (a new file)")
+    s.add_argument("--seconds", type=float, default=None, help="stop after this long (default: at Ctrl-C or SIGTERM)")
+    s.add_argument("--csv", default=None, help="where the converted trace goes (default: the dump's name with .csv)")
+    s.add_argument("--window-ms", type=float, default=10.0); s.add_argument("--no-csv", action="store_true")
+    s.set_defaults(f=cmd_meter_log)
     from .pause.cli import register as _register_pause
     _register_pause(sp)
     from .treaty.cli import add_parser as _register_treaty

@@ -81,7 +81,8 @@ any audit data exist; otherwise its hash is logged and kept in the signed chain.
   system; no host name, user name or path).
 - **Do not send `signing_key.bin`.** It is the run's private key and is deliberately left out of the bundle. Keep it or
   delete it. The public key is in `T1-smoke/signature.json` (`T1-medium/` or `T1-long/` for those trials).
-- If an independent power meter logged during the trial, export it as `timestamp_s,power_w` and run
+- If an independent power meter logged during the trial, export it as `timestamp_s,power_w` (a PowerSensor3 dump:
+  `closure dcbus-import`, or record it with `closure meter-log`; [GPU_ACCESS.md](GPU_ACCESS.md)) and run
   `closure dcbus-analyze --run runs/tier0/T1-smoke --csv bus.csv`. Send `results_dcbus.json` as well. The meter must be
   DC-coupled and report absolute watts; an AC-coupled probe cannot give energy and the command refuses it.
 
@@ -132,6 +133,11 @@ residency timing and the blind smoke trial on a real device.
   fewer stack variants than H1.6 asks for; both are reported. A free Colab session is not reliable for this long.
 - **A cloud VM with one GPU and a root shell:** the commands under "Run it" above, unchanged (add
   `--trial-profile medium` or `long`).
+- **Modal (H100, H200, B200, B300), from your own computer:** `modal run --detach scripts/modal_tier0.py --gpu H100`
+  after `modal run scripts/modal_tier0.py --gpu H100 --check`. Modal's free Starter plan includes $30 of compute a
+  month, enough for a smoke pilot on any of these; `--estimate` prints the costs. [GPU_ACCESS.md](GPU_ACCESS.md).
+- **A Slurm cluster's H100:** `bash scripts/slurm_tier0.sh --setup` once on a login node, then
+  `sbatch --account=<account> scripts/slurm_tier0.sh` (set its `--gpus` line to the cluster's GPU type name).
 
 Such a run is an engineering shakedown on a non-target device: inside a VM, without an independent meter (assumption A6
 does not hold), and usually without clock or power control. It is not the registered trial. Record it in

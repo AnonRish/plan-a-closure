@@ -7,7 +7,7 @@
 Every joule, packet byte and byte of memory on an enrolled cluster must be *explained* by verified work.
 What is left over (the residual) upper-bounds hidden compute, hidden exfiltration and hidden persistent state.
 
-> **Status: v0.10.0. The software is tested; the physical claim is not yet demonstrated.** Eight shakedown runs on
+> **Status: v0.12.0. The software is tested; the physical claim is not yet demonstrated.** Eight shakedown runs on
 > Tesla T4s in Colab and Kaggle sessions (8 to 12 November 2026, the GPU's own NVML counters as the only meter) are
 > published whatever they showed: [results/README.md](results/README.md) is the table, generated from the bundles, and
 > [docs/DEVIATIONS.md](docs/DEVIATIONS.md) is the account.
@@ -36,7 +36,7 @@ What is left over (the residual) upper-bounds hidden compute, hidden exfiltratio
 >
 > None of this is a claim about Plan A. A T4 is not the target device, NVML can be spoofed by whoever runs the machine,
 > and every run so far is the author's. Each claim is decided by the pre-registered trial on instrumented H100-class
-> hardware with an independent power meter. The software itself: 379 tests (`pytest`), plus 23 that run the torch code
+> hardware with an independent power meter. The software itself: 438 tests (`pytest`), plus 23 that run the torch code
 > on CPU where torch is installed, 10 of them rehearsing the whole GPU path against a fake NVML and nvidia-smi; the 13
 > vendored repositories under `external/` add their own suites (2,708 tests passed here, `closure external test`). A
 > report whose status says `SIMULATED` validates the estimators only.
@@ -61,6 +61,19 @@ runs it on a free Colab GPU, and [notebooks/tier0_kaggle.ipynb](notebooks/tier0_
 on each of a Kaggle session's two GPUs, declared one campaign beforehand and read together (`closure pool`). A run on
 any GPU other than a T4 would be the first of its kind, and the most useful thing a reader can add.
 
+**On an H100, H200, B200 or B300, for free or nearly** ([docs/GPU_ACCESS.md](docs/GPU_ACCESS.md)): Modal's free Starter
+plan includes $30 of compute a month, which covers a smoke pilot on any of them, run from your own computer in your own
+account; Side Channel Cloud gives open-source projects free bare-metal H100s and H200s with an instrumented DC bus; and
+a Slurm cluster's H100 takes one batch job.
+
+```bash
+pip install modal && modal setup                               # once
+python scripts/modal_tier0.py --estimate                       # what each GPU and profile costs; no Modal call
+modal run scripts/modal_tier0.py --gpu H100 --check            # a minute or two: does NVML's energy counter read there?
+modal run --detach scripts/modal_tier0.py --gpu H100           # the smoke pilot, about 2 h 20 min
+sbatch --account=<account> scripts/slurm_tier0.sh              # a Slurm cluster (bash scripts/slurm_tier0.sh --setup first)
+```
+
 ## The gap this targets
 
 Plan A's inference-only retrofit checks *correctness* with passive taps and partial recomputation. For *completeness*
@@ -70,10 +83,11 @@ telemetry signals are signature-based. Gargiulo and Kulp (arXiv 2609.00309, meas
 with an AC-coupled current probe) reach 97% accuracy, with diluted LoRA the hardest evasion case. Rahman and Tajdari
 (arXiv 2606.19262) classify from 1 Hz NVML telemetry at 98% accuracy, assume the counters cannot be tampered with, and
 find white-box LoRA the hardest case (42.6% detection). Kimpson, Baker and Graham (arXiv 2610.07476) bound hidden compute
-from power analytically: on an A100 a matched-energy attack (declared work on cheap operands, the saved energy spent on
-covert int8 work) hides at least 0.41 of capacity, and only re-execution at an observed clock plus further restrictions
-bring the bound down to 0.059. Closure's slack-inflated gap plays the same role, measured rather than derived, which is
-why the probe sweeps operand cost and int8/fp8. Closure is **signature-independent accounting**: whatever hidden work does, it costs joules,
+from power on A100s, reading NVML's energy counter as a trusted instrument: a matched-energy attack (declared work on
+cheap operands, the saved energy spent on covert int8 work) hides at least 0.41 of capacity, the bound from the meter
+alone is 1.16, and only re-execution at an observed clock plus further restrictions bring it down to 0.059. Closure's
+slack-inflated gap plays the same role, measured rather than derived, which is why the probe sweeps operand cost and
+int8/fp8. Closure is **signature-independent accounting**: whatever hidden work does, it costs joules,
 busy-time, bytes or memory, and the verifier asks whether those are fully explained. It does not classify: it bounds
 unexplained energy against a calibrated model of verified work, converts it to FLOPs with a measured energy floor, and needs
 an independent *absolute-power* meter, because NVML can be spoofed (a point Gargiulo and Kulp also make) and an AC-coupled
@@ -90,7 +104,7 @@ tap-and-recompute. Its known blind spot (efficiency slack: an energy-neutral adv
 | traffic | is every payload byte on the tap explained by a verified exchange? | flow byte accounting from a streamed pcap (IPv4 and IPv6), unknown-flow and tap-loss detection, frames it cannot attribute counted as unexplained, release-grid capacity bound | `traffic.py` |
 | state | does device memory hold only the verifier's stream? | AES-CTR stream, keyed digest challenges, bandwidth-bounded timing; honest, dropping and host-parking provers | `state.py` |
 | evidence | can a stranger check what was run and when? | hash chain, Ed25519 signature, preregistration, commit-reveal of the breaker's schedule | `evidence.py` |
-| independent meter | can the prover's own NVML be cross-checked? | absolute-power CSV import (AC-coupled traces are rejected), unit conversion, constant-memory decimation of very large traces, clock alignment, re-analysis of the same run | `dcbus.py` |
+| independent meter | can the prover's own NVML be cross-checked? | absolute-power CSV import (AC-coupled traces are rejected), unit conversion, constant-memory decimation of very large traces, PowerSensor3 dumps read directly and recorded with absolute times (`closure dcbus-import`, `closure meter-log`), clock alignment, re-analysis of the same run | `dcbus.py` |
 | efficiency slack and energy floor | does an allowed stack, clock or power cap, numerics choice, or cheap input data leave energy-neutral room for hidden work? what is the lowest joules per FLOP? | duty-cycled windows at fixed work rates, one-sided 95% upper saving of allowed stack variants (`s_stack`) and activation patterns (`s_operand`), dynamic J/FLOP floor with int8 and fp8, the declared-work band, sealed `probe.json` bound into the pre-registration | `hw/probe.py` |
 | one-command pilot | can an operator run Tier 0 alone, without a meeting, and get the GPU back as it was? | `closure tier0`: every step logged with its command and exit status, `SUMMARY.md`, a bundle that leaves out the private key; the GPU matched across CUDA and NVML by UUID; clocks and power limit restored on exit, on SIGTERM and by a final `hw-restore` step; the whole hardware path rehearsed in CI against a fake NVML and nvidia-smi | `tier0.py` `hw/gpu.py` |
 
@@ -126,8 +140,8 @@ the 100B ZDR fleet cap exceeds the 60B 2034 world-compute figure; Appendix A.4.2
 
 The halt and treaty proposals (ControlAI's *A Narrow Path* and Direct Institutional Plan, the middle-powers paper at
 asi-prevention.com, MIRI's *Mechanisms to Verify International Agreements* and *AI Governance to Avoid Extinction*,
-Barnett and Thiergart on what evaluations can and cannot do, and CBPAI's *Deal of the Century*) rest on verification
-this repository builds. [docs/TREATY_COVERAGE.md](docs/TREATY_COVERAGE.md) maps every mechanism they name to code, to a
+Barnett and Thiergart on what evaluations can and cannot do, CBPAI's *Deal of the Century*, MIRI's draft agreement and
+FLI's Draft Articles) rest on verification this repository builds. [docs/TREATY_COVERAGE.md](docs/TREATY_COVERAGE.md) maps every mechanism they name to code, to a
 GPU or cluster step, or to "not code", and states what the computations show.
 
 | module | what it makes concrete | command |
@@ -140,14 +154,18 @@ GPU or cluster step, or to "not code", and states what the computations show.
 | `treaty/inspection.py`, `beacon.py`, `quorum.py` | inspection samples nobody can predict, lot-selected witnesses, a draw the last party to reveal cannot steer, and k-of-n approval of critical actions | `closure treaty inspect-plan`, `beacon-commit`, `beacon-seed`, `sortition`, `quorum-verify` |
 | `treaty/clauses.py` | suspended enforcement clauses: in force only for an unexpired finding that k of n panel members signed | `closure treaty clause` |
 | `treaty/bandwidth.py` | interconnect limits: the link rate that training across pods needs, the slowdown a cap forces, and what inference needs | `closure treaty bandwidth` |
+| `treaty/asi_agreement.py` | MIRI's draft agreement (arXiv 2511.10783): FLOP counting, H100e and TPP, the three thresholds, covered chip clusters, declared runs approved by both sides' inspectors, Council consensus and vetoes, 30-day emergency changes, the register, transfers, certified destruction, challenge inspections, and its Tables 1 and 2 | `closure treaty asi-run`, `asi-cluster`, `asi-crosssite`, `asi-tables`, `asi-off` |
+| `treaty/fli_articles.py`, `chipauth.py` | FLI's Draft Articles: the catastrophic-risk test, certificates and evaluator licences, challenges, the Conference's simple and contribution-weighted majorities, amendments, and Annex C's chip authorization (signed, used once, renewed every few minutes, withheld after a violation) | `closure treaty fli-weighted`, `chip-auth` |
+| `treaty/obligations.py`, `coverage.py` | both texts' deadlines against a log of dated events, and their article-by-article matrix | `closure treaty obligations`, `coverage` |
 
 ## Plan A coverage (checked against the pasted documents and the live pages)
 
 `docs/PLAN_A_COVERAGE.md` maps 79 requirements from the Verification Plan and its Get Involved page (every phase, all
 17 SITREP workstreams, the four tracks, the open problems) to code and tests in this archive, including the vendored
 repositories under `external/`. `closure coverage` fails if a row points at code or a test that does not exist, and
-`closure external check` fails if a vendored test that a row cites did not pass in the recorded run. On 6 November 2026
-the SITREP statuses and open problems still matched the live Get Involved page (last updated 9 July 2026).
+`closure external check` fails if a vendored test that a row cites did not pass in the recorded run. On 14 November 2026
+all 17 SITREP statuses, the 7 open problems and the 4 tracks still matched the live Get Involved page (last updated
+9 July 2026).
 
 | status | rows |
 | --- | --- |
@@ -196,8 +214,9 @@ of the 34 vendored tests that a coverage row cites passed.
 ## The hardwired-pause layer
 
 `src/closure/pause/` makes the quantitative parts of the working paper "The Feasibility of a Hardwired Pause of Frontier AI
-Training" (Working Group on AI Pause Feasibility, Berkeley; checked against v1.0.1, October 2026; v1.0.2 followed on
-26 October 2026 and has not been re-checked) executable: treaty thresholds, covert-evasion
+Training" (Working Group on AI Pause Feasibility, Berkeley; checked in full against v1.0.1, October 2026; in v1.0.2 of
+26 October 2026, 35 of the 114 numbers below were looked up and all were unchanged, and its footnotes from 21 on are
+numbered one higher, [docs/HARDWIRED_PAUSE.md](docs/HARDWIRED_PAUSE.md)) executable: treaty thresholds, covert-evasion
 and overt-breakout ledgers, the chip-census estimator, fab mass balance, a model whitelist, a screen for inference-only chip
 designs, transition timing, chip economics, and the game-theoretic conditions for a stable pause. The guide is
 [docs/HARDWIRED_PAUSE.md](docs/HARDWIRED_PAUSE.md); [docs/HARDWIRED_PAUSE_COVERAGE.md](docs/HARDWIRED_PAUSE_COVERAGE.md) maps
@@ -209,6 +228,7 @@ its 75 requirements to code, tests and repositories.
 - The model is cross-checked against the authors' public code (`scripts/crosscheck_upstream.py`, not vendored): all 12 cells of
   their chip-economics figure are identical, and the fleet thresholds and census totals agree with their notebook. Re-run on
   6 November 2026 against their current repositories (the calculations supplement last changed on 10 October 2026): all agree.
+  Neither repository had changed by 14 November 2026.
 - Telemetry-based workload classification (3.3.3) is here only as defence in depth (`cadence.py`), never as a bound.
 - `bridge.py` turns a closure trial's measured detection gap into a ledger line for transitional inference service, replacing an
   assumed covert discount with a measured one on the audited share of a fleet. It is descriptive, not pre-registered, and only as
@@ -216,6 +236,29 @@ its 75 requirements to code, tests and repositories.
 
 Items that are inspections, seals, treaties or chip manufacturing are marked `policy` or `physical` and are not counted as
 covered. `gemm_audit.py` is a design-time screen, not the physical audit the paper requires.
+
+## Two draft agreements, article by article
+
+MIRI's draft agreement (Scher, Abecassis, Barnett and Abeyta, arXiv 2511.10783) and FLI's Draft Articles on the Safe
+Development and Diffusion of Artificial Intelligence (2026) are written as treaty text, so
+[docs/AGREEMENTS_COVERAGE.md](docs/AGREEMENTS_COVERAGE.md) gives every article and annex of both a row, generated by
+`closure treaty coverage`, which fails if a row points at code or a test that does not exist.
+
+| status | rows |
+| --- | --- |
+| implemented (code and tests here) | 49 |
+| hardware-gated (code here; measured on hardware) | 8 |
+| partial | 4 |
+| physical (outside software) | 5 |
+| policy (outside software) | 33 |
+
+Every one of the 61 software rows has code and a test. What the computations show is in
+[docs/TREATY_COVERAGE.md](docs/TREATY_COVERAGE.md): FLI's chip authorizations, as Annex C describes them, can be held
+back and used after renewal stops (30 days of run-on after 30 days of use, with renewals every 5 minutes worth 10), and
+binding each one to a nonce the chip has just made bounds that to about one renewal period; two 16-H100e sets on MIRI's
+25 Gbit/s line are no covered cluster yet can train together with no slowdown; on the plain reading of MIRI's Article X,
+a Council member can refuse a challenge inspection of its own territory; and FLI's contribution-weighted votes, with GDP
+as a stand-in, put the verification and enforcement mechanisms in the hands of four economies.
 
 ## Claim chain (what a HARDWARE report says)
 
@@ -234,7 +277,7 @@ covered. `gemm_audit.py` is a design-time screen, not the physical audit the pap
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"                # Python 3.10 or newer
-pytest                                  # 379 tests (402 with torch installed)
+pytest                                  # 438 tests (461 with torch installed)
 closure selftest                        # end-to-end simulated trial, PASS/FAIL
 closure doctor                          # what the pilot can do on this machine, and why not where not
 closure tier0 --mock --out runs/tier0   # the whole one-GPU pilot on fake hardware: logs, SUMMARY.md, bundle
@@ -323,9 +366,10 @@ verifier never sees it until analysis. Use `--pause-after-prereg` to timestamp `
 `approval.py` `captrade.py` `coverage.py` `external.py`), `hw/` (`nvml.py` `workloads.py` `source.py` `probe.py` `gpu.py`) and `pause/` (`thresholds.py`
 `treaty_ledger.py` `census.py` `inference_only.py` `gemm_audit.py` `fab.py` `whitelist.py` `registry.py` `supply_chain.py` `transition.py`
 `msic_econ.py` `pausegame.py` `bridge.py` `paper_claims.py` `coverage.py` `cli.py`), and `treaty/` (`thresholds.py` `deterrence.py`
-`coalition.py` `mockrun.py` `geoloc.py` `inspection.py` `beacon.py` `quorum.py` `clauses.py` `bandwidth.py` `cli.py`). `tests/`, `scripts/`
-(`run_anywhere.sh`, `sim_study.py`, `crosscheck_upstream.py`), `results/` (every hardware run's bundle, `record.py`, `reread.py`), `docs/`
-(`VERIFY_IT_YOURSELF.md`, `DEVIATIONS.md`, `HARDWARE_CONFIG.md`, `OPERATOR_TIER0.md`, `PREREGISTRATION.md`, `RUNBOOK_HARDWARE.md`, `PLAN_A_COVERAGE.md`, `TREATY_COVERAGE.md`,
+`coalition.py` `mockrun.py` `geoloc.py` `inspection.py` `beacon.py` `quorum.py` `clauses.py` `bandwidth.py`
+`asi_agreement.py` `fli_articles.py` `chipauth.py` `obligations.py` `coverage.py` `cli.py`). `tests/`, `scripts/`
+(`run_anywhere.sh`, `modal_tier0.py`, `slurm_tier0.sh`, `sim_study.py`, `crosscheck_upstream.py`), `results/` (every hardware run's bundle, `record.py`, `reread.py`), `docs/`
+(`VERIFY_IT_YOURSELF.md`, `GPU_ACCESS.md`, `DEVIATIONS.md`, `HARDWARE_CONFIG.md`, `OPERATOR_TIER0.md`, `PREREGISTRATION.md`, `RUNBOOK_HARDWARE.md`, `PLAN_A_COVERAGE.md`, `TREATY_COVERAGE.md`, `AGREEMENTS_COVERAGE.md`,
 `SIM_STUDY.md`, `PUBLISH.md`, `HARDWIRED_PAUSE.md`, `HARDWIRED_PAUSE_COVERAGE.md`), `CHANGELOG.md`, and `external/` (13
 vendored repositories, `MANIFEST.json`, `README.md`).
 

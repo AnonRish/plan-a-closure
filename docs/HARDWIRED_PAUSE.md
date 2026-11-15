@@ -119,6 +119,29 @@ python scripts/crosscheck_upstream.py --calc pause-ledger-calculations --msic ec
 The failure-by-vintage model in `census.py` is implemented but its default inputs are Table 5.1 as the notebook computes it,
 because the paper's own vintage data come from Epoch AI sales records that are not included here.
 
+Neither upstream repository has a commit after 10 October 2026 (checked 14 November 2026), so the 6 November cross-check
+still describes them.
+
+## Version 1.0.2 (26 October 2026)
+
+The code and the 114 claims follow v1.0.1, which was read in full. v1.0.2 describes itself as "minor corrections and
+clarifications, updated references, and formatting improvements" and lists no particular change. On 14 November 2026 its
+HTML text at hardwired-pause.ai/paper was searched for the printed numbers behind 35 of the 114 claims; every one was found
+as v1.0.1 printed it, and none was found changed:
+
+- Table 3.1 and section 6.2: `HP.T31.CT`, `HP.T31.NT`, `HP.T31.CE`, `HP.T31.FE`, `HP.T31.FB`, `HP.62.rhoF`, `HP.62.rhoP`,
+  `HP.62.rhoE`, `HP.62.rhoB`, `HP.62.UF`, `HP.62.FE.printed`, `HP.62.FP`, `HP.62.FP.stress`, `HP.62.FE.2027`,
+  `HP.62.CF.2027`, `HP.62.CB.2028`, `HP.62.beta.2028`, `HP.62.FB.2028`, `HP.62.FB.2028.T1`, `HP.62.FB.T1`,
+  `HP.62.gpt6.low`, `HP.62.gpt6.high`, `HP.62.gpt6.full`
+- sections 4.1, 5.3.2, 5.4.2 and 6.4.3: `HP.41.token`, `HP.41.machines`, `HP.53.detect95`, `HP.53.poisson`, `HP.54.cost`,
+  `HP.54.buyback`, `HP.64.hc.two.line`, `HP.64.hc.two.sum`
+- section 7.3 and footnotes: `HP.65f.ord`, `HP.73.price.llama`, `HP.73.x120`, `HP.73.stranded`
+
+The other 79 were not re-read in v1.0.2. One change affects how this repository cites the paper: v1.0.2 has one more
+footnote before footnote 21, so every footnote this repository cites is one higher there (21 becomes 22, 36 becomes 37,
+39 becomes 40, 46 becomes 47, 50 becomes 51, 52 becomes 53, 64 becomes 65, 65 becomes 66 and 79 becomes 80). Footnote
+numbers in the code and in this guide are v1.0.1's.
+
 ## Closure as the evidence behind a discount
 
 The paper's covert discount for transitional service (`pi_E = 0.001`: 10% of operators evade, each diverting 1%) is an

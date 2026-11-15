@@ -36,6 +36,8 @@ jobs:
       - run: closure coverage
       - run: closure pause claims
       - run: closure pause coverage
+      - run: closure treaty coverage
+      - run: closure treaty asi-tables
       - name: vendored repositories are the trees that were tested
         run: closure external check
       - run: closure hw-probe --mock --out probe.json

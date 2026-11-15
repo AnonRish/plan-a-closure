@@ -1,0 +1,71 @@
+name: Hardware run
+description: Send back the bundle of a pilot you ran on a real GPU. Every run is published whatever it shows.
+title: "Hardware run: <GPU> on <platform>"
+labels: ["hardware run"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for running it. Attach `tier0_bundle.tar.gz` (and `drill.json` or `results_dcbus.json` if you have
+        them). **Never attach `signing_key.bin`**: it is the run's private key, and the bundle leaves it out on purpose.
+        Anything you do not know, leave blank.
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU
+      description: As `closure doctor` names it (the bundle's doctor.json records it too)
+      placeholder: NVIDIA H100 80GB HBM3
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Where it ran
+      options:
+        - Modal (scripts/modal_tier0.py)
+        - A Slurm cluster (scripts/slurm_tier0.sh)
+        - Side Channel Cloud
+        - A cloud virtual machine
+        - Google Colab
+        - Kaggle
+        - My own machine
+        - Somewhere else (say below)
+    validations:
+      required: true
+  - type: dropdown
+    id: profile
+    attributes:
+      label: Trial profile
+      options:
+        - smoke
+        - medium
+        - long
+    validations:
+      required: true
+  - type: input
+    id: sha256
+    attributes:
+      label: SHA-256 of tier0_bundle.tar.gz
+      description: The pilot prints it at the end
+  - type: dropdown
+    id: meter
+    attributes:
+      label: Independent power meter
+      options:
+        - None (NVML only)
+        - DC-coupled, absolute (results_dcbus.json attached)
+        - AC-coupled probe only (it cannot give energy)
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything unusual
+      description: Steps that stopped, warnings in preflight, clock or power changes the machine refused, what you changed
+  - type: checkboxes
+    id: key
+    attributes:
+      label: Private key
+      options:
+        - label: I did not attach signing_key.bin
+          required: true

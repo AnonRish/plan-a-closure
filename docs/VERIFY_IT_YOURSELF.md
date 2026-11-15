@@ -81,7 +81,10 @@ record, open an issue at https://github.com/AnonRish/plan-a-closure/issues and a
 leaves out the run's private key (`signing_key.bin`) on purpose. Every run is published whatever it shows.
 
 No GPU at hand: any cloud that rents an NVIDIA GPU by the hour with a shell will do. A virtual machine gives root, so
-the whole probe runs; a container usually refuses clock changes, and the pilot then runs as it does on Kaggle.
+the whole probe runs; a container usually refuses clock changes, and the pilot then runs as it does on Kaggle. For free
+or nearly, [GPU_ACCESS.md](GPU_ACCESS.md) lists the routes: Modal's free monthly credit covers a smoke pilot on an H100,
+H200, B200 or B300 from your own computer (`modal run --detach scripts/modal_tier0.py --gpu H100`), and
+`scripts/slurm_tier0.sh` runs it as a batch job on a Slurm cluster's H100.
 
 ## What has been shown, and what has not
 

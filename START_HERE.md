@@ -27,6 +27,8 @@ closure pause claims            # the hardwired-pause paper's numbers (111 of 11
 closure coverage                # checks the Plan A matrix and prints its status counts (docs/PLAN_A_COVERAGE.md)
 closure external check          # the vendored repositories are the trees that were tested
 closure treaty coalition         # the middle-powers agreement on World Bank data (docs/TREATY_COVERAGE.md)
+closure treaty coverage          # MIRI's draft agreement and FLI's Draft Articles, article by article
+closure treaty chip-auth         # FLI Annex C: how long a chip runs on after its authorizations stop
 closure treaty mock-run --budget-flop 4e11   # A Narrow Path's mock training run, on CPU
 ```
 
@@ -43,6 +45,15 @@ bash scripts/run_anywhere.sh --hardware    # the pilot; --profile medium (5 h 40
 It is one unattended command underneath, `closure tier0`, which logs every step and writes a bundle to send back
 (`docs/OPERATOR_TIER0.md`). The bundle leaves out the run's private key; do not send `signing_key.bin`. Every run so
 far was on a T4: a run on any other GPU is the first of its kind.
+
+No GPU of your own: `docs/GPU_ACCESS.md` lists the free and nearly free routes. With a Modal account (its free plan
+includes $30 of compute a month) the pilot runs on an H100, H200, B200 or B300 from your own computer:
+
+```bash
+pip install modal && modal setup
+modal run scripts/modal_tier0.py --gpu H100 --check          # a minute or two first
+modal run --detach scripts/modal_tier0.py --gpu H100         # the smoke pilot
+```
 
 ## Sending results back
 
