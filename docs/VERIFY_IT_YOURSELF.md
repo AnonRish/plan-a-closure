@@ -39,7 +39,9 @@ closure slack-left --run /tmp/run6/*/T1-long   # the slack left if a regime fixe
 **What a bundle proves.** That these results follow from these data; that the analysis, the thresholds, the seed and
 the committed schedule of hidden loads were fixed in `prereg.json` before the audit data existed (its hash is in the
 signed chain, and from run 5 on it carries an OpenTimestamps proof, pending at public calendars when the bundle was
-written, which `ots upgrade` and `ots verify` complete); and that the code was the commit named in it. **What it does not prove.** That the data came from the GPU as described. Every run so far reads
+written, which `ots upgrade` and `ots verify` complete); and that the code was the commit named in it (since the history was re-dated to UTC on 15 November 2026, the
+commit [COMMIT_HISTORY.md](COMMIT_HISTORY.md) maps it to; its source hash, `code.src_sha256`, checks the code either
+way). **What it does not prove.** That the data came from the GPU as described. Every run so far reads
 the GPU's own NVML counters, which whoever runs the machine could falsify, and every run so far was run by the
 author. The pre-registration says so (assumption A6), every report is labelled "NVML energy counter; spoofable", and
 the two things that would change it are an independent power meter and a run by someone else. Level 4 is the second.

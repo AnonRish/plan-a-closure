@@ -55,6 +55,10 @@ and FLI's *Draft Articles on the Safe Development and Diffusion of Artificial In
 
 - The Modal cost table is printed with `python scripts/modal_tier0.py --estimate`, which does not contact Modal (`modal
   run` would start an app first). GPU_ACCESS.md adds `modal app logs`, `modal app stop` and the Usage & Billing budget.
+- The commits for 0.5.5 to 0.10.0 are re-dated to UTC with the noreply address: files, messages and moments
+  unchanged, hashes new. [docs/COMMIT_HISTORY.md](docs/COMMIT_HISTORY.md) maps the old hashes, which runs 3 to 8
+  cite, to the new ones, and every run's `code.src_sha256` equals the source hash of its version's commit now.
+- `scripts/run_anywhere.sh` and `scripts/slurm_tier0.sh` are executable again.
 
 ## 0.11.0
 
