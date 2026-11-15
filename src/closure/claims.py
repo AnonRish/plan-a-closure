@@ -1,4 +1,4 @@
-"""Executable re-derivation of the numeric claims in the AI 2040 verification plan (pasted text).
+"""Executable re-derivation of the numeric claims in the AI 2040 verification plan (ai-2040.com/supplements/verification-plan).
 
 Status: OK (reproduces), WORDING (true only under a stated reading), INCONSISTENT (no reading reproduces it)."""
 from __future__ import annotations

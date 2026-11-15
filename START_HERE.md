@@ -1,8 +1,8 @@
 # Start here
 
-You received this archive so that you can check it yourself, without a meeting. It contains plan-a-closure (energy,
-time, traffic and state accounting for AI 2040 Plan A's inference-only verification, plus executable versions of the
-Plan A and hardwired-pause numbers) and 13 related repositories under `external/`.
+This page is the shortest way to check plan-a-closure yourself; nothing in it needs the author. The repository holds
+plan-a-closure (energy, time, traffic and state accounting for AI 2040 Plan A's inference-only verification, plus
+executable versions of the Plan A and hardwired-pause numbers) and 13 related repositories under `external/`.
 
 Nothing here demonstrates a physical claim yet. Eight shakedown runs on Tesla T4s are published whatever they showed
 (`results/README.md`, `docs/DEVIATIONS.md`); everything that needs H100-class hardware and an independent power meter

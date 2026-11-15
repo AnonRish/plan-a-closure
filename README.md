@@ -158,7 +158,7 @@ GPU or cluster step, or to "not code", and states what the computations show.
 | `treaty/fli_articles.py`, `chipauth.py` | FLI's Draft Articles: the catastrophic-risk test, certificates and evaluator licences, challenges, the Conference's simple and contribution-weighted majorities, amendments, and Annex C's chip authorization (signed, used once, renewed every few minutes, withheld after a violation) | `closure treaty fli-weighted`, `chip-auth` |
 | `treaty/obligations.py`, `coverage.py` | both texts' deadlines against a log of dated events, and their article-by-article matrix | `closure treaty obligations`, `coverage` |
 
-## Plan A coverage (checked against the pasted documents and the live pages)
+## Plan A coverage (checked against the AI 2040 pages)
 
 `docs/PLAN_A_COVERAGE.md` maps 79 requirements from the Verification Plan and its Get Involved page (every phase, all
 17 SITREP workstreams, the four tracks, the open problems) to code and tests in this archive, including the vendored
@@ -370,7 +370,7 @@ verifier never sees it until analysis. Use `--pause-after-prereg` to timestamp `
 `asi_agreement.py` `fli_articles.py` `chipauth.py` `obligations.py` `coverage.py` `cli.py`). `tests/`, `scripts/`
 (`run_anywhere.sh`, `modal_tier0.py`, `slurm_tier0.sh`, `sim_study.py`, `crosscheck_upstream.py`), `results/` (every hardware run's bundle, `record.py`, `reread.py`), `docs/`
 (`VERIFY_IT_YOURSELF.md`, `GPU_ACCESS.md`, `DEVIATIONS.md`, `HARDWARE_CONFIG.md`, `OPERATOR_TIER0.md`, `PREREGISTRATION.md`, `RUNBOOK_HARDWARE.md`, `PLAN_A_COVERAGE.md`, `TREATY_COVERAGE.md`, `AGREEMENTS_COVERAGE.md`,
-`SIM_STUDY.md`, `PUBLISH.md`, `HARDWIRED_PAUSE.md`, `HARDWIRED_PAUSE_COVERAGE.md`), `CHANGELOG.md`, and `external/` (13
+`SIM_STUDY.md`, `HARDWIRED_PAUSE.md`, `HARDWIRED_PAUSE_COVERAGE.md`), `CHANGELOG.md`, and `external/` (13
 vendored repositories, `MANIFEST.json`, `README.md`).
 
 plan-a-closure is Apache-2.0. The vendored repositories keep their own licences (external/README.md).

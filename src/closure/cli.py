@@ -754,7 +754,7 @@ def cmd_claims(a) -> int:
             print(f"{c.status:12} {c.id:16} expected={c.expected:<12.5g} computed={c.computed:<12.5g} {c.claim}"
                   + (f"  [{c.note}]" if c.note else ""))
     s = claims.summary(cs)
-    print(f"\n{s['total']} claims re-derived from the pasted plan: {s['OK']} OK, {s['WORDING']} WORDING "
+    print(f"\n{s['total']} claims re-derived from the verification plan: {s['OK']} OK, {s['WORDING']} WORDING "
           f"(true only under a stated reading), {s['INCONSISTENT']} INCONSISTENT")
     return 1 if (a.strict and (s["WORDING"] or s["INCONSISTENT"])) else 0
 

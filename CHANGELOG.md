@@ -59,6 +59,8 @@ and FLI's *Draft Articles on the Safe Development and Diffusion of Artificial In
   unchanged, hashes new. [docs/COMMIT_HISTORY.md](docs/COMMIT_HISTORY.md) maps the old hashes, which runs 3 to 8
   cite, to the new ones, and every run's `code.src_sha256` equals the source hash of its version's commit now.
 - `scripts/run_anywhere.sh` and `scripts/slurm_tier0.sh` are executable again.
+- The Plan A coverage matrix and the claims check name ai-2040.com as their source; START_HERE.md is written for
+  any reader; `docs/PUBLISH.md`, the maintainer's own publishing notes, is no longer in the repository.
 
 ## 0.11.0
 
