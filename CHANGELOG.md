@@ -61,6 +61,8 @@ and FLI's *Draft Articles on the Safe Development and Diffusion of Artificial In
 - `scripts/run_anywhere.sh` and `scripts/slurm_tier0.sh` are executable again.
 - The Plan A coverage matrix and the claims check name ai-2040.com as their source; START_HERE.md is written for
   any reader; `docs/PUBLISH.md`, the maintainer's own publishing notes, is no longer in the repository.
+- After a hardware run, `scripts/run_anywhere.sh` said to send the bundle to an address the README does not give. It
+  now says to send it back to whoever asked for the run, or to attach it to an issue.
 
 ## 0.11.0
 

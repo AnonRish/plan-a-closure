@@ -146,9 +146,9 @@ if [ -f "$OUT/tier0_bundle.tar.gz" ]; then
     echo "and that its evidence verifies; it says nothing about any real GPU. On a machine with an NVIDIA GPU:"
     echo "  bash scripts/run_anywhere.sh --hardware"
   else
-    echo "To add this run to the public record, send the bundle (and drill.json if there is one) to the address in the"
-    echo "README, or open an issue at https://github.com/AnonRish/plan-a-closure/issues and attach it. Every run is"
-    echo "published whatever it shows. Do not send $TRIAL/signing_key.bin: it is this run's private key, and it"
+    echo "To add this run to the public record, send the bundle (and drill.json if there is one) back to whoever asked"
+    echo "you to run it, or open an issue at https://github.com/AnonRish/plan-a-closure/issues and attach it. Every"
+    echo "run is published whatever it shows. Do not send $TRIAL/signing_key.bin: it is this run's private key, and it"
     echo "is left out of the bundle on purpose."
   fi
 else
