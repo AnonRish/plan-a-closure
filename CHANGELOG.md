@@ -65,6 +65,8 @@ and FLI's *Draft Articles on the Safe Development and Diffusion of Artificial In
   now says to send it back to whoever asked for the run, or to attach it to an issue.
 - The README says, before `--hardware`, what a run changes on the machine and how to undo it, and links the operator
   guide's full list; `scripts/run_anywhere.sh --hardware` prints the same pointer before it starts.
+- The README opens with the three steps to run the pilot and that list, ahead of the status and the background, so a
+  GPU owner sees what to run and what it does before anything else.
 
 ## 0.11.0
 
