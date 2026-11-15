@@ -54,6 +54,20 @@ bash scripts/run_anywhere.sh --hardware    # 2 h 20 min on an NVIDIA GPU: the pi
 .venv/bin/python -m pytest -q tests/test_runs_on_record.py   # every published bundle re-read: hashes, signatures, numbers
 ```
 
+**Before `--hardware` on your own GPU:** everything it does to the machine is listed in
+[What it changes on the machine](docs/OPERATOR_TIER0.md#what-it-changes-on-the-machine). In short:
+
+- It uses only the GPU you name (`--gpu N`, matched by UUID) and needs that GPU to itself until the run ends. No other
+  GPU is read or changed.
+- With root, it locks clocks and sets power limits one variant at a time, and puts both back after each variant and on
+  exit, including after Ctrl-C or a scheduler's time limit. After a `kill -9`,
+  `sudo .venv/bin/python -m closure.cli hw-restore --gpu N` puts them back. Without root, those variants are skipped and
+  noted.
+- It installs into `./.venv` (PyTorch included, about 3 GB, for `--hardware`), writes only to its output folder, and
+  uses no network after installation unless you add `--stamp`. Nothing is sent anywhere.
+- It leaves one file to send back, `tier0_bundle.tar.gz`. The run's private signing key stays with you.
+- `--check` shows what would run on each GPU without running anything on it, and Ctrl-C stops a run at any point.
+
 The pilot is one unattended command underneath, `closure tier0` ([operator guide](docs/OPERATOR_TIER0.md)).
 [notebooks/tier0_colab.ipynb](notebooks/tier0_colab.ipynb)
 ([open in Colab](https://colab.research.google.com/github/AnonRish/plan-a-closure/blob/main/notebooks/tier0_colab.ipynb))

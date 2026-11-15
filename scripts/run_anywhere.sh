@@ -111,6 +111,7 @@ else
       echo "reports is then a lower bound. For the full probe: sudo -E env PATH=\"\$PATH\" bash scripts/run_anywhere.sh --hardware ..."
     fi
   fi
+  echo "what this run changes on the machine, and how to undo it: docs/OPERATOR_TIER0.md, \"What it changes on the machine\""
   say "the pilot on GPU $GPU, $PROFILE trial -> $OUT (exclusive use of that GPU until it finishes)"
   # shellcheck disable=SC2086
   ${RUN[@]+"${RUN[@]}"} "$PYBIN" -m closure.cli tier0 --confirm-hardware --gpu "$GPU" --trial-profile "$PROFILE" $SKIPARG --out "$OUT"; RC=$?

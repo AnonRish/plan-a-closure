@@ -63,6 +63,8 @@ and FLI's *Draft Articles on the Safe Development and Diffusion of Artificial In
   any reader; `docs/PUBLISH.md`, the maintainer's own publishing notes, is no longer in the repository.
 - After a hardware run, `scripts/run_anywhere.sh` said to send the bundle to an address the README does not give. It
   now says to send it back to whoever asked for the run, or to attach it to an issue.
+- The README says, before `--hardware`, what a run changes on the machine and how to undo it, and links the operator
+  guide's full list; `scripts/run_anywhere.sh --hardware` prints the same pointer before it starts.
 
 ## 0.11.0
 
